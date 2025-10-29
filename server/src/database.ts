@@ -1,8 +1,10 @@
 import * as mongodb from "mongodb";
 import { User } from "./users";
+import { SharedAccount } from "./shared-account";
 
 export const collections: {
     users?: mongodb.Collection<User>;
+    sharedAccounts?: mongodb.Collection<SharedAccount>;
 } = {};
 
 export async function connectToDatabase(uri: string) {
@@ -14,6 +16,8 @@ export async function connectToDatabase(uri: string) {
 
     const usersCollection = db.collection<User>("users");
     collections.users = usersCollection;
+    const sharedAccountsCollection = db.collection<SharedAccount>("shared_accounts");
+    collections.sharedAccounts = sharedAccountsCollection;
 }
 
 // Update our existing collection with JSON schema validation so we know our documents will always match the shape of our Employee model, even if added elsewhere.
@@ -66,6 +70,50 @@ async function applySchemaValidation(db: mongodb.Db) {
     }).catch(async (error: mongodb.MongoServerError) => {
         if (error.codeName === "NamespaceNotFound") {
             await db.createCollection("users", {validator: jsonSchema});
+        }
+    });
+
+    const sharedAccountsJsonSchema = {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["nombre", "moneda", "creador_id", "fecha_creacion"],
+            additionalProperties: false,
+            properties: {
+                _id: {},
+                id_grupo: {
+                    bsonType: ["string", "int"],
+                    description: "Optional external id (UUID or INT)",
+                },
+                nombre: {
+                    bsonType: "string",
+                    description: "'nombre' is required and is a string",
+                },
+                descripcion: {
+                    bsonType: ["string", "null"],
+                    description: "Optional description",
+                },
+                moneda: {
+                    bsonType: "string",
+                    description: "3-letter ISO currency code",
+                },
+                creador_id: {
+                    bsonType: "string",
+                    description: "Reference to the creator user id",
+                },
+                fecha_creacion: {
+                    bsonType: "date",
+                    description: "'fecha_creacion' is required and is a date",
+                },
+            },
+        },
+    };
+
+    await db.command({
+        collMod: "shared_accounts",
+        validator: sharedAccountsJsonSchema,
+    }).catch(async (error: mongodb.MongoServerError) => {
+        if (error.codeName === "NamespaceNotFound") {
+            await db.createCollection("shared_accounts", { validator: sharedAccountsJsonSchema });
         }
     });
 }
