@@ -48,8 +48,6 @@ function connectToDatabase(uri) {
     });
 }
 exports.connectToDatabase = connectToDatabase;
-// Update our existing collection with JSON schema validation so we know our documents will always match the shape of our Employee model, even if added elsewhere.
-// For more information about schema validation, see this blog series: https://www.mongodb.com/blog/post/json-schema-validation--locking-down-your-model-the-smart-way
 function applySchemaValidation(db) {
     return __awaiter(this, void 0, void 0, function* () {
         const jsonSchema = {
@@ -91,7 +89,6 @@ function applySchemaValidation(db) {
                 },
             },
         };
-        // Try applying the modification to the collection, if the collection doesn't exist, create it
         yield db.command({
             collMod: "users",
             validator: jsonSchema
