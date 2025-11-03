@@ -11,26 +11,13 @@ import * as mongodb from "mongodb";
  *  - fecha_creacion: fecha de creación
  */
 export interface SharedAccount {
-    // optional external id (UUID or INT)
-    id_grupo?: string | number;
-
-    // nombre del grupo
-    nombre: string;
-
-    // descripción breve
-    descripcion?: string;
-
-    // ISO 4217 currency code
-    moneda: string;
-
-    // referencia al usuario que creó el grupo (puede ser id externo o user._id en string)
-    creador_id: string;
-
-    // fecha de creación
-    fecha_creacion: Date;
-
-    // MongoDB internal id
-    _id?: mongodb.ObjectId;
+  id_grupo?: string | number;
+  nombre: string;
+  descripcion?: string;
+  moneda: string;
+  creador_id: string;
+  fecha_creacion: Date;
+  _id?: mongodb.ObjectId;
 }
 
 // Ejemplo de documento:

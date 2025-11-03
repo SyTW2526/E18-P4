@@ -1,27 +1,38 @@
 import * as mongodb from "mongodb";
 import { User } from "./users";
 import { SharedAccount } from "./shared-account";
+import { UserGroup } from "./user-group";
+import { Gasto } from "./gastos";
+import { Participacion } from "./participacion";
+
 
 export const collections: {
-    users?: mongodb.Collection<User>;
-    sharedAccounts?: mongodb.Collection<SharedAccount>;
+  users?: mongodb.Collection<User>;
+  sharedAccounts?: mongodb.Collection<SharedAccount>;
+  gastos?: mongodb.Collection<Gasto>;
+  userGroups?: mongodb.Collection<UserGroup>;
+  participaciones?: mongodb.Collection<Participacion>;
 } = {};
 
 export async function connectToDatabase(uri: string) {
-    const client = new mongodb.MongoClient(uri);
-    await client.connect();
+  const client = new mongodb.MongoClient(uri);
+  await client.connect();
 
-    const db = client.db("meanStackExample");
-    await applySchemaValidation(db);
+  const db = client.db("meanStackExample");
+  await applySchemaValidation(db);
 
-    const usersCollection = db.collection<User>("users");
-    collections.users = usersCollection;
-    const sharedAccountsCollection = db.collection<SharedAccount>("shared_accounts");
-    collections.sharedAccounts = sharedAccountsCollection;
+  const usersCollection = db.collection<User>("users");
+  collections.users = usersCollection;
+  const sharedAccountsCollection = db.collection<SharedAccount>("shared_accounts");
+  collections.sharedAccounts = sharedAccountsCollection;
+  const gastosCollection = db.collection<Gasto>("gastos");
+  collections.gastos = gastosCollection;
+  const userGroupsCollection = db.collection<UserGroup>("user_groups");
+  collections.userGroups = userGroupsCollection;
+  const participacionesCollection = db.collection<Participacion>("participaciones");
+  collections.participaciones = participacionesCollection;
 }
 
-// Update our existing collection with JSON schema validation so we know our documents will always match the shape of our Employee model, even if added elsewhere.
-// For more information about schema validation, see this blog series: https://www.mongodb.com/blog/post/json-schema-validation--locking-down-your-model-the-smart-way
 async function applySchemaValidation(db: mongodb.Db) {
     const jsonSchema = {
         $jsonSchema: {
@@ -63,7 +74,6 @@ async function applySchemaValidation(db: mongodb.Db) {
         },
     };
 
-    // Try applying the modification to the collection, if the collection doesn't exist, create it
     await db.command({
         collMod: "users",
         validator: jsonSchema
