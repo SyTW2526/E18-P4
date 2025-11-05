@@ -36,6 +36,7 @@ exports.connectToDatabase = exports.collections = void 0;
 const mongodb = __importStar(require("mongodb"));
 exports.collections = {};
 function connectToDatabase(uri) {
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         const client = new mongodb.MongoClient(uri);
         yield client.connect();
@@ -45,6 +46,30 @@ function connectToDatabase(uri) {
         exports.collections.users = usersCollection;
         const sharedAccountsCollection = db.collection("shared_accounts");
         exports.collections.sharedAccounts = sharedAccountsCollection;
+        const gastosCollection = db.collection("gastos");
+        exports.collections.gastos = gastosCollection;
+        const userGroupsCollection = db.collection("user_groups");
+        exports.collections.userGroups = userGroupsCollection;
+        const participacionesCollection = db.collection("participaciones");
+        exports.collections.participaciones = participacionesCollection;
+        try {
+            yield ((_a = exports.collections.userGroups) === null || _a === void 0 ? void 0 : _a.createIndex({ id_usuario: 1, id_grupo: 1 }, { unique: true, background: true }));
+        }
+        catch (err) {
+            console.warn("Could not create index on user_groups (id_usuario, id_grupo)", err);
+        }
+        try {
+            yield ((_b = exports.collections.gastos) === null || _b === void 0 ? void 0 : _b.createIndex({ id_grupo: 1 }, { background: true }));
+        }
+        catch (err) {
+            console.warn("Could not create index on gastos.id_grupo", err);
+        }
+        try {
+            yield ((_c = exports.collections.participaciones) === null || _c === void 0 ? void 0 : _c.createIndex({ id_gasto: 1 }, { background: true }));
+        }
+        catch (err) {
+            console.warn("Could not create index on participaciones.id_gasto", err);
+        }
     });
 }
 exports.connectToDatabase = connectToDatabase;
@@ -137,6 +162,124 @@ function applySchemaValidation(db) {
         }).catch((error) => __awaiter(this, void 0, void 0, function* () {
             if (error.codeName === "NamespaceNotFound") {
                 yield db.createCollection("shared_accounts", { validator: sharedAccountsJsonSchema });
+            }
+        }));
+        // Schema validation for gastos
+        const gastosJsonSchema = {
+            $jsonSchema: {
+                bsonType: "object",
+                required: ["id_grupo", "descripcion", "monto", "id_pagador", "fecha", "categoria"],
+                additionalProperties: false,
+                properties: {
+                    _id: {},
+                    id_gasto: {
+                        bsonType: ["string", "int"],
+                        description: "Optional external id (UUID or INT)",
+                    },
+                    id_grupo: {
+                        bsonType: ["string", "int"],
+                        description: "Reference to group id",
+                    },
+                    descripcion: {
+                        bsonType: "string",
+                        description: "Expense description",
+                    },
+                    monto: {
+                        bsonType: ["double", "int", "decimal"],
+                        description: "Amount of the expense",
+                    },
+                    id_pagador: {
+                        bsonType: ["string", "int"],
+                        description: "Payer user id",
+                    },
+                    fecha: {
+                        bsonType: "date",
+                        description: "Date of the expense",
+                    },
+                    categoria: {
+                        bsonType: "string",
+                        description: "Category of the expense",
+                    },
+                },
+            },
+        };
+        yield db.command({
+            collMod: "gastos",
+            validator: gastosJsonSchema,
+        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+            if (error.codeName === "NamespaceNotFound") {
+                yield db.createCollection("gastos", { validator: gastosJsonSchema });
+            }
+        }));
+        // Schema validation for user_groups (relations)
+        const userGroupsJsonSchema = {
+            $jsonSchema: {
+                bsonType: "object",
+                required: ["id_usuario", "id_grupo", "rol", "fecha_union"],
+                additionalProperties: false,
+                properties: {
+                    _id: {},
+                    id_usuario: {
+                        bsonType: ["string", "int"],
+                        description: "Reference to user id",
+                    },
+                    id_grupo: {
+                        bsonType: ["string", "int"],
+                        description: "Reference to group id",
+                    },
+                    rol: {
+                        bsonType: "string",
+                        enum: ["admin", "miembro"],
+                        description: "Role of the user in the group",
+                    },
+                    fecha_union: {
+                        bsonType: "date",
+                        description: "Date when joined",
+                    },
+                },
+            },
+        };
+        yield db.command({
+            collMod: "user_groups",
+            validator: userGroupsJsonSchema,
+        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+            if (error.codeName === "NamespaceNotFound") {
+                yield db.createCollection("user_groups", { validator: userGroupsJsonSchema });
+            }
+        }));
+        // Schema validation for participaciones
+        const participacionesJsonSchema = {
+            $jsonSchema: {
+                bsonType: "object",
+                required: ["id_usuario", "id_gasto", "monto_asignado"],
+                additionalProperties: false,
+                properties: {
+                    _id: {},
+                    id_participacion: {
+                        bsonType: ["string", "int"],
+                        description: "Optional external id",
+                    },
+                    id_usuario: {
+                        bsonType: ["string", "int"],
+                        description: "Reference to user id",
+                    },
+                    id_gasto: {
+                        bsonType: ["string", "int"],
+                        description: "Reference to gasto id",
+                    },
+                    monto_asignado: {
+                        bsonType: ["double", "int", "decimal"],
+                        description: "Assigned amount for this participant",
+                    },
+                },
+            },
+        };
+        yield db.command({
+            collMod: "participaciones",
+            validator: participacionesJsonSchema,
+        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+            if (error.codeName === "NamespaceNotFound") {
+                yield db.createCollection("participaciones", { validator: participacionesJsonSchema });
             }
         }));
     });

@@ -1,5 +1,7 @@
 import { collections } from "./database";
 import { ObjectId } from "mongodb";
+import { Gasto } from "./gastos";
+import { Participacion } from "./participacion";
 
 type Balance = {
   userId: string;
@@ -17,13 +19,16 @@ type Balance = {
 export async function computeGroupBalances(groupId: string): Promise<Balance[]> {
   if (!collections.gastos) throw new Error("Colección 'gastos' no está inicializada");
 
-  const gastos = await collections.gastos.find({ id_grupo: groupId }).toArray();
+  const gastos = (await collections.gastos.find({ id_grupo: groupId }).toArray()) as Array< Gasto & { _id?: ObjectId }>;
 
   // obtener miembros del grupo si es necesario (lazy)
   const getMembers = async (): Promise<string[]> => {
     if (!collections.userGroups) return [];
-    const rows = await collections.userGroups.find({ id_grupo: groupId }).project({ id_usuario: 1 }).toArray();
-    return rows.map((r: any) => String(r.id_usuario));
+    const rows = (await collections.userGroups
+      .find({ id_grupo: groupId })
+      .project({ id_usuario: 1 })
+      .toArray()) as Array<{ id_usuario: string | number }>;
+    return rows.map((r) => String(r.id_usuario));
   };
 
   const agg: Record<string, { paid: number; share: number }> = {};
@@ -40,11 +45,11 @@ export async function computeGroupBalances(groupId: string): Promise<Balance[]> 
     // intentar usar participaciones
     let parts: { id_usuario: string; monto_asignado: number }[] = [];
     if (collections.participaciones) {
-      // intentamos buscar participaciones por id_gasto (coincidiendo por string y por ObjectId)
-      const gastoId = g._id as ObjectId | undefined;
-      const q: any = { id_gasto: String(gastoId ?? g.id_gasto ?? "") };
-      const raw = await collections.participaciones.find(q).toArray();
-      parts = raw.map((p: any) => ({ id_usuario: String(p.id_usuario), monto_asignado: Number(p.monto_asignado) || 0 }));
+      // intentamos buscar participaciones por id_gasto (coincidiendo por ObjectId y por string)
+  const gastoIdStr = String(g.id_gasto ?? g._id ?? "");
+  const q = { id_gasto: gastoIdStr };
+  const raw = (await collections.participaciones.find(q).toArray()) as Participacion[];
+      parts = raw.map((p) => ({ id_usuario: String(p.id_usuario), monto_asignado: Number(p.monto_asignado) || 0 }));
     }
 
     if (parts && parts.length) {

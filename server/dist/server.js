@@ -30,7 +30,7 @@ const dotenv = __importStar(require("dotenv"));
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const database_1 = require("./database");
-const users_routes_1 = require("./users.routes");
+const users_route_1 = require("./routes/users.route");
 // Load environment variables from the .env file, where the ATLAS_URI is configured
 dotenv.config();
 const { ATLAS_URI } = process.env;
@@ -42,7 +42,7 @@ if (!ATLAS_URI) {
     .then(() => {
     const app = (0, express_1.default)();
     app.use((0, cors_1.default)());
-    app.use("/users", users_routes_1.userRouter);
+    app.use("/users", users_route_1.userRouter);
     // start the Express server
     app.listen(5200, () => {
         console.log(`Server running at http://localhost:5200...`);

@@ -18,16 +18,19 @@ const database_1 = require("./database");
  *   Si hay participaciones, utiliza esos montos; si no, reparte el gasto igual entre los miembros del grupo (userGroups).
  */
 function computeGroupBalances(groupId) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
         if (!database_1.collections.gastos)
             throw new Error("Colección 'gastos' no está inicializada");
-        const gastos = yield database_1.collections.gastos.find({ id_grupo: groupId }).toArray();
+        const gastos = (yield database_1.collections.gastos.find({ id_grupo: groupId }).toArray());
         // obtener miembros del grupo si es necesario (lazy)
         const getMembers = () => __awaiter(this, void 0, void 0, function* () {
             if (!database_1.collections.userGroups)
                 return [];
-            const rows = yield database_1.collections.userGroups.find({ id_grupo: groupId }).project({ id_usuario: 1 }).toArray();
+            const rows = (yield database_1.collections.userGroups
+                .find({ id_grupo: groupId })
+                .project({ id_usuario: 1 })
+                .toArray());
             return rows.map((r) => String(r.id_usuario));
         });
         const agg = {};
@@ -43,10 +46,10 @@ function computeGroupBalances(groupId) {
             // intentar usar participaciones
             let parts = [];
             if (database_1.collections.participaciones) {
-                // intentamos buscar participaciones por id_gasto (coincidiendo por string y por ObjectId)
-                const gastoId = g._id;
-                const q = { id_gasto: String((_c = gastoId !== null && gastoId !== void 0 ? gastoId : g.id_gasto) !== null && _c !== void 0 ? _c : "") };
-                const raw = yield database_1.collections.participaciones.find(q).toArray();
+                // intentamos buscar participaciones por id_gasto (coincidiendo por ObjectId y por string)
+                const gastoIdStr = String((_d = (_c = g.id_gasto) !== null && _c !== void 0 ? _c : g._id) !== null && _d !== void 0 ? _d : "");
+                const q = { id_gasto: gastoIdStr };
+                const raw = (yield database_1.collections.participaciones.find(q).toArray());
                 parts = raw.map((p) => ({ id_usuario: String(p.id_usuario), monto_asignado: Number(p.monto_asignado) || 0 }));
             }
             if (parts && parts.length) {

@@ -1,6 +1,7 @@
 import * as express from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../database";
+import * as bcrypt from "bcryptjs";
 
 export const userRouter = express.Router();
 userRouter.use(express.json());
@@ -41,6 +42,12 @@ userRouter.post("/", async (req: express.Request, res: express.Response) => {
             user.fecha_registro = new Date();
         } else {
             user.fecha_registro = new Date(user.fecha_registro);
+        }
+
+        // Accept plaintext `password` and hash it into `password_hash` (if provided)
+        if (user.password) {
+            user.password_hash = bcrypt.hashSync(String(user.password), 10);
+            delete user.password;
         }
 
         const result = await collections?.users?.insertOne(user);
