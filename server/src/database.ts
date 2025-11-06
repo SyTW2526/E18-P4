@@ -32,6 +32,7 @@ export async function connectToDatabase(uri: string) {
   const participacionesCollection = db.collection<Participacion>("participaciones");
   collections.participaciones = participacionesCollection;
 
+
     try {
         await collections.userGroups?.createIndex({ id_usuario: 1, id_grupo: 1 }, { unique: true, background: true });
     } catch (err) {

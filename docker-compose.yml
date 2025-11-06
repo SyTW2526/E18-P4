@@ -24,7 +24,6 @@ services:
     env_file:
       - ./server/.env
     environment:
-      # fallback if not set in server/.env
       - ATLAS_URI=mongodb://root:example@mongo:27017/meanStackExample?authSource=admin
     ports:
       - "5200:5200"
