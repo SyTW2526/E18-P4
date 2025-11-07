@@ -11,7 +11,7 @@ import * as mongodb from "mongodb";
  *  - fecha_creacion: fecha de creación
  */
 export interface SharedAccount {
-  id_grupo?: string | number;
+  id_grupo: string | number;
   nombre: string;
   descripcion?: string;
   moneda: string;

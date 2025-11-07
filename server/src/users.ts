@@ -1,7 +1,7 @@
 import * as mongodb from "mongodb";
 
 export interface User {
-    id_usuario?: string;
+    id_usuario: string;
     nombre: string;
     email: string;
     password_hash: string;

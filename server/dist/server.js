@@ -31,6 +31,10 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const database_1 = require("./database");
 const users_route_1 = require("./routes/users.route");
+const shared_account_route_1 = require("./routes/shared-account.route");
+const gastos_route_1 = require("./routes/gastos.route");
+const participacion_route_1 = require("./routes/participacion.route");
+const user_group_route_1 = require("./routes/user-group.route");
 // Load environment variables from the .env file, where the ATLAS_URI is configured
 dotenv.config();
 const { ATLAS_URI } = process.env;
@@ -41,8 +45,13 @@ if (!ATLAS_URI) {
 (0, database_1.connectToDatabase)(ATLAS_URI)
     .then(() => {
     const app = (0, express_1.default)();
+    app.use(express_1.default.json());
     app.use((0, cors_1.default)());
     app.use("/users", users_route_1.userRouter);
+    app.use("/shared_accounts", shared_account_route_1.sharedAccountsRouter);
+    app.use("/user_groups", user_group_route_1.userGroupRouter);
+    app.use("/gastos", gastos_route_1.GastosRouter);
+    app.use("/participaciones", participacion_route_1.participacionRouter);
     // start the Express server
     app.listen(5200, () => {
         console.log(`Server running at http://localhost:5200...`);

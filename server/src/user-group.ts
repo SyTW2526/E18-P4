@@ -9,7 +9,7 @@ import * as mongodb from 'mongodb';
  *  - fecha_union: fecha en que el usuario se unió al grupo
  */
 export interface UserGroup {
-  id_usuario_grupo?: string | number;
+  id_usuario_grupo: string | number;
   id_usuario: string | number;
   id_grupo: string | number;
   rol: 'admin' | 'miembro';
