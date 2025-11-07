@@ -126,8 +126,4 @@ docker-compose down
 
 ---
 
-Si quieres, puedo:
-- Añadir un ejemplo de `.env.example` en `server/` y aplicarlo en el repo.
-- Implementar los endpoints `/signup` y `/signin` con JWT en `server/src/routes/users.route.ts` y añadir instrucciones de uso (registro/login y cómo usar el token en peticiones).
-
-Dime qué prefieres y lo implemento. 
+ 
