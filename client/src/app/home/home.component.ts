@@ -6,11 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
     <section style="max-width:900px; width:100%; text-align:center">
       <h1>Bienvenido a PaySplit</h1>
@@ -29,7 +30,10 @@ import { MatInputModule } from '@angular/material/input';
                 <input matInput placeholder="Email" [(ngModel)]="signupModel.email" name="email" required (ngModelChange)="clearSignupError()" />
               </mat-form-field>
               <mat-form-field style="width:100%">
-                <input matInput placeholder="Password" [(ngModel)]="signupModel.password" name="password" type="password" required (ngModelChange)="clearSignupError()" />
+                <input matInput placeholder="Password" [(ngModel)]="signupModel.password" name="password" [type]="showSignupPassword ? 'text' : 'password'" required (ngModelChange)="clearSignupError()" />
+                <button mat-icon-button matSuffix type="button" (click)="toggleSignupPassword()" [attr.aria-label]="showSignupPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                  <mat-icon>{{ showSignupPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
               </mat-form-field>
               <div style="display:flex;flex-direction:column;gap:0.5rem">
                 <button mat-raised-button color="primary" type="submit" [disabled]="signupLoading">{{ signupLoading ? 'Registrando...' : 'Registrarse' }}</button>
@@ -45,7 +49,10 @@ import { MatInputModule } from '@angular/material/input';
                 <input matInput placeholder="Email" [(ngModel)]="signinModel.email" name="se_email" required (ngModelChange)="clearSigninError()" />
               </mat-form-field>
               <mat-form-field style="width:100%">
-                <input matInput placeholder="Password" [(ngModel)]="signinModel.password" name="se_password" type="password" required (ngModelChange)="clearSigninError()" />
+                <input matInput placeholder="Password" [(ngModel)]="signinModel.password" name="se_password" [type]="showSigninPassword ? 'text' : 'password'" required (ngModelChange)="clearSigninError()" />
+                <button mat-icon-button matSuffix type="button" (click)="toggleSigninPassword()" [attr.aria-label]="showSigninPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+                  <mat-icon>{{ showSigninPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
               </mat-form-field>
               <div style="display:flex;flex-direction:column;gap:0.5rem">
                 <button mat-raised-button color="accent" type="submit" [disabled]="signinLoading">{{ signinLoading ? 'Iniciando...' : 'Iniciar sesión' }}</button>
@@ -69,12 +76,22 @@ import { MatInputModule } from '@angular/material/input';
 export class HomeComponent {
   signupModel = { nombre: '', email: '', password: '' };
   signinModel = { email: '', password: '' };
+  showSignupPassword = false;
+  showSigninPassword = false;
   signupError: string | null = null;
   signinError: string | null = null;
   signupLoading = false;
   signinLoading = false;
 
   constructor(public auth: AuthService, private router: Router) {}
+
+  toggleSignupPassword() {
+    this.showSignupPassword = !this.showSignupPassword;
+  }
+
+  toggleSigninPassword() {
+    this.showSigninPassword = !this.showSigninPassword;
+  }
 
   signup() {
     this.signupError = null;
