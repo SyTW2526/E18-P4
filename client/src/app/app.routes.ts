@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HomeComponent } from '../app/paysplit/home/home.component';
-// Importa un guard de autenticación aquí cuando lo tengas
+import { AuthGuard } from './auth/auth.guard';
+import { AccountDetailComponent } from './paysplit/account-detail/account-detail.component';
 
 export const routes: Routes = [
   // Al inicio redirigimos a la pantalla de login/registro
@@ -13,7 +14,8 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent, title: 'Registrarse' },
 
   // Ruta principal de la app (accedida tras autenticarse)
-  { path: 'home', component: HomeComponent, title: 'Inicio' },
+  { path: 'home', component: HomeComponent, title: 'Inicio', canActivate: [AuthGuard] },
+  { path: 'group/:id', component: AccountDetailComponent, title: 'Cuenta', canActivate: [AuthGuard] },
 
   // Redirige cualquier otra ruta a login
   { path: '**', redirectTo: 'login' }

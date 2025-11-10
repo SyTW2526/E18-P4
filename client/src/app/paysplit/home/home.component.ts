@@ -275,8 +275,8 @@ export class HomeComponent {
   }
 
   openGroup(g: any) {
-    // minimal action for now: show details in an alert. Could navigate to a detail route later.
-    window.alert(`Grupo: ${g.nombre}\nID: ${g._id}\nDescripción: ${g.descripcion || '—'}`);
+    // navigate to account detail route
+    this.router.navigate(['/group', g._id], { state: { accountName: g.nombre } });
   }
 
   createGroupFromForm() {

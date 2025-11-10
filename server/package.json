@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "src/server.ts",
   "scripts": {
-    "start": "ts-node src/server.ts",
-    "build": "tsc",
-    "test": "eslint ."
+  "start": "ts-node src/server.ts",
+  "build": "tsc",
+  "test": "eslint .",
+  "seed": "ts-node src/seed_data.ts"
   },
   "author": "Stanimira Vlaeva",
   "license": "Apache 2.0",
