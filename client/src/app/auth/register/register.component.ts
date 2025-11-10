@@ -49,7 +49,7 @@ export class RegisterComponent {
         next: () => {
           this.loading = false;
           // after signup the user is usually logged in (token saved by service)
-          this.router.navigate(['/']);
+          this.router.navigate(['/home']);
         },
         error: (e) => {
           this.loading = false;

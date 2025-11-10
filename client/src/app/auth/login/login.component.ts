@@ -42,7 +42,8 @@ export class LoginComponent {
       this.auth.signin(this.loginForm.value as any).subscribe({
         next: () => {
           this.loading = false;
-          this.router.navigate(['/']);
+          // go to protected home after login
+          this.router.navigate(['/home']);
         },
         error: (e) => {
           this.loading = false;

@@ -52,4 +52,17 @@ export class AuthService {
   getToken(): string | null {
     return localStorage.getItem('auth_token');
   }
+
+  // Shared accounts endpoints
+  getSharedAccounts() {
+    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts`);
+  }
+
+  createSharedAccount(payload: any) {
+    return this.http.post<any>(`${this.baseUrl}/user-group/shared-accounts`, payload);
+  }
+
+  updateSharedAccount(id: string, payload: any) {
+    return this.http.put<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`, payload);
+  }
 }

@@ -3,6 +3,9 @@ import express from "express";
 import cors from "cors";
 import { connectToDatabase } from "./database";
 import { userRouter } from "./routes/users.route";
+import { userGroupRouter } from "./routes/user-group.route";
+import { participacionRouter } from "./routes/participacion.route";
+
 
 // Load environment variables from the .env file, where the ATLAS_URI is configured
 dotenv.config();
@@ -21,6 +24,9 @@ connectToDatabase(ATLAS_URI)
     const app = express();
   app.use(cors());
   app.use("/users", userRouter);
+  // mount additional routers for groups and participations
+  app.use("/user-group", userGroupRouter);
+  app.use("/participacion", participacionRouter);
 
     // start the Express server
     app.listen(5200, () => {
