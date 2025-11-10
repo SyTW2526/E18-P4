@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../auth.service';
 
 // Importaciones de Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -29,15 +30,33 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required]
   });
+  loading = false;
+  error: string | null = null;
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService) {}
 
   onSubmit() {
     if (this.loginForm.valid) {
-      console.log('Login data:', this.loginForm.value);
-
-      // Redirige a la página principal tras éxito
-      this.router.navigate(['/']);
+      this.error = null;
+      this.loading = true;
+      this.auth.signin(this.loginForm.value as any).subscribe({
+        next: () => {
+          this.loading = false;
+          this.router.navigate(['/']);
+        },
+        error: (e) => {
+          this.loading = false;
+          // Backend returns 401 for invalid credentials with plain text body
+          if (e?.status === 401) {
+            this.error = 'Correo o contraseña incorrectos.';
+          } else if (typeof e?.error === 'string' && e?.error.length) {
+            this.error = e.error;
+          } else {
+            this.error = e?.error?.message || e?.message || 'Error al iniciar sesión';
+          }
+          console.error('signin error', e);
+        }
+      });
     }
   }
 }

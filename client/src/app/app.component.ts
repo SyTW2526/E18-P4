@@ -3,6 +3,7 @@ import { RouterOutlet, RouterModule } from '@angular/router'; // Importar Router
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,7 @@ import { MatIconModule } from '@angular/material/icon';
     MatToolbarModule, 
     MatButtonModule, // Añadir
     MatIconModule
+    , HttpClientModule
   ],
   styles: [
     `
