@@ -38,84 +38,34 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     <section style="max-width:900px; width:100%; margin:0 auto; text-align:left; padding-bottom:1.5rem">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">Añadir Gasto</h2>
+        <h2 style="margin:0">{{ accountName || 'Cuenta compartida' }}</h2>
+        <span style="margin-left:auto; display:flex; gap:0.5rem">
+          <button mat-stroked-button color="primary" (click)="openCreateGasto()">Añadir gasto</button>
+        </span>
       </div>
 
-      <div style="margin:0.5rem 0">
-        <mat-button-toggle-group appearance="legacy" value="gasto">
-          <mat-button-toggle value="gasto">Gasto</mat-button-toggle>
-          <mat-button-toggle value="ingreso">Ingreso</mat-button-toggle>
-          <mat-button-toggle value="transferencia">Transferencia</mat-button-toggle>
-        </mat-button-toggle-group>
-      </div>
+      <div style="display:flex;gap:1rem;margin-top:0.5rem">
+        <mat-card style="flex:1">
+          <h3>Resumen</h3>
+          <p>Total cuenta: <strong>{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+          <p>Tu total pagado: <strong>{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+        </mat-card>
 
-      <div style="margin-top:0.5rem">
-        <mat-form-field style="width:100%">
-          <input matInput placeholder="Por ejemplo, Bebidas" name="descripcion" [(ngModel)]="newGasto.descripcion" required />
-          <button mat-icon-button matSuffix type="button" aria-label="Tag"><mat-icon>sell</mat-icon></button>
-          <button mat-icon-button matSuffix type="button" aria-label="Foto"><mat-icon>photo_camera</mat-icon></button>
-        </mat-form-field>
-      </div>
-
-      <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.5rem">
-        <mat-form-field style="flex:1">
-          <input matInput placeholder="0,00" name="monto" type="number" [(ngModel)]="newGasto.monto" required />
-        </mat-form-field>
-        <mat-form-field style="width:120px">
-          <mat-select [(ngModel)]="newGasto.moneda" name="moneda">
-            <mat-option value="EUR">€</mat-option>
-            <mat-option value="USD">$</mat-option>
-            <mat-option value="GBP">£</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-
-      <div style="display:flex;gap:0.5rem;align-items:center;margin-top:0.75rem">
-        <div style="flex:1">
-          <label style="display:block;font-weight:600;margin-bottom:0.25rem">Pagado por</label>
-          <mat-form-field style="width:100%">
-            <mat-select name="pagador" [(ngModel)]="selectedPayer" required>
-              <mat-option *ngFor="let m of miembros" [value]="m._id">{{ displayMember(m) }}</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <div style="min-width:220px">
-          <label style="display:block;font-weight:600;margin-bottom:0.25rem">Cuando</label>
-          <mat-form-field style="width:100%">
-            <input matInput [matDatepicker]="picker" name="fecha" [(ngModel)]="newGasto.fecha" />
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem">
-        <div style="display:flex;align-items:center;gap:0.5rem">
-          <mat-checkbox [(ngModel)]="splitEnabled" name="split">Dividir</mat-checkbox>
-        </div>
-        <div>
-          <mat-form-field>
-            <mat-select [(ngModel)]="splitMode" name="splitMode" style="min-width:120px">
-              <mat-option value="equal">Igualmente</mat-option>
-              <mat-option value="custom">Personalizado</mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <mat-card style="margin-top:0.5rem">
-        <div *ngFor="let p of participantes; let i = index" style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(0,0,0,0.06)">
-          <div style="display:flex;align-items:center;gap:0.75rem">
-            <mat-checkbox [(ngModel)]="participantes[i].included" name="inc{{i}}"></mat-checkbox>
-            <div>{{ displayMember(miembros[i]) }}</div>
-          </div>
-          <div style="min-width:120px;text-align:right">{{ participantes[i].amount ? (participantes[i].amount | number:'1.2-2') : '0,00' }} {{ newGasto.moneda || '€' }}</div>
-        </div>
-      </mat-card>
-
-      <div style="margin-top:1rem">
-        <button mat-raised-button color="primary" style="width:100%;height:48px;font-size:16px" (click)="createGastoFromForm()" [disabled]="creating">Añadir</button>
+        <mat-card style="flex:2">
+          <h3>Historial de gastos</h3>
+          <div *ngIf="!gastos.length">No hay gastos todavía.</div>
+          <mat-list *ngIf="gastos.length">
+            <mat-list-item *ngFor="let g of gastos">
+              <div style="display:flex;justify-content:space-between;width:100%">
+                <div>
+                  <div style="font-weight:600">{{ g.descripcion }}</div>
+                  <div style="font-size:0.9rem;color:#666">por {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'short') : '' }}</div>
+                </div>
+                <div style="font-weight:700">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</div>
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </mat-card>
       </div>
     </section>
   `,
@@ -152,51 +102,69 @@ export class AccountDetailComponent implements OnInit {
     // fetch account details to get miembros
     this.auth.getSharedAccountById(this.accountId).subscribe({
       next: (acc: any) => {
-        const rawMiembros = Array.isArray(acc?.miembros) ? acc.miembros : [];
-        // rawMiembros may be array of ids or objects; resolve ids to full user objects
-        const observables = rawMiembros.map((m: any) => {
-          if (!m) return of(null);
-          if (typeof m === 'object' && (m._id || m.id || m.email)) return of(m);
-          // assume m is id string
-          return this.auth.getUserById(String(m));
-        });
+        // if API returns explicit miembros array (legacy), use it; otherwise fetch members relation
+        const rawMiembros = Array.isArray(acc?.miembros) ? acc.miembros : null;
+        const processRaw = (list: any[]) => {
+          const observables = list.map((m: any) => {
+            if (!m) return of(null);
+            if (typeof m === 'object' && (m._id || m.id || m.email)) return of(m);
+            // assume m is id string
+            return this.auth.getUserById(String(m));
+          });
 
-        (forkJoin(observables) as any).subscribe(
-          (resolved: any[]) => {
-            // normalize members to objects with _id, nombre, email
-            this.miembros = resolved.map((r: any, i: number) => {
-              if (!r) {
-                const id = rawMiembros[i];
-                return { _id: id };
+          (forkJoin(observables) as any).subscribe(
+            (resolved: any[]) => {
+              // normalize members to objects with _id, nombre, email
+              this.miembros = resolved.map((r: any, i: number) => {
+                if (!r) {
+                  const id = list[i];
+                  return { _id: id };
+                }
+                return r;
+              });
+              // ensure current user is present among miembros
+              const me = this.auth.getUser();
+              const meId = me?._id || me?.id;
+              if (meId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meId)) {
+                this.miembros.unshift(me);
               }
-              return r;
-            });
-            // ensure current user is present among miembros
-            const me = this.auth.getUser();
-            const meId = me?._id || me?.id;
-            if (meId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meId)) {
-              this.miembros.unshift(me);
+              // default selected payer to current user if present
+              this.selectedPayer = meId || (this.miembros.length ? this.miembros[0]?._id || this.miembros[0] : null);
+              // initialize participantes for the form (include current user)
+              this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
+              this.loadGastos();
+            },
+            () => {
+              // fallback: use raw members as-is
+              this.miembros = list.map((m: any) => (typeof m === 'object' ? m : { _id: m }));
+              const meFav = this.auth.getUser();
+              const meFavId = meFav?._id || meFav?.id;
+              if (meFavId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meFavId)) {
+                this.miembros.unshift(meFav);
+              }
+              this.selectedPayer = meFavId || (this.miembros.length ? this.miembros[0]._id : null);
+              this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
+              this.loadGastos();
             }
-            // default selected payer to current user if present
-            this.selectedPayer = meId || (this.miembros.length ? this.miembros[0]?._id || this.miembros[0] : null);
-            // initialize participantes for the form (include current user)
-            this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
-            this.loadGastos();
-          },
-          () => {
-            // fallback: use raw members as-is
-            this.miembros = rawMiembros.map((m: any) => (typeof m === 'object' ? m : { _id: m }));
-            // ensure current user is included
-            const meFav = this.auth.getUser();
-            const meFavId = meFav?._id || meFav?.id;
-            if (meFavId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meFavId)) {
-              this.miembros.unshift(meFav);
-            }
-            this.selectedPayer = meFavId || (this.miembros.length ? this.miembros[0]._id : null);
-            this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
-            this.loadGastos();
-          }
-        );
+          );
+        };
+
+        if (rawMiembros) {
+          processRaw(rawMiembros);
+        } else {
+          // fetch members from relation endpoint
+          this.auth.getMembersForGroup(this.accountId).subscribe({
+            next: (members: any[]) => {
+              processRaw(members || []);
+            },
+            error: () => {
+              // if members endpoint fails, fallback to empty list and continue
+              this.miembros = [];
+              this.participantes = [];
+              this.loadGastos();
+            },
+          });
+        }
       },
       error: (err: any) => {
         // still try to load gastos even if account fetch fails
@@ -271,6 +239,29 @@ export class AccountDetailComponent implements OnInit {
         this.createError = err?.error?.message || err?.message || 'No se pudo crear el gasto';
       },
     });
+  }
+
+  accountTotal() {
+    return this.gastos.reduce((s, g) => s + (Number(g.monto) || 0), 0);
+  }
+
+  userTotal() {
+    const me = this.auth.getUser();
+    const meId = me?._id || me?.id;
+    return this.gastos.reduce((s, g) => s + ((String(g.id_pagador) === String(meId) ? Number(g.monto) || 0 : 0)), 0);
+  }
+
+  gastosCurrency() {
+    // try to pick currency from first gasto or fallback to EUR
+    return this.gastos.length ? (this.gastos[0].moneda || 'EUR') : 'EUR';
+  }
+
+  openCreateGasto() {
+    this.router.navigate(['/group', this.accountId, 'create-gasto']);
+  }
+
+  openBalance() {
+    this.router.navigate(['/group', this.accountId, 'balance']);
   }
 
   removeGasto(id: string) {

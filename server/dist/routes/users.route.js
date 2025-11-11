@@ -37,6 +37,7 @@ const express = __importStar(require("express"));
 const mongodb_1 = require("mongodb");
 const database_1 = require("../database");
 const bcrypt = __importStar(require("bcryptjs"));
+const jwt = __importStar(require("jsonwebtoken"));
 exports.userRouter = express.Router();
 exports.userRouter.use(express.json());
 // GET /users - list all users
@@ -44,7 +45,13 @@ exports.userRouter.get("/", (_req, res) => __awaiter(void 0, void 0, void 0, fun
     var _a;
     try {
         const users = yield ((_a = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _a === void 0 ? void 0 : _a.find({}).toArray());
-        res.status(200).send(users);
+        // remove sensitive fields before sending
+        const safe = users === null || users === void 0 ? void 0 : users.map((u) => {
+            const copy = Object.assign({}, u);
+            delete copy.password_hash;
+            return copy;
+        });
+        res.status(200).send(safe);
     }
     catch (error) {
         res.status(500).send(error instanceof Error ? error.message : "Unknown error");
@@ -58,7 +65,9 @@ exports.userRouter.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
         const query = { _id: new mongodb_1.ObjectId(id) };
         const user = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.findOne(query));
         if (user) {
-            res.status(200).send(user);
+            const safe = Object.assign({}, user);
+            delete safe.password_hash;
+            res.status(200).send(safe);
         }
         else {
             res.status(404).send(`Failed to find a user: ID ${id}`);
@@ -73,14 +82,12 @@ exports.userRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, fun
     var _e;
     try {
         const user = req.body;
-        // ensure fecha_registro is set if not provided
         if (!user.fecha_registro) {
             user.fecha_registro = new Date();
         }
         else {
             user.fecha_registro = new Date(user.fecha_registro);
         }
-        // Accept plaintext `password` and hash it into `password_hash` (if provided)
         if (user.password) {
             user.password_hash = bcrypt.hashSync(String(user.password), 10);
             delete user.password;
@@ -98,17 +105,84 @@ exports.userRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, fun
         res.status(400).send(error instanceof Error ? error.message : "Unknown error");
     }
 }));
-// PUT /users/:id - update user (partial updates allowed)
-exports.userRouter.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+// POST /signup - register a new user and return a JWT
+exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _f, _g;
     try {
-        const id = (_f = req === null || req === void 0 ? void 0 : req.params) === null || _f === void 0 ? void 0 : _f.id;
+        const { nombre, email, password, foto_perfil, preferencia_tema } = req.body;
+        if (!nombre || !email || !password) {
+            return res.status(400).send("'nombre', 'email' and 'password' are required");
+        }
+        // check JWT secret
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET) {
+            return res.status(500).send("JWT_SECRET is not set on the server");
+        }
+        // ensure email is unique
+        const existing = yield ((_f = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _f === void 0 ? void 0 : _f.findOne({ email: String(email).toLowerCase() }));
+        if (existing)
+            return res.status(409).send("A user with that email already exists");
+        const password_hash = bcrypt.hashSync(String(password), 10);
+        const userDoc = {
+            nombre,
+            email: String(email).toLowerCase(),
+            password_hash,
+            fecha_registro: new Date(),
+            preferencia_tema: preferencia_tema || "claro",
+        };
+        if (foto_perfil)
+            userDoc.foto_perfil = foto_perfil;
+        const result = yield ((_g = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _g === void 0 ? void 0 : _g.insertOne(userDoc));
+        if (!(result === null || result === void 0 ? void 0 : result.acknowledged))
+            return res.status(500).send("Failed to create user");
+        const userId = result.insertedId;
+        const token = jwt.sign({ userId: userId.toString(), email: userDoc.email }, JWT_SECRET, { expiresIn: '7d' });
+        const safe = Object.assign(Object.assign({}, userDoc), { _id: userId });
+        delete safe.password_hash;
+        return res.status(201).json({ user: safe, token });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).send(err instanceof Error ? err.message : 'Unknown error');
+    }
+}));
+// POST /signin - authenticate and return JWT
+exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _h;
+    try {
+        const { email, password } = req.body;
+        if (!email || !password)
+            return res.status(400).send("'email' and 'password' are required");
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET)
+            return res.status(500).send("JWT_SECRET is not set on the server");
+        const user = yield ((_h = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _h === void 0 ? void 0 : _h.findOne({ email: String(email).toLowerCase() }));
+        if (!user)
+            return res.status(401).send("Invalid email or password");
+        const ok = bcrypt.compareSync(String(password), String(user.password_hash || ''));
+        if (!ok)
+            return res.status(401).send("Invalid email or password");
+        const token = jwt.sign({ userId: user._id.toString(), email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+        const safe = Object.assign({}, user);
+        delete safe.password_hash;
+        return res.status(200).json({ user: safe, token });
+    }
+    catch (err) {
+        console.error(err);
+        return res.status(500).send(err instanceof Error ? err.message : 'Unknown error');
+    }
+}));
+// PUT /users/:id - update user (partial updates allowed)
+exports.userRouter.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _j, _k;
+    try {
+        const id = (_j = req === null || req === void 0 ? void 0 : req.params) === null || _j === void 0 ? void 0 : _j.id;
         const user = req.body;
         // if fecha_registro provided, convert to Date
         if (user.fecha_registro)
             user.fecha_registro = new Date(user.fecha_registro);
         const query = { _id: new mongodb_1.ObjectId(id) };
-        const result = yield ((_g = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _g === void 0 ? void 0 : _g.updateOne(query, { $set: user }));
+        const result = yield ((_k = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _k === void 0 ? void 0 : _k.updateOne(query, { $set: user }));
         if (result && result.matchedCount) {
             res.status(200).send(`Updated a user: ID ${id}.`);
         }
@@ -127,11 +201,11 @@ exports.userRouter.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
 }));
 // DELETE /users/:id - remove user by _id
 exports.userRouter.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h, _j;
+    var _l, _m;
     try {
-        const id = (_h = req === null || req === void 0 ? void 0 : req.params) === null || _h === void 0 ? void 0 : _h.id;
+        const id = (_l = req === null || req === void 0 ? void 0 : req.params) === null || _l === void 0 ? void 0 : _l.id;
         const query = { _id: new mongodb_1.ObjectId(id) };
-        const result = yield ((_j = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _j === void 0 ? void 0 : _j.deleteOne(query));
+        const result = yield ((_m = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _m === void 0 ? void 0 : _m.deleteOne(query));
         if (result && result.deletedCount) {
             res.status(202).send(`Removed a user: ID ${id}`);
         }

@@ -64,6 +64,27 @@ exports.userGroupRouter.get("/shared-accounts/:id", (req, res) => __awaiter(void
         res.status(500).send({ message: "Error al obtener la cuenta compartida.", error });
     }
 }));
+// Obtener miembros (usuarios) de una cuenta compartida usando user_groups
+exports.userGroupRouter.get("/shared-accounts/:id/members", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const id = req.params.id;
+        // buscar en user_groups por id_grupo
+        const rows = yield database_1.collections.userGroups.find({ id_grupo: String(id) }).toArray();
+        const userIds = rows.map(r => String(r.id_usuario));
+        // traer usuarios
+        const users = yield database_1.collections.users.find({ $or: userIds.map(u => ({ _id: new mongodb_1.ObjectId(u) })) }).toArray().catch(() => []);
+        // fallback: if users array empty, try to return minimal objects from ids
+        if (!users || users.length === 0) {
+            const minimal = userIds.map(u => ({ _id: u }));
+            return res.status(200).send(minimal);
+        }
+        res.status(200).send(users);
+    }
+    catch (error) {
+        console.error('members fetch error', error);
+        res.status(500).send({ message: 'Error al obtener miembros del grupo', error });
+    }
+}));
 // Crear una nueva cuenta/grupo compartido
 exports.userGroupRouter.post("/shared-accounts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -85,6 +106,39 @@ exports.userGroupRouter.post("/shared-accounts", (req, res) => __awaiter(void 0,
     }
     catch (error) {
         res.status(400).send({ message: "Error al crear la cuenta compartida.", error });
+    }
+}));
+// Crear relación usuario-grupo (unirse a un grupo) usando la colección user_groups
+exports.userGroupRouter.post("/user-groups", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const body = req.body || {};
+        const id_usuario = body.id_usuario;
+        const id_grupo = body.id_grupo;
+        const rol = body.rol || 'miembro';
+        if (!id_usuario || !id_grupo) {
+            return res.status(400).send({ message: 'id_usuario y id_grupo son requeridos' });
+        }
+        const doc = {
+            id_usuario: String(id_usuario),
+            id_grupo: String(id_grupo),
+            rol: String(rol),
+            fecha_union: new Date(),
+        };
+        const result = yield database_1.collections.userGroups.insertOne(doc);
+        if (result && result.insertedId) {
+            res.status(201).send({ message: 'Usuario unido al grupo', id: result.insertedId });
+        }
+        else {
+            res.status(500).send({ message: 'No se pudo crear la relación usuario-grupo' });
+        }
+    }
+    catch (error) {
+        // duplicate key (already a member)
+        if ((error === null || error === void 0 ? void 0 : error.code) === 11000) {
+            return res.status(409).send({ message: 'El usuario ya forma parte del grupo' });
+        }
+        console.error('user-groups POST error', error);
+        res.status(500).send({ message: 'Error al unir al usuario al grupo', error });
     }
 }));
 // Actualizar cuenta/grupo compartido

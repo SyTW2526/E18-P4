@@ -205,8 +205,11 @@ export class HomeComponent {
     const nombre = prompt('Nombre del nuevo grupo:');
     if (!nombre) return;
     const user = this.auth.getUser();
+    // server schema expects 'creador_id', 'moneda' and 'fecha_creacion'
     const payload: any = { nombre };
-    if (user?._id) payload.creador = user._id;
+    payload.fecha_creacion = new Date();
+    payload.moneda = 'EUR';
+    if (user?._id) payload.creador_id = user._id;
 
     this.auth.createSharedAccount(payload).subscribe({
       next: (res: any) => {
@@ -238,17 +241,16 @@ export class HomeComponent {
           return;
         }
 
-        const miembros = Array.isArray(target.miembros) ? [...target.miembros] : [];
+        // Instead of mutating shared_accounts (schema doesn't allow extra fields),
+        // create a user_groups relation entry on the server.
         const uid = user?._id || user?.id;
         if (!uid) {
           this.groupsError = 'Usuario no identificado';
           this.loadingGroups = false;
           return;
         }
-        if (!miembros.includes(uid)) miembros.push(uid);
-
-        const updated = { ...target, miembros };
-        this.auth.updateSharedAccount(target._id || target.id, updated).subscribe({
+        const relation = { id_usuario: String(uid), id_grupo: String(target._id || target.id), rol: 'miembro' };
+        this.auth.createUserGroup(relation).subscribe({
           next: () => {
             this.loadSharedAccounts();
           },
@@ -286,8 +288,9 @@ export class HomeComponent {
     }
     this.createLoading = true;
     const user = this.auth.getUser();
-    const payload: any = { nombre: this.createName.trim(), fecha_creacion: new Date() };
-    if (user?._id) payload.creador = user._id;
+  // match server schema: nombre, fecha_creacion, moneda, creador_id
+  const payload: any = { nombre: this.createName.trim(), fecha_creacion: new Date(), moneda: 'EUR' };
+  if (user?._id) payload.creador_id = user._id;
 
     this.auth.createSharedAccount(payload).subscribe({
       next: () => {
@@ -326,10 +329,9 @@ export class HomeComponent {
           this.joinLoading = false;
           return;
         }
-        const miembros = Array.isArray(target.miembros) ? [...target.miembros] : [];
-        if (!miembros.includes(uid)) miembros.push(uid);
-        const updated = { ...target, miembros };
-        this.auth.updateSharedAccount(target._id || target.id, updated).subscribe({
+        // create a user_groups relation instead of mutating the shared_account document
+        const relation = { id_usuario: String(uid), id_grupo: String(target._id || target.id), rol: 'miembro' };
+        this.auth.createUserGroup(relation).subscribe({
           next: () => {
             this.joinLoading = false;
             this.joinId = '';
