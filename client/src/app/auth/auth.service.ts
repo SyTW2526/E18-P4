@@ -100,6 +100,10 @@ export class AuthService {
     return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/members`);
   }
 
+  getBalancesForGroup(id: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances`);
+  }
+
   // User-group relations (join a group)
   createUserGroup(payload: { id_usuario: string; id_grupo: string; rol?: string }) {
     return this.http.post<any>(`${this.baseUrl}/user-group/user-groups`, payload);
@@ -116,6 +120,11 @@ export class AuthService {
 
   createGasto(payload: any) {
     return this.http.post<any>(`${this.baseUrl}/gastos`, payload);
+  }
+
+  // Participaciones endpoints
+  createParticipacion(payload: { id_usuario: string; id_gasto: string; monto_asignado: number }) {
+    return this.http.post<any>(`${this.baseUrl}/participacion`, payload);
   }
 
   deleteGasto(id: string) {

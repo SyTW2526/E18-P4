@@ -1,6 +1,7 @@
 import * as express from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../database";
+import { computeGroupBalances } from "../balances";
 
 export const userGroupRouter = express.Router();
 
@@ -48,6 +49,24 @@ userGroupRouter.get("/shared-accounts/:id/members", async (req: express.Request,
   } catch (error) {
     console.error('members fetch error', error);
     res.status(500).send({ message: 'Error al obtener miembros del grupo', error });
+  }
+});
+
+// Obtener balances calculados para una cuenta/grupo compartido
+userGroupRouter.get("/shared-accounts/:id/balances", async (req: express.Request, res: express.Response) => {
+  try {
+    const id = req.params.id;
+    const balances = await computeGroupBalances(id);
+    // intentar enriquecer con datos de usuario (nombre/email)
+    const userIds = balances.map(b => String(b.userId));
+    const users = await collections.users!.find({ $or: userIds.map(u => ({ _id: new ObjectId(u) })) }).toArray().catch(() => []);
+    const usersById: Record<string, any> = {};
+    users.forEach(u => { usersById[String(u._id)] = u; });
+    const result = balances.map(b => ({ ...b, user: usersById[b.userId] || { _id: b.userId } }));
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('balances fetch error', error);
+    res.status(500).send({ message: 'Error al calcular balances', error: error instanceof Error ? error.message : error });
   }
 });
 
