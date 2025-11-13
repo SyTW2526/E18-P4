@@ -24,10 +24,6 @@ connectToDatabase(ATLAS_URI)
   .then(() => {
     const app = express();
   app.use(cors());
-  // parse JSON bodies
-  app.use(express.json());
-  // parse URL-encoded bodies
-  app.use(express.urlencoded({ extended: true }));
   app.use("/users", userRouter);
   // mount additional routers for groups and participations
   app.use("/user-group", userGroupRouter);
