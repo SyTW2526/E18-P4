@@ -52,6 +52,28 @@ userGroupRouter.get("/shared-accounts/:id/members", async (req: express.Request,
   }
 });
 
+// Obtener los grupos a los que pertenece un usuario (devuelve documentos de sharedAccounts)
+userGroupRouter.get('/user-groups/user/:id', async (req: express.Request, res: express.Response) => {
+  try {
+    const id = req.params.id;
+    // buscar relaciones user_groups por id_usuario
+    const rows = await collections.userGroups!.find({ id_usuario: String(id) }).toArray();
+    if (!rows || rows.length === 0) return res.status(200).json([]);
+    // extraer ids de grupo válidos (24-char hex)
+    const grupoIds = rows.map(r => String((r as any).id_grupo)).filter((g: string) => typeof g === 'string' && g.match(/^[0-9a-fA-F]{24}$/));
+    if (!grupoIds.length) {
+      // fallback: return minimal objects with ids when they are not ObjectId strings
+      return res.status(200).json(rows.map(r => ({ id: (r as any).id_grupo })));
+    }
+    const objectIds = grupoIds.map((g: string) => new ObjectId(g));
+    const groups = await collections.sharedAccounts!.find({ _id: { $in: objectIds } }).toArray();
+    return res.status(200).json(groups);
+  } catch (error) {
+    console.error('user-groups by user fetch error', error);
+    return res.status(500).json({ message: 'Error al obtener grupos del usuario', error });
+  }
+});
+
 // Obtener balances calculados para una cuenta/grupo compartido
 userGroupRouter.get("/shared-accounts/:id/balances", async (req: express.Request, res: express.Response) => {
   try {
@@ -86,9 +108,31 @@ userGroupRouter.post("/shared-accounts", async (req: express.Request, res: expre
     }
 
     const result = await collections?.sharedAccounts!.insertOne(cuenta);
-    result
-      ? res.status(201).send({ message: "Cuenta compartida creada.", id: result.insertedId })
-      : res.status(500).send({ message: "Error al crear la cuenta compartida." });
+    if (result && result.insertedId) {
+      // If payload included a creator, auto-create a user_groups relation so the
+      // creator is immediately a member/admin of the group and it will appear
+      // in their "my groups" list.
+      let creatorMembershipId: any = null;
+      try {
+        if (cuenta.creador_id) {
+          const membershipDoc: any = {
+            id_usuario: String(cuenta.creador_id),
+            id_grupo: String(result.insertedId),
+            rol: 'admin',
+            fecha_union: new Date(),
+          };
+          const mres = await collections.userGroups!.insertOne(membershipDoc);
+          if (mres && mres.insertedId) creatorMembershipId = String(mres.insertedId);
+        }
+      } catch (e) {
+        // Log and continue: group was created, but auto-join failed.
+        console.error('Failed to create creator membership for new group', e);
+      }
+
+      return res.status(201).send({ message: 'Cuenta compartida creada.', id: result.insertedId, creatorMembershipId });
+    } else {
+      return res.status(500).send({ message: 'Error al crear la cuenta compartida.' });
+    }
   }
   catch (error) {
     console.error('POST /shared-accounts error', error);

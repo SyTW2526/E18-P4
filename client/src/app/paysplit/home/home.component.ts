@@ -188,13 +188,30 @@ export class HomeComponent {
   loadSharedAccounts() {
     this.groupsError = null;
     this.loadingGroups = true;
-    this.auth.getSharedAccounts().subscribe({
+    const user = this.auth.getUser();
+    const userId = user?._id || user?.id;
+    if (!userId) {
+      this.sharedAccounts = [];
+      this.loadingGroups = false;
+      return;
+    }
+
+    // fetch only the groups the current user belongs to
+    this.auth.getGroupsForUser(String(userId)).subscribe({
       next: (res: any) => {
-        this.sharedAccounts = Array.isArray(res) ? res : (res?.data || []);
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        // the server may return fallback objects like { id: 'nonObjectId' }
+        // normalize so template can always read _id
+        this.sharedAccounts = list.map((g: any) => {
+          if (!g) return g;
+          if (!g._id && g.id) g._id = g.id;
+          return g;
+        });
         this.loadingGroups = false;
       },
       error: (err: any) => {
         this.groupsError = err?.error?.message || err?.message || 'No se pudieron cargar los grupos';
+        this.sharedAccounts = [];
         this.loadingGroups = false;
         console.error('loadSharedAccounts error', err);
       },

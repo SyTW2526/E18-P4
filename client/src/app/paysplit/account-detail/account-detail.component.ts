@@ -42,6 +42,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
         <span style="margin-left:auto; display:flex; gap:0.5rem">
           <button mat-stroked-button color="primary" (click)="openCreateGasto()">Añadir gasto</button>
           <button mat-stroked-button color="accent" (click)="openBalance()">Balances</button>
+          <button mat-stroked-button color="warn" (click)="deleteGroup()">Eliminar</button>
         </span>
       </div>
 
@@ -270,6 +271,20 @@ export class AccountDetailComponent implements OnInit {
     this.auth.deleteGasto(id).subscribe({
       next: () => this.loadGastos(),
       error: (err: any) => alert('No se pudo eliminar el gasto: ' + (err?.error?.message || err?.message || 'Error')),
+    });
+  }
+
+  deleteGroup() {
+    if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
+    this.auth.deleteSharedAccount(this.accountId).subscribe({
+      next: () => {
+        // navigate back to home after successful deletion
+        this.router.navigate(['/home']);
+      },
+      error: (err: any) => {
+        alert('No se pudo eliminar el grupo: ' + (err?.error?.message || err?.message || 'Error'));
+        console.error('deleteGroup error', err);
+      },
     });
   }
 

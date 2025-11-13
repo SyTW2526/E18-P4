@@ -96,8 +96,17 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
   }
 
+  deleteSharedAccount(id: string) {
+    return this.http.delete<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
+  }
+
   getMembersForGroup(id: string) {
     return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/members`);
+  }
+
+  // Get groups (shared account documents) for a given user
+  getGroupsForUser(userId: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/user-group/user-groups/user/${userId}`);
   }
 
   getBalancesForGroup(id: string) {
