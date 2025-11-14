@@ -1,67 +1,129 @@
-# MEAN Stack Sample Application
+# Proyecto E18-P4
 
-This is a simple CRUD application built using the MEAN (MongoDB, Express, Angular, Node.js) stack. You can also follow the step-by-step [tutorial](https://www.mongodb.com/languages/mean-stack-tutorial) for building this application.
+## Levantar MongoDB y el servidor
 
-![Demonstration of the web application](mean-demo.gif)
+Este proyecto puede correr con servicios locales (instalando MongoDB) o, preferiblemente, con Docker Compose. Abajo tienes instrucciones para ambas opciones: levantar MongoDB, configurar el servidor y comprobar que todo funciona.
 
-## How To Run
+---
 
-Set your [Atlas URI connection string](https://docs.atlas.mongodb.com/getting-started/) as a parameter in `server/.env`. Make sure you replace the username and password placeholders with your own credentials.
+### 1) Levantar MongoDB (Docker, recomendado)
 
+Si tienes Docker instalado, lo más sencillo es levantar Mongo con un contenedor:
+
+```bash
+docker run -d \
+	--name mongo-e18p4 \
+	-p 27017:27017 \
+	-v "$HOME/mongo-data-e18p4:/data/db" \
+	mongo:6.0
 ```
-ATLAS_URI=mongodb+srv://<username>:<password>@sandbox.jadwj.mongodb.net/meanStackExample?retryWrites=true&w=majority
+
+Comprobaciones y utilidades:
+
+```bash
+# Ver contenedor en ejecución
+docker ps --filter name=mongo-e18p4
+
+# Ver logs
+docker logs -f mongo-e18p4
+
+# Abrir shell de mongo
+docker exec -it mongo-e18p4 mongosh
+
+# Ping rápido (no interactivo)
+docker exec mongo-e18p4 mongosh --quiet --eval 'db.runCommand({ ping: 1 })'
+
+# Parar y eliminar
+docker stop mongo-e18p4 && docker rm mongo-e18p4
 ```
 
-Start the server and client applications:
+Notas:
+- El volumen `~/mongo-data-e18p4` preserva la base de datos entre reinicios.
+- Si necesitas autenticación, crea usuarios o usa las opciones de arranque de Mongo para inicializar credenciales.
+
+---
+
+### 2) Levantar la aplicación (Servidor)
+
+El repo incluye un `docker-compose.yml` que arranca tanto Mongo como el servidor Node. Esta es la forma recomendada para reproducibilidad.
+
+Opción A — Usar Docker Compose (recomendado):
+
+1. (Opcional) Si hay contenedores anteriores con puertos en conflicto, para/elimínalos:
+
+```bash
+docker stop mongo-e18p4 e18-p4-server || true
+docker rm mongo-e18p4 e18-p4-server || true
 ```
-npm start
+
+2. Revisa/crea `server/.env` con al menos `ATLAS_URI` (y opcional `JWT_SECRET`). Ejemplo mínimo:
+
+```ini
+ATLAS_URI="mongodb://root:example@mongo:27017/meanStackExample?authSource=admin"
+JWT_SECRET="cambia-por-una-frase-secreta-y-larga"
+# PORT opcional, por defecto el servidor escucha 5200 en docker-compose
+# PORT=5200
 ```
 
-When both applications are built and running, open your browser on http://localhost:4200/.
+3. Desde la raíz del repo (donde está `docker-compose.yml`), construir y levantar:
 
+```bash
+docker-compose up -d --build
+```
 
-## Contributors ✨
+4. Comprobar estado y logs:
 
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tr>
-    <td align="center">
-        <a href="https://github.com/AbiramiSukumaran">
-            <img src="https://avatars.githubusercontent.com/u/13735898?v=4" width="100px;" alt=""/><br />
-            <sub><b>Abirami Sukumaran</b></sub>
-        </a><br />
-    </td>
-    <td align="center">
-        <a href="https://twitter.com/StanimiraVlaeva">
-            <img src="https://avatars.githubusercontent.com/u/7893485?v=4" width="100px;" alt=""/><br />
-            <sub><b>Stanimira Vlaeva</b></sub>
-        </a><br />
-    </td>
-    <td align="center">
-        <a href="https://www.linkedin.com/in/abdulahosama">
-            <img src="https://avatars.githubusercontent.com/u/51336081?v=4" width="100px;" alt=""/><br />
-            <sub><b>Abdullah Osama</b></sub>
-        </a><br />
-    </td>
-    <td align="center">
-        <a href="https://bleything.net/">
-            <img src="https://avatars.githubusercontent.com/u/270?v=4" width="100px;" alt=""/><br />
-            <sub><b>Ben Bleything</b></sub>
-        </a><br />
-    </td>
-    <td align="center">
-        <a href="https://youtube.com/codestackr/">
-            <img src="https://avatars.githubusercontent.com/u/52665907?v=4" width="100px;" alt=""/><br />
-            <sub><b>Jesse Hall @codeSTACKr</b></sub>
-        </a><br />
-    </td>
-  </tr>
-</table>
+```bash
+docker-compose ps
+docker-compose logs -f server
+```
 
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
+5. Probar un endpoint desde el host (ejemplo):
 
-## Disclaimer
+```bash
+curl http://localhost:5200/users
+```
 
-Use at your own risk; not a supported MongoDB product
+Opción B — Ejecutar el servidor localmente (sin Docker)
+
+1. Entra en la carpeta `server`:
+
+```bash
+cd server
+```
+
+2. Instala dependencias y crea un `.env` (igual al anterior). Luego hay dos formas de arrancarlo:
+
+# Desarrollo (usa ts-node, más rápido para cambios):
+```bash
+npm install
+npm run start
+```
+
+# Producción local (compila TypeScript y ejecuta JS):
+```bash
+npm install
+npm run build
+node dist/server.js
+```
+
+Notas sobre `ATLAS_URI` y `server/.env`:
+- El archivo `server/.env` es cargado por `dotenv` en `server/src/server.ts`. Si `ATLAS_URI` no está definido, el servidor se cerrará con error. Usa la URI correcta según si te conectas a un Mongo local o al servicio Docker.
+- Si ejecutas con Docker Compose, la URI recomendada es `mongodb://root:example@mongo:27017/meanStackExample?authSource=admin` (el usuario/contraseña los define el servicio `mongo` en `docker-compose.yml`).
+
+---
+
+### 3) Comprobaciones rápidas y troubleshooting
+
+- Puerto 27017 en uso: si ya hay otro Mongo en ese puerto, deténlo o cambia el mapeo de puertos en `docker-compose.yml`.
+- Si el servidor no arranca, revisa `docker-compose logs server` para ver errores (fallos al instalar deps, errores de compilación o problemas de conexión a la DB).
+- Asegúrate de que `ATLAS_URI` apunta al host/servicio correcto (`mongo` en Docker Compose, `localhost` o `127.0.0.1` si corres Mongo localmente).
+- Para eliminar todo (contenedores y network creada por compose):
+
+```bash
+docker-compose down
+```
+
+---
+
+ 
