@@ -19,6 +19,7 @@ export const routes: Routes = [
   { path: 'home', component: HomeComponent, title: 'Inicio', canActivate: [AuthGuard] },
   { path: 'group/:id', component: AccountDetailComponent, title: 'Cuenta', canActivate: [AuthGuard] },
   { path: 'group/:id/create-gasto', component: CreateGastoComponent, title: 'Crear Gasto', canActivate: [AuthGuard] },
+  { path: 'group/:id/gasto/:gastoId', component: CreateGastoComponent, title: 'Editar Gasto', canActivate: [AuthGuard] },
   { path: 'group/:id/balance', component: BalanceComponent, title: 'Balances', canActivate: [AuthGuard] },
 
   // Redirige cualquier otra ruta a login

@@ -57,15 +57,19 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
           <h3>Historial de gastos</h3>
           <div *ngIf="!gastos.length">No hay gastos todavía.</div>
           <mat-list *ngIf="gastos.length">
-            <mat-list-item *ngFor="let g of gastos">
-              <div style="display:flex;justify-content:space-between;width:100%">
-                <div>
-                  <div style="font-weight:600">{{ g.descripcion }}</div>
-                  <div style="font-size:0.9rem;color:#666">por {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'short') : '' }}</div>
+              <mat-list-item *ngFor="let g of gastos">
+                <div style="display:flex;justify-content:space-between;width:100%">
+                  <div>
+                    <div style="font-weight:600">{{ g.descripcion }}</div>
+                    <div style="font-size:0.9rem;color:#666">por {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'short') : '' }}</div>
+                  </div>
+                  <div style="display:flex;gap:0.5rem;align-items:center">
+                    <div style="font-weight:700">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</div>
+                    <button mat-icon-button title="Editar gasto" (click)="editGasto(g._id || g.id || g._id?.toString())"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" title="Eliminar gasto" (click)="removeGasto(g._id || g.id || g._id?.toString())"><mat-icon>delete</mat-icon></button>
+                  </div>
                 </div>
-                <div style="font-weight:700">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</div>
-              </div>
-            </mat-list-item>
+              </mat-list-item>
           </mat-list>
         </mat-card>
       </div>
@@ -260,6 +264,11 @@ export class AccountDetailComponent implements OnInit {
 
   openCreateGasto() {
     this.router.navigate(['/group', this.accountId, 'create-gasto']);
+  }
+
+  editGasto(gastoId: string | null) {
+    if (!gastoId) return;
+    this.router.navigate(['/group', this.accountId, 'gasto', gastoId]);
   }
 
   openBalance() {

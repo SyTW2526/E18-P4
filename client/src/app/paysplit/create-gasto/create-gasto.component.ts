@@ -84,14 +84,37 @@ export class CreateGastoComponent implements OnInit {
   participaciones: Array<{ user: any; selected: boolean; monto_asignado: number }> = [];
   dividir = true;
   creating = false;
+  editMode = false;
+  gastoId: string | null = null;
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
+    this.gastoId = this.route.snapshot.paramMap.get('gastoId') || null;
     this.loadMembers();
     const me = this.auth.getUser();
     this.pagador = me?._id || me?.id || null;
+
+    if (this.gastoId) {
+      // load gasto to edit
+      this.editMode = true;
+      this.auth.getGastoById(this.gastoId).subscribe({
+        next: (g: any) => {
+          this.descripcion = g.descripcion || '';
+          this.monto = g.monto || null;
+          this.moneda = g.moneda || 'EUR';
+          this.pagador = g.id_pagador || this.pagador;
+          this.dividir = true;
+          // date parsing
+          try { if (g.fecha) this.pagador = this.pagador || null } catch(e) {}
+          // we don't currently load participaciones here (out of scope)
+        },
+        error: (err: any) => {
+          console.error('Failed to load gasto for edit', err);
+        }
+      });
+    }
   }
 
   loadMembers() {
@@ -201,6 +224,23 @@ export class CreateGastoComponent implements OnInit {
       fecha: new Date(),
       categoria: '',
     };
+
+    if (this.editMode && this.gastoId) {
+      // update existing gasto (participaciones not handled here)
+      this.auth.updateGasto(this.gastoId, payload).subscribe({
+        next: () => {
+          this.creating = false;
+          this.router.navigate(['/group', this.accountId]);
+        },
+        error: (err: any) => {
+          this.creating = false;
+          console.error('updateGasto error', err);
+        }
+      });
+      return;
+    }
+
+    // otherwise create new gasto (existing behavior)
     this.auth.createGasto(payload).subscribe({
       next: (res: any) => {
         const gastoId = res?.id || res?.insertedId || null;

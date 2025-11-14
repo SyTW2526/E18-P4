@@ -131,6 +131,10 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}/gastos`, payload);
   }
 
+  getGastoById(id: string) {
+    return this.http.get<any>(`${this.baseUrl}/gastos/${id}`);
+  }
+
   // Participaciones endpoints
   createParticipacion(payload: { id_usuario: string; id_gasto: string; monto_asignado: number }) {
     return this.http.post<any>(`${this.baseUrl}/participacion`, payload);
