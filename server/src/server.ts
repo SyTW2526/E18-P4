@@ -3,10 +3,10 @@ import express from "express";
 import cors from "cors";
 import { connectToDatabase } from "./database";
 import { userRouter } from "./routes/users.route";
-import { sharedAccountsRouter } from "./routes/shared-account.route";
-import { GastosRouter } from "./routes/gastos.route";
-import { participacionRouter } from "./routes/participacion.route";
 import { userGroupRouter } from "./routes/user-group.route";
+import { participacionRouter } from "./routes/participacion.route";
+import { GastosRouter } from "./routes/gastos.route";
+
 
 // Load environment variables from the .env file, where the ATLAS_URI is configured
 dotenv.config();
@@ -23,13 +23,16 @@ if (!ATLAS_URI) {
 connectToDatabase(ATLAS_URI)
   .then(() => {
     const app = express();
-  app.use(express.json());
   app.use(cors());
+  // body parsers - ensure incoming JSON/form bodies are parsed into req.body
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   app.use("/users", userRouter);
-  app.use("/shared_accounts", sharedAccountsRouter);
-  app.use("/user_groups", userGroupRouter);
+  // mount additional routers for groups and participations
+  app.use("/user-group", userGroupRouter);
+  app.use("/participacion", participacionRouter);
+  // mount gastos router
   app.use("/gastos", GastosRouter);
-  app.use("/participaciones", participacionRouter);
 
     // start the Express server
     app.listen(5200, () => {

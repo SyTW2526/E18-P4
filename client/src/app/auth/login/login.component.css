@@ -1,0 +1,28 @@
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 50px;
+}
+
+mat-card {
+  width: 400px;
+}
+
+mat-card-content form {
+  display: flex;
+  flex-direction: column;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+button {
+  margin-top: 16px;
+}
+
+mat-card-actions {
+  margin: 16px;
+  text-align: center;
+}

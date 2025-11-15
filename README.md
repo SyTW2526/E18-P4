@@ -1,122 +1,129 @@
-# Proyecto E18-P4 — Instrucciones rápidas
+# Proyecto E18-P4
 
-## Levantar MongoDB y el servidor (Docker)
+## Levantar MongoDB y el servidor
 
-Aquí tienes comandos rápidos para levantar la base de datos MongoDB y el servidor del proyecto usando Docker Compose, y alternativas con Docker y npm para desarrollo local.
-
-### 1) Usando Docker Compose (recomendado)
-
-- Construir y levantar los servicios (Mongo + servidor):
-
-```bash
-docker compose up --build
-```
-
-- Ver logs del servidor:
-
-```bash
-docker compose logs -f server
-```
-
-### 2) Construir la imagen y ejecutar el servidor con Docker (sin compose)
-
-- Construir la imagen (desde la raíz del repo):
-
-```bash
-docker build -t e18-p4-server:dev -f server/Dockerfile server
-```
-
-### 3) Ejecutar MongoDB con Docker (solo la base de datos)
-
-- Levantar un contenedor Mongo local (prueba/desarrollo):
-
-```bash
-docker run -d --name e18-p4-mongo -p 27017:27017 \
-  -e MONGO_INITDB_ROOT_USERNAME=root \
-  -e MONGO_INITDB_ROOT_PASSWORD=example \
-  -e MONGO_INITDB_DATABASE=meanStackExample \
-  mongo:6.0
-```
-
-### 4) Alternativa: ejecutar el servidor localmente (sin Docker)
-
-- Instala dependencias y compila:
-
-```bash
-npm --prefix server install
-npm --prefix server run build
-```
-
-- Arrancar en modo desarrollo (usa ts-node) o producción (desde `dist`):
-
-```bash
-npm --prefix server start      # usa ts-node (según package.json)
-# o ejecutar el bundle ya compilado
-node server/dist/server.js
-```
-
-### 5) Probar que está arriba
-
-- Endpoint ejemplo (listar usuarios):
-
-```bash
-curl -s http://localhost:5200/users/
-```
-
-### Notas rápidas
-
-- Por seguridad no pongas credenciales reales en el repositorio; usa `server/.env` (no comitees) o secretos en tu entorno de despliegue.
-- El `docker-compose.yml` incluido configura Mongo y el servicio `server` para conectarse a `mongo` usando `ATLAS_URI` de `server/.env` o un fallback interno.
-- Si cambias el código del servidor reconstruye la imagen (`docker compose up --build`) para que el contenedor ejecute la versión actual.
+Este proyecto puede correr con servicios locales (instalando MongoDB) o, preferiblemente, con Docker Compose. Abajo tienes instrucciones para ambas opciones: levantar MongoDB, configurar el servidor y comprobar que todo funciona.
 
 ---
 
-## Explicación de las colecciones y su funcionamiento
+### 1) Levantar MongoDB (Docker, recomendado)
 
-A continuación tienes una descripción en español de las principales colecciones ("tablas") usadas por el proyecto, sus campos clave y cómo se relacionan.
+Si tienes Docker instalado, lo más sencillo es levantar Mongo con un contenedor:
 
-- `users`
-  - Propósito: almacena los usuarios de la aplicación.
-  - Campos clave: `_id` (ObjectId), `nombre`, `email` (único), `password_hash` (bcrypt), `fecha_creacion`.
-  - Notas: las rutas públicas no devuelven `password_hash`. En `signup` la contraseña se almacena hasheada.
+```bash
+docker run -d \
+	--name mongo-e18p4 \
+	-p 27017:27017 \
+	-v "$HOME/mongo-data-e18p4:/data/db" \
+	mongo:6.0
+```
 
-- `shared_accounts` (cuentas compartidas)
-  - Propósito: representa un grupo de gastos compartidos (ej. "Viaje a Roma").
-  - Campos clave: `_id` (ObjectId), `nombre`, `descripcion`, `moneda`, `creador_id` (referencia a `users._id`), `fecha_creacion`.
-  - Notas: expone rutas CRUD y endpoints como `GET /shared_accounts/:id/balances`.
+Comprobaciones y utilidades:
 
-- `user_groups` (relación N:M usuario↔grupo)
-  - Propósito: asocia usuarios a `shared_accounts`.
-  - Campos clave: `_id`, `id_usuario` (referencia a `users._id`), `id_grupo` (referencia a `shared_accounts._id`), `rol` (opcional), `fecha_union`.
-  - Índices: índice compuesto único `(id_usuario, id_grupo)` para evitar duplicados.
+```bash
+# Ver contenedor en ejecución
+docker ps --filter name=mongo-e18p4
 
-- `gastos` (gastos dentro de una cuenta compartida)
-  - Propósito: almacena cada gasto realizado en un `shared_account`.
-  - Campos clave: `_id`, `id_grupo`, `id_autor` (referencia a `users._id`), `monto`, `moneda`, `descripcion`, `fecha_gasto`.
+# Ver logs
+docker logs -f mongo-e18p4
 
-- `participaciones` (cómo se reparte cada gasto)
-  - Propósito: relaciona un `gasto` con los usuarios participantes y la porción asignada.
-  - Campos clave: `_id`, `id_gasto` (referencia a `gastos._id`), `id_usuario` (referencia a `users._id`), `porcentaje` o `monto_asignado`.
+# Abrir shell de mongo
+docker exec -it mongo-e18p4 mongosh
 
-### Cómo se calculan los balances (resumen)
+# Ping rápido (no interactivo)
+docker exec mongo-e18p4 mongosh --quiet --eval 'db.runCommand({ ping: 1 })'
 
-- Para calcular cuánto debe o tiene que recibir cada usuario en un `shared_account` se agregan los `gastos` del grupo y se cruzan con las `participaciones`.
-- Fórmula conceptual por usuario: balance = (suma de lo que pagó como autor) - (suma de lo que le corresponde según participaciones).
-- El servidor expone `GET /shared_accounts/:id/balances` que agrega `gastos` + `participaciones` + `user_groups` para devolver el balance por usuario.
+# Parar y eliminar
+docker stop mongo-e18p4 && docker rm mongo-e18p4
+```
 
-### Validación e índices
-
-- Las colecciones incluyen JSON Schemas (definidos en `server/src/database.ts`) para validar documentos al insertar/actualizar.
-- Índices relevantes: `users.email` (único), `(id_usuario,id_grupo)` (único) en `user_groups`, índices en `gastos.id_grupo` y `participaciones.id_gasto`.
-
-### Autenticación y seguridad
-
-- El proyecto usa `bcrypt` para hashear contraseñas y `jsonwebtoken` (JWT) para sesiones sin estado (`signup`/`signin`).
-- Recomendación: configurar `JWT_SECRET` en `server/.env` o variables de entorno del despliegue; no commitear secretos.
+Notas:
+- El volumen `~/mongo-data-e18p4` preserva la base de datos entre reinicios.
+- Si necesitas autenticación, crea usuarios o usa las opciones de arranque de Mongo para inicializar credenciales.
 
 ---
 
-Si quieres puedo añadir:
-- ejemplos JSON por colección,
-- un pequeño diagrama ER,
-- o ejemplos de `curl` para el endpoint de balances (con una respuesta de ejemplo).
+### 2) Levantar la aplicación (Servidor)
+
+El repo incluye un `docker-compose.yml` que arranca tanto Mongo como el servidor Node. Esta es la forma recomendada para reproducibilidad.
+
+Opción A — Usar Docker Compose (recomendado):
+
+1. (Opcional) Si hay contenedores anteriores con puertos en conflicto, para/elimínalos:
+
+```bash
+docker stop mongo-e18p4 e18-p4-server || true
+docker rm mongo-e18p4 e18-p4-server || true
+```
+
+2. Revisa/crea `server/.env` con al menos `ATLAS_URI` (y opcional `JWT_SECRET`). Ejemplo mínimo:
+
+```ini
+ATLAS_URI="mongodb://root:example@mongo:27017/meanStackExample?authSource=admin"
+JWT_SECRET="cambia-por-una-frase-secreta-y-larga"
+# PORT opcional, por defecto el servidor escucha 5200 en docker-compose
+# PORT=5200
+```
+
+3. Desde la raíz del repo (donde está `docker-compose.yml`), construir y levantar:
+
+```bash
+docker-compose up -d --build
+```
+
+4. Comprobar estado y logs:
+
+```bash
+docker-compose ps
+docker-compose logs -f server
+```
+
+5. Probar un endpoint desde el host (ejemplo):
+
+```bash
+curl http://localhost:5200/users
+```
+
+Opción B — Ejecutar el servidor localmente (sin Docker)
+
+1. Entra en la carpeta `server`:
+
+```bash
+cd server
+```
+
+2. Instala dependencias y crea un `.env` (igual al anterior). Luego hay dos formas de arrancarlo:
+
+# Desarrollo (usa ts-node, más rápido para cambios):
+```bash
+npm install
+npm run start
+```
+
+# Producción local (compila TypeScript y ejecuta JS):
+```bash
+npm install
+npm run build
+node dist/server.js
+```
+
+Notas sobre `ATLAS_URI` y `server/.env`:
+- El archivo `server/.env` es cargado por `dotenv` en `server/src/server.ts`. Si `ATLAS_URI` no está definido, el servidor se cerrará con error. Usa la URI correcta según si te conectas a un Mongo local o al servicio Docker.
+- Si ejecutas con Docker Compose, la URI recomendada es `mongodb://root:example@mongo:27017/meanStackExample?authSource=admin` (el usuario/contraseña los define el servicio `mongo` en `docker-compose.yml`).
+
+---
+
+### 3) Comprobaciones rápidas y troubleshooting
+
+- Puerto 27017 en uso: si ya hay otro Mongo en ese puerto, deténlo o cambia el mapeo de puertos en `docker-compose.yml`.
+- Si el servidor no arranca, revisa `docker-compose logs server` para ver errores (fallos al instalar deps, errores de compilación o problemas de conexión a la DB).
+- Asegúrate de que `ATLAS_URI` apunta al host/servicio correcto (`mongo` en Docker Compose, `localhost` o `127.0.0.1` si corres Mongo localmente).
+- Para eliminar todo (contenedores y network creada por compose):
+
+```bash
+docker-compose down
+```
+
+---
+
+ 

@@ -1,18 +1,27 @@
 import { Routes } from '@angular/router';
-import { SharedAccountsListComponent } from './shared-accounts-list/shared-accounts-list.component';
-import { SharedAccountBalancesComponent } from './shared-account-balances/shared-account-balances.component';
-import { AuthComponent } from './auth/auth.component';
-import { GastosListComponent } from './gastos-list/gastos-list.component';
-import { ParticipacionesListComponent } from './participaciones-list/participaciones-list.component';
-import { MembersListComponent } from './members-list/members-list.component';
-import { HomeComponent } from './home/home.component';
+import { LoginComponent } from './auth/login/login.component';
+import { RegisterComponent } from './auth/register/register.component';
+import { HomeComponent } from '../app/paysplit/home/home.component';
+import { AuthGuard } from './auth/auth.guard';
+import { AccountDetailComponent } from './paysplit/account-detail/account-detail.component';
+import { CreateGastoComponent } from './paysplit/create-gasto/create-gasto.component';
+import { BalanceComponent } from './paysplit/balance/balance.component';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent, title: 'Inicio' },
-  { path: 'shared-accounts', component: SharedAccountsListComponent, title: 'Shared Accounts' },
-  { path: 'shared-accounts/:id/balances', component: SharedAccountBalancesComponent, title: 'Balances' },
-  { path: 'shared-accounts/:id/gastos', component: GastosListComponent, title: 'Gastos' },
-  { path: 'shared-accounts/:id/participaciones', component: ParticipacionesListComponent, title: 'Participaciones' },
-  { path: 'shared-accounts/:id/members', component: MembersListComponent, title: 'Members' },
-  { path: 'auth', component: AuthComponent, title: 'Auth' },
+  // Al inicio redirigimos a la pantalla de login/registro
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+
+  // Rutas de autenticación
+  { path: 'login', component: LoginComponent, title: 'Iniciar Sesión' },
+  { path: 'register', component: RegisterComponent, title: 'Registrarse' },
+
+  // Ruta principal de la app (accedida tras autenticarse)
+  { path: 'home', component: HomeComponent, title: 'Inicio', canActivate: [AuthGuard] },
+  { path: 'group/:id', component: AccountDetailComponent, title: 'Cuenta', canActivate: [AuthGuard] },
+  { path: 'group/:id/create-gasto', component: CreateGastoComponent, title: 'Crear Gasto', canActivate: [AuthGuard] },
+  { path: 'group/:id/gasto/:gastoId', component: CreateGastoComponent, title: 'Editar Gasto', canActivate: [AuthGuard] },
+  { path: 'group/:id/balance', component: BalanceComponent, title: 'Balances', canActivate: [AuthGuard] },
+
+  // Redirige cualquier otra ruta a login
+  { path: '**', redirectTo: 'login' }
 ];

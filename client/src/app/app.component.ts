@@ -1,13 +1,21 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
+import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { AuthService } from './auth.service';
-import { OnInit } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
+import { MatIconModule } from '@angular/material/icon';
+import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, MatToolbarModule, RouterLink],
+  imports: [
+    RouterOutlet, 
+    RouterModule, // Añadir
+    MatToolbarModule, 
+    MatButtonModule, // Añadir
+    MatIconModule
+    , HttpClientModule
+  ],
   styles: [
     `
       main {
@@ -15,13 +23,20 @@ import { OnInit } from '@angular/core';
         justify-content: center;
         padding: 2rem 4rem;
       }
+      .spacer {
+        flex: 1 1 auto;
+      }
     `,
   ],
   template: `
-    <mat-toolbar>
-  <span style="margin-right:1rem">Shared Accounts</span>
-  <a routerLink="/shared-accounts" style="margin-right:1rem; color:inherit; text-decoration:none">Shared Accounts</a>
-      <a routerLink="/auth" style="margin-left:auto; color:inherit; text-decoration:none">Auth</a>
+    <mat-toolbar color="primary">
+      <span>Divisor de Cuentas</span>
+      <span class="spacer"></span>
+      <button mat-button routerLink="/login">Login</button>
+      <button mat-button routerLink="/register">Registro</button>
+      <button mat-icon-button>
+        <mat-icon>logout</mat-icon>
+      </button>
     </mat-toolbar>
     <main>
       <router-outlet></router-outlet>
@@ -29,5 +44,5 @@ import { OnInit } from '@angular/core';
   `,
 })
 export class AppComponent {
-  title = 'client';
+  title = 'bill-splitter-client'; // Título actualizado
 }
