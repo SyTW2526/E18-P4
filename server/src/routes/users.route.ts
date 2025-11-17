@@ -23,6 +23,93 @@ userRouter.get("/", async (_req: express.Request, res: express.Response) => {
     }
 });
 
+// GET friend list for a user
+userRouter.get("/:id/friends", async (req: express.Request, res: express.Response) => {
+    try {
+        const id = req?.params?.id;
+        const user = await collections?.users?.findOne({ _id: new ObjectId(id) });
+        if (!user) {
+            return res.status(404).send(`User not found: ID ${id}`);
+        }
+
+        const friendIds = (user.friends || []).map((fid: any) => new ObjectId(fid));
+        const friends = await collections?.users?.find({ _id: { $in: friendIds } }).toArray();
+
+        // remove sensitive fields
+        const safeFriends = friends?.map((f: any) => {
+            const copy = { ...f };
+            delete copy.password_hash;
+            return copy;
+        });
+
+        res.status(200).send(safeFriends);
+    } catch (error) {
+        res.status(500).send(error instanceof Error ? error.message : "Unknown error");
+    }
+});
+
+// DELETE friend from user's friend list
+// The other user must also remove this user as a friend for mutual removal
+userRouter.delete("/:id/friends/:friendId", async (req: express.Request, res: express.Response) => {
+    try {
+        const id = req?.params?.id;
+        const friendId = req?.params?.friendId;
+
+        const user = await collections?.users?.findOne({ _id: new ObjectId(id) });
+        if (!user) {
+            return res.status(404).send(`User not found: ID ${id}`);
+        }
+
+        const updatedFriends = (user.friends || []).filter((fid: any) => fid.toString() !== friendId);
+
+        const result = await collections?.users?.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { friends: updatedFriends } }
+        );
+
+        if (result && result.matchedCount) {
+            res.status(200).send(`Removed friend ID ${friendId} from user ID ${id}.`);
+        } else {
+            res.status(500).send(`Failed to remove friend ID ${friendId} from user ID ${id}.`);
+        }
+    } catch (error) {
+        res.status(500).send(error instanceof Error ? error.message : "Unknown error");
+    }
+});
+
+// POST add friend to user's friend list
+// The other user must also add this user as a friend for mutual friendship
+userRouter.post("/:id/friends/:friendId", async (req: express.Request, res: express.Response) => {
+    try {
+        const id = req?.params?.id;
+        const friendId = req?.params?.friendId;
+
+        const user = await collections?.users?.findOne({ _id: new ObjectId(id) });
+        if (!user) {
+            return res.status(404).send(`User not found: ID ${id}`);
+        }
+
+        const friendObjectId = new ObjectId(friendId);
+        const updatedFriends = user.friends || [];
+        if (!updatedFriends.find((fid: any) => fid.toString() === friendId)) {
+            updatedFriends.push(friendObjectId);
+        }
+
+        const result = await collections?.users?.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { friends: updatedFriends } }
+        );
+
+        if (result && result.matchedCount) {
+            res.status(200).send(`Added friend ID ${friendId} to user ID ${id}.`);
+        } else {
+            res.status(500).send(`Failed to add friend ID ${friendId} to user ID ${id}.`);
+        }
+    } catch (error) {
+        res.status(500).send(error instanceof Error ? error.message : "Unknown error");
+    }
+});
+
 // GET /users/:id - get single user by Mongo _id
 userRouter.get("/:id", async (req: express.Request, res: express.Response) => {
     try {
