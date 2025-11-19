@@ -10,9 +10,9 @@ import { HttpClientModule } from '@angular/common/http';
   standalone: true,
   imports: [
     RouterOutlet, 
-    RouterModule, // Añadir
+    RouterModule, 
     MatToolbarModule, 
-    MatButtonModule, // Añadir
+    MatButtonModule, 
     MatIconModule
     , HttpClientModule
   ],
