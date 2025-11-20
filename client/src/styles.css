@@ -2,3 +2,19 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Dark theme overrides when 'app-dark-theme' class is applied to body */
+.app-dark-theme {
+	background: #121212;
+	color: #e0e0e0;
+}
+.app-dark-theme mat-card {
+	background: #1e1e1e;
+	color: #e0e0e0;
+}
+.app-dark-theme .mat-toolbar {
+	background: #1f1f1f !important;
+}
+.app-dark-theme input, .app-dark-theme textarea {
+	color: #e0e0e0;
+}

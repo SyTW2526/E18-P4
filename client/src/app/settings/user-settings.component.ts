@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
+import { ThemeService } from '../core/theme.service';
 
 @Component({
   selector: 'app-user-settings',
@@ -70,7 +71,7 @@ export class UserSettingsComponent implements OnInit {
 
   userId: string | null = null;
 
-  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private theme: ThemeService) {}
 
   ngOnInit(): void {
     const u = this.auth.getUser();
@@ -80,23 +81,32 @@ export class UserSettingsComponent implements OnInit {
       if (this.userId) {
         this.auth.getUserById(this.userId).subscribe({
         next: (data) => {
+          const theme = data.preferencia_tema === 'oscuro' ? 'dark' : (data.preferencia_tema === 'claro' ? 'light' : (data.preferencia_tema || 'light'));
           this.form.patchValue({
             nombre: data.nombre ?? data.name ?? '',
             email: data.email ?? '',
-            preferencia_tema: data.preferencia_tema ?? 'light',
+            preferencia_tema: theme,
           });
         },
         error: () => {
           // fallback to local data
+          const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
           this.form.patchValue({
             nombre: u.nombre ?? u.name ?? '',
             email: u.email ?? '',
-            preferencia_tema: u.preferencia_tema ?? 'light',
+            preferencia_tema: ut,
           });
         },
         });
       }
     }
+
+    // apply theme when user changes selection in the form
+    this.form.get('preferencia_tema')?.valueChanges.subscribe((v) => {
+      if (v === 'dark' || v === 'light') {
+        try { this.theme.applyTheme(v); } catch(e) { /* noop */ }
+      }
+    });
   }
 
   onSubmit() {
@@ -104,6 +114,11 @@ export class UserSettingsComponent implements OnInit {
     const payload = this.form.value;
     this.auth.updateUser(this.userId, payload).subscribe({
       next: () => {
+        // apply selected theme immediately
+        const t = payload?.preferencia_tema;
+        if (t === 'dark' || t === 'light') {
+          try { this.theme.applyTheme(t); } catch(e) {}
+        }
         this.router.navigate(['/home']);
       },
       error: (err) => {

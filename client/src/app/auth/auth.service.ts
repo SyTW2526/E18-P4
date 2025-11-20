@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export interface AuthResponse {
   user: any;
@@ -123,16 +124,20 @@ export class AuthService {
   }
 
   updateUser(id: string, payload: any) {
-    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payload).pipe(
-      tap((updated) => {
+    // map client theme values to server schema ('light'/'dark' -> 'claro'/'oscuro')
+    const payloadToSend = { ...payload };
+    if (payloadToSend?.preferencia_tema) {
+      if (payloadToSend.preferencia_tema === 'light') payloadToSend.preferencia_tema = 'claro';
+      else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
+    }
+
+    // After updating, fetch the fresh user document and update localStorage with real user data
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend).pipe(
+      switchMap(() => this.getUserById(id)),
+      tap((freshUser) => {
         try {
           if (typeof window !== 'undefined' && window?.localStorage) {
-            const current = window.localStorage.getItem('auth_user');
-            if (current) {
-              const parsed = JSON.parse(current);
-              const merged = { ...parsed, ...updated };
-              window.localStorage.setItem('auth_user', JSON.stringify(merged));
-            }
+            window.localStorage.setItem('auth_user', JSON.stringify(freshUser));
           }
         } catch (e) {
           console.warn('Failed to update auth_user in localStorage', e);

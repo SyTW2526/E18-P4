@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth/auth.service';
+import { ThemeService } from './core/theme.service';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
@@ -48,9 +49,18 @@ import { Router } from '@angular/router';
     </main>
   `,
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'bill-splitter-client'; // Título actualizado
-  constructor(public authService: AuthService, private router: Router) {}
+  constructor(public authService: AuthService, private router: Router, private theme: ThemeService) {}
+
+  ngOnInit(): void {
+    // priority: user preference from server -> stored local preference -> default 'light'
+    const user = this.authService.getUser();
+    const userPref = user?.preferencia_tema;
+    const stored = this.theme.getStoredTheme();
+    const themeToApply = (userPref === 'dark' || userPref === 'light') ? userPref : (stored || 'light');
+    this.theme.applyTheme(themeToApply as 'dark' | 'light');
+  }
 
   logout() {
     this.authService.logout();
