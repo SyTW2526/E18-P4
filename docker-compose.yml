@@ -12,19 +12,19 @@ services:
     ports:
       - "27017:27017"
 
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    image: e18-p4-server:dev
-    container_name: e18-p4-server
+  #server:
+   # build:
+    #  context: ./server
+     # dockerfile: Dockerfile
+    #image: e18-p4-server:dev
+    #container_name: e18-p4-server
     # Server will read environment variables from ./server/.env
     # Edit ./server/.env (or create it from .env.example) to point ATLAS_URI to your new Mongo VM
-    env_file:
-      - ./server/.env
-    ports:
-      - "5200:5200"
-    restart: unless-stopped
+    #env_file:
+     # - ./server/.env
+    #ports:
+     # - "5200:5200"
+    #restart: unless-stopped
 
 volumes:
   mongo-data:
