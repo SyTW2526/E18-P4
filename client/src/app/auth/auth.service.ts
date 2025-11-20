@@ -122,6 +122,34 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
 
+  updateUser(id: string, payload: any) {
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payload).pipe(
+      tap((updated) => {
+        try {
+          if (typeof window !== 'undefined' && window?.localStorage) {
+            const current = window.localStorage.getItem('auth_user');
+            if (current) {
+              const parsed = JSON.parse(current);
+              const merged = { ...parsed, ...updated };
+              window.localStorage.setItem('auth_user', JSON.stringify(merged));
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to update auth_user in localStorage', e);
+        }
+      })
+    );
+  }
+
+  deleteUser(id: string) {
+    const token = this.getToken();
+    const options: any = {};
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+    }
+    return this.http.delete<any>(`${this.baseUrl}/users/${id}`, options);
+  }
+
   // Gastos (expenses) endpoints
   getGastosForGroup(id_grupo: string) {
     return this.http.get<any[]>(`${this.baseUrl}/gastos/grupo/${id_grupo}`);
@@ -138,6 +166,14 @@ export class AuthService {
   // Participaciones endpoints
   createParticipacion(payload: { id_usuario: string; id_gasto: string; monto_asignado: number }) {
     return this.http.post<any>(`${this.baseUrl}/participacion`, payload);
+  }
+
+  getParticipacionesForGasto(id_gasto: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/participacion/gasto/${id_gasto}`);
+  }
+
+  deleteParticipacion(id: string) {
+    return this.http.delete<any>(`${this.baseUrl}/participacion/${id}`);
   }
 
   deleteGasto(id: string) {
