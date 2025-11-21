@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export interface AuthResponse {
   user: any;
@@ -122,6 +123,38 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
 
+  updateUser(id: string, payload: any) {
+    // map client theme values to server schema ('light'/'dark' -> 'claro'/'oscuro')
+    const payloadToSend = { ...payload };
+    if (payloadToSend?.preferencia_tema) {
+      if (payloadToSend.preferencia_tema === 'light') payloadToSend.preferencia_tema = 'claro';
+      else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
+    }
+
+    // After updating, fetch the fresh user document and update localStorage with real user data
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend).pipe(
+      switchMap(() => this.getUserById(id)),
+      tap((freshUser) => {
+        try {
+          if (typeof window !== 'undefined' && window?.localStorage) {
+            window.localStorage.setItem('auth_user', JSON.stringify(freshUser));
+          }
+        } catch (e) {
+          console.warn('Failed to update auth_user in localStorage', e);
+        }
+      })
+    );
+  }
+
+  deleteUser(id: string) {
+    const token = this.getToken();
+    const options: any = {};
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+    }
+    return this.http.delete<any>(`${this.baseUrl}/users/${id}`, options);
+  }
+
   // Gastos (expenses) endpoints
   getGastosForGroup(id_grupo: string) {
     return this.http.get<any[]>(`${this.baseUrl}/gastos/grupo/${id_grupo}`);
@@ -138,6 +171,14 @@ export class AuthService {
   // Participaciones endpoints
   createParticipacion(payload: { id_usuario: string; id_gasto: string; monto_asignado: number }) {
     return this.http.post<any>(`${this.baseUrl}/participacion`, payload);
+  }
+
+  getParticipacionesForGasto(id_gasto: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/participacion/gasto/${id_gasto}`);
+  }
+
+  deleteParticipacion(id: string) {
+    return this.http.delete<any>(`${this.baseUrl}/participacion/${id}`);
   }
 
   deleteGasto(id: string) {

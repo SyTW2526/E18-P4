@@ -126,4 +126,101 @@ docker-compose down
 
 ---
 
+## Tests
+
+Se han añadido suites de tests tanto para el `server` (Jest) como para el `client` (Karma/Jasmine).
+
+- Backend (server):
+
+	- Dependencias: desde la carpeta `server/` instala devDependencies si no están presentes:
+
+		```bash
+		cd server
+		npm install
+		```
+
+	- Ejecutar tests unitarios (Jest):
+
+		```bash
+		# ejecuta las pruebas con el servidor de tests en memoria
+		cd server
+		npm test
+		```
+
+		- Nota sobre `mongodb-memory-server`: las máquinas modernas pueden carecer de algunas librerías nativas (por ejemplo `libcrypto.so.1.1`) que impiden arrancar el binario de Mongo que `mongodb-memory-server` descarga. Si ves errores tipo "Instance failed to start because a library is missing" puedes:
+			- Proveer una instancia Mongo externa y ejecutar las pruebas contra ella exportando `MONGO_TEST_URI`:
+
+				```bash
+				# ejemplo (ajusta credenciales/host según tu entorno)
+				MONGO_TEST_URI="mongodb://root:example@10.6.130.212:27017/meanStackExample?authSource=admin" npm test
+				```
+
+			- O instalar la librería faltante en el host (ej. `libssl1.1` / `libcrypto.so.1.1`) para permitir que `mongodb-memory-server` arranque su binario.
+
+	- Notas adicionales:
+		- Las pruebas cierran correctamente la conexión Mongo exportando una función `closeDatabase()` desde `server/src/database.ts`, por lo que Jest no debería quedarse colgado por handles abiertos.
+
+- Frontend (client):
+
+	- Karma necesita un navegador para ejecutar los specs. En este proyecto usamos `puppeteer` para obtener una copia de Chromium y ejecutarlo en CI/local sin requerir Chrome preinstalado.
+
+	- Pasos para ejecutar tests del cliente:
+
+		```bash
+		cd client
+		npm install
+		# instalar puppeteer (si no está en devDependencies)
+		npm install --save-dev puppeteer
+
+		# obtener la ruta de Chromium que descargó puppeteer
+		chromePath=$(node -e "console.log(require('puppeteer').executablePath())")
+
+		# establecer CHROME_BIN y ejecutar Karma (no interactivo)
+		CHROME_BIN="$chromePath" npm test -- --watch=false
+		```
+
+	- Dependencias del sistema (Linux): Chromium puede requerir bibliotecas del sistema. Si el ejecutable de puppeteer falla con errores tipo "error while loading shared libraries: libnspr4.so", instala los paquetes del sistema indicados abajo (ejemplo para Ubuntu/Debian):
+
+		```bash
+		sudo apt update
+		sudo apt install -y libnspr4 libnss3 libxss1 libasound2 libatk1.0-0 libatk-bridge2.0-0 libcups2 libx11-xcb1 libxcomposite1 libxrandr2 libgbm1 libpangocairo-1.0-0 libgtk-3-0 fonts-liberation libxdamage1 libxfixes3 libxcb1
+		```
+
+	- Durante el desarrollo de las pruebas se añadieron helpers y mocks para `ActivatedRoute`, `RouterTestingModule`, `HttpClientTestingModule` y `NoopAnimationsModule` en los specs, de forma que los componentes con dependencias de Angular Router/Http/Material puedan testearse sin arrancar la aplicación completa.
+
+CI suggestions
+- Para ejecutar tests en CI (GitHub Actions / GitLab CI) recomiendo usar `ubuntu-latest` y un job que:
+
+	- Instale dependencias del sistema (si se usan Puppeteer/Chromium).
+	- Ejecute `npm ci` en `server/` y `client/`.
+	- Para Jest: o bien permitir que `mongodb-memory-server` descargue su binario (asegurar que la imagen tenga libcrypto), o inyectar `MONGO_TEST_URI` apuntando a un servicio Mongo de pruebas.
+	- Para Karma: establecer `CHROME_BIN` al ejecutable de Puppeteer (o usar una imagen de runner con Chrome disponible).
+
+Ejemplo (GitHub Actions snippet):
+
+```yaml
+jobs:
+	tests:
+		runs-on: ubuntu-latest
+		steps:
+			- uses: actions/checkout@v4
+			- name: Setup Node
+				uses: actions/setup-node@v4
+				with:
+					node-version: '18'
+			- name: Install system deps
+				run: sudo apt-get update && sudo apt-get install -y libnss3 libnspr4 libgtk-3-0 fonts-liberation
+			- name: Install server deps and run Jest
+				run: |
+					cd server
+					npm ci
+					npm test
+			- name: Install client deps and run Karma
+				run: |
+					cd client
+					npm ci
+					npm install --no-audit --no-fund --save-dev puppeteer
+					CHROME_BIN="$(node -e \"console.log(require('puppeteer').executablePath())\")" npm test -- --watch=false
+```
+
  

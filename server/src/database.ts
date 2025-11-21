@@ -17,6 +17,8 @@ export const collections: {
 export async function connectToDatabase(uri: string) {
   const client = new mongodb.MongoClient(uri);
   await client.connect();
+  // keep reference to client so tests and shutdown logic can close it
+  mongoClient = client;
 
   const db = client.db("meanStackExample");
   await applySchemaValidation(db);
@@ -49,6 +51,19 @@ export async function connectToDatabase(uri: string) {
         await collections.participaciones?.createIndex({ id_gasto: 1 }, { background: true });
     } catch (err) {
         console.warn("Could not create index on participaciones.id_gasto", err);
+    }
+}
+
+let mongoClient: mongodb.MongoClient | null = null;
+
+export async function closeDatabase() {
+    if (mongoClient) {
+        try {
+            await mongoClient.close();
+        } catch (err) {
+            console.warn('Error closing MongoClient', err);
+        }
+        mongoClient = null;
     }
 }
 

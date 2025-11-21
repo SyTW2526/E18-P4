@@ -147,9 +147,9 @@ userRouter.post("/", async (req: express.Request, res: express.Response) => {
         const result = await collections?.users?.insertOne(user);
 
         if (result?.acknowledged) {
-            res.status(201).send(`Created a new user: ID ${result.insertedId}.`);
+            res.status(201).json({ id: result.insertedId.toString(), message: `Created a new user` });
         } else {
-            res.status(500).send("Failed to create a new user.");
+            res.status(500).json({ message: "Failed to create a new user." });
         }
     } catch (error) {
         console.error(error);
@@ -242,11 +242,11 @@ userRouter.put("/:id", async (req: express.Request, res: express.Response) => {
         const result = await collections?.users?.updateOne(query, { $set: user });
 
         if (result && result.matchedCount) {
-            res.status(200).send(`Updated a user: ID ${id}.`);
+            res.status(200).json({ id, message: `Updated a user` });
         } else if (!result?.matchedCount) {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
+            res.status(404).json({ message: `Failed to find a user: ID ${id}` });
         } else {
-            res.status(304).send(`Failed to update a user: ID ${id}`);
+            res.status(304).json({ message: `Failed to update a user: ID ${id}` });
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -263,11 +263,11 @@ userRouter.delete("/:id", async (req: express.Request, res: express.Response) =>
         const result = await collections?.users?.deleteOne(query);
 
         if (result && result.deletedCount) {
-            res.status(202).send(`Removed a user: ID ${id}`);
+            res.status(202).json({ id, message: `Removed a user` });
         } else if (!result) {
-            res.status(400).send(`Failed to remove a user: ID ${id}`);
+            res.status(400).json({ message: `Failed to remove a user: ID ${id}` });
         } else if (!result.deletedCount) {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
+            res.status(404).json({ message: `Failed to find a user: ID ${id}` });
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

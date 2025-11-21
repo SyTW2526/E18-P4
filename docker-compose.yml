@@ -1,16 +1,5 @@
 services:
-  mongo:
-    image: mongo:6.0
-    container_name: e18-p4-mongo
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-      MONGO_INITDB_DATABASE: meanStackExample
-    volumes:
-      - mongo-data:/data/db
-    ports:
-      - "27017:27017"
+  
 
   server:
     build:
@@ -18,17 +7,14 @@ services:
       dockerfile: Dockerfile
     image: e18-p4-server:dev
     container_name: e18-p4-server
-    depends_on:
-      - mongo
+    # Server will read environment variables from ./server/.env
+    # Edit ./server/.env (or create it from .env.example) to point ATLAS_URI appropriately
     env_file:
       - ./server/.env
-    environment:
-      - ATLAS_URI=mongodb://root:example@mongo:27017/meanStackExample?authSource=admin
     ports:
       - "5200:5200"
     restart: unless-stopped
 
-  
-
 volumes:
   mongo-data:
+    driver: local

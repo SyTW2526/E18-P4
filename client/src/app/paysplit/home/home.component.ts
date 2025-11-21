@@ -305,9 +305,9 @@ export class HomeComponent {
     }
     this.createLoading = true;
     const user = this.auth.getUser();
-  // match server schema: nombre, fecha_creacion, moneda, creador_id
-  const payload: any = { nombre: this.createName.trim(), fecha_creacion: new Date(), moneda: 'EUR' };
-  if (user?._id) payload.creador_id = user._id;
+    // match server schema: nombre, fecha_creacion, moneda, creador_id
+    const payload: any = { nombre: this.createName.trim(), fecha_creacion: new Date(), moneda: 'EUR' };
+    if (user?._id) payload.creador_id = user._id;
 
     this.auth.createSharedAccount(payload).subscribe({
       next: () => {
