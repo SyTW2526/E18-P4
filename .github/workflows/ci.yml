@@ -10,12 +10,12 @@ jobs:
   tests:
     name: Run tests (server + client)
     runs-on: ubuntu-latest
-    # This workflow assumes you use an Atlas cluster for DB in CI.
-    # Set a repository secret named `ATLAS_URI` with the MongoDB connection string.
-    # If you prefer to run a local Mongo service in CI, remove the `env` below and
-    # re-enable the `services: mongodb:` block.
-    env:
-      MONGO_TEST_URI: ${{ secrets.ATLAS_URI }}
+    # Prefer Atlas when provided via secrets. If not provided, run a local Mongo service.
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
 
     steps:
       - name: Checkout repository
@@ -31,11 +31,13 @@ jobs:
           cd server && npm ci
           cd ../client && npm ci
 
-      - name: Fail if ATLAS_URI not provided
+      - name: Note DB connection
         run: |
-          if [ -z "$MONGO_TEST_URI" ]; then
-            echo "Secret ATLAS_URI is not set. Configure it in repository Settings → Secrets → Actions." >&2
+          if [ -z "${MONGO_TEST_URI}" ]; then
+            echo "MONGO_TEST_URI is empty - this should not happen." >&2
             exit 1
+          else
+            echo "Using MONGO_TEST_URI=$MONGO_TEST_URI"
           fi
         shell: bash
 
@@ -44,6 +46,19 @@ jobs:
           # attempt to get puppeteer path (will succeed after npm ci)
           if node -e "console.log(require('puppeteer').executablePath())" >/dev/null 2>&1; then
             echo "CHROME_BIN=$(node -e \"console.log(require('puppeteer').executablePath())\")" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Set DB env vars
+        env:
+          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
+        run: |
+          if [ -n "$ATLAS_SECRET" ]; then
+            echo "MONGO_TEST_URI=$ATLAS_SECRET" >> $GITHUB_ENV
+            echo "ATLAS_URI=$ATLAS_SECRET" >> $GITHUB_ENV
+          else
+            echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+            echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
           fi
         shell: bash
 
@@ -68,8 +83,11 @@ jobs:
     name: E2E tests (Selenium)
     runs-on: ubuntu-latest
     needs: tests
-    env:
-      ATLAS_URI: ${{ secrets.ATLAS_URI }}
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
 
     steps:
       - name: Checkout repository
@@ -87,8 +105,16 @@ jobs:
           cd ../e2e && npm ci
 
       - name: Start server
+        env:
+          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
         run: |
-          export ATLAS_URI="${{ secrets.ATLAS_URI }}"
+          # Use Atlas if provided, otherwise point server at local Mongo service
+          if [ -z "$ATLAS_SECRET" ]; then
+            echo "ATLAS_URI not set, using local mongodb service"
+            export ATLAS_URI="mongodb://localhost:27017"
+          else
+            export ATLAS_URI="$ATLAS_SECRET"
+          fi
           cd server
           # run server in background
           npm start &
