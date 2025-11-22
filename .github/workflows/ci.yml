@@ -48,7 +48,6 @@ jobs:
             echo "CHROME_BIN=$(node -e \"console.log(require('puppeteer').executablePath())\")" >> $GITHUB_ENV
           fi
         shell: bash
-
       - name: Set DB env vars
         env:
           ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
@@ -59,6 +58,16 @@ jobs:
           else
             echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
             echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+          fi
+        shell: bash
+
+      - name: Note DB connection
+        run: |
+          if [ -z "${MONGO_TEST_URI}" ]; then
+            echo "MONGO_TEST_URI is empty - this should not happen." >&2
+            exit 1
+          else
+            echo "Using MONGO_TEST_URI=$MONGO_TEST_URI"
           fi
         shell: bash
 
