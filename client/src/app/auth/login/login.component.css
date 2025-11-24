@@ -9,6 +9,10 @@ mat-card {
   width: 400px;
 }
 
+@media (max-width:480px){
+  mat-card{ width: 92vw; }
+}
+
 mat-card-content form {
   display: flex;
   flex-direction: column;

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
+import { LanguageService } from '../../core/language.service';
 
 // Importaciones de Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -36,7 +37,7 @@ export class LoginComponent {
   loading = false;
   error: string | null = null;
 
-  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService) {}
+  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService, public lang: LanguageService) {}
 
   toggleShowPassword() {
     this.showPassword = !this.showPassword;

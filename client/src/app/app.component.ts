@@ -3,6 +3,8 @@ import { RouterOutlet, RouterModule } from '@angular/router'; // Importar Router
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './core/theme.service';
+import { LanguageService } from './core/language.service';
+import { FooterComponent } from './shared/footer/footer.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +22,7 @@ import { Router } from '@angular/router';
     MatButtonModule, 
     MatIconModule
     , HttpClientModule
+    , FooterComponent
   ],
   styles: [
     `
@@ -35,11 +38,12 @@ import { Router } from '@angular/router';
   ],
   template: `
       <mat-toolbar color="primary">
-      <span>Divisor de Cuentas</span>
+      <span>{{ lang.t('appTitle') }}</span>
       <span class="spacer"></span>
-      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/login">Login</button>
-      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/register">Registro</button>
-      <button *ngIf="authService.isLoggedIn()" mat-button routerLink="/settings">Configuración</button>
+      <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language">{{ lang.current === 'es' ? 'ES' : 'EN' }}</button>
+      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/login">{{ lang.t('login') }}</button>
+      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/register">{{ lang.t('register') }}</button>
+      <button *ngIf="authService.isLoggedIn()" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
       <button *ngIf="authService.isLoggedIn()" mat-icon-button (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
@@ -47,11 +51,12 @@ import { Router } from '@angular/router';
     <main>
       <router-outlet></router-outlet>
     </main>
+    <app-footer></app-footer>
   `,
 })
 export class AppComponent implements OnInit {
   title = 'bill-splitter-client'; // Título actualizado
-  constructor(public authService: AuthService, private router: Router, private theme: ThemeService) {}
+  constructor(public authService: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'
@@ -65,5 +70,9 @@ export class AppComponent implements OnInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  toggleLang() {
+    this.lang.toggle();
   }
 }

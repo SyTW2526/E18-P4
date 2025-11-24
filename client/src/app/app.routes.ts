@@ -8,9 +8,11 @@ import { CreateGastoComponent } from './paysplit/create-gasto/create-gasto.compo
 import { BalanceComponent } from './paysplit/balance/balance.component';
 import { UserSettingsComponent } from './settings/user-settings.component';
 
+import { LandingComponent } from './landing/landing.component';
+
 export const routes: Routes = [
-  // Al inicio redirigimos a la pantalla de login/registro
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // Al inicio mostramos la pantalla de presentación (landing)
+  { path: '', component: LandingComponent, title: 'Bienvenido' },
 
   // Rutas de autenticación
   { path: 'login', component: LoginComponent, title: 'Iniciar Sesión' },
@@ -24,6 +26,6 @@ export const routes: Routes = [
   { path: 'group/:id/balance', component: BalanceComponent, title: 'Balances', canActivate: [AuthGuard] },
   { path: 'settings', component: UserSettingsComponent, title: 'Configuración', canActivate: [AuthGuard] },
 
-  // Redirige cualquier otra ruta a login
-  { path: '**', redirectTo: 'login' }
+  // Redirige cualquier otra ruta a landing
+  { path: '**', redirectTo: '' }
 ];
