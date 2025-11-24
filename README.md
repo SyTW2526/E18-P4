@@ -189,6 +189,45 @@ Se han añadido suites de tests tanto para el `server` (Jest) como para el `clie
 	- Durante el desarrollo de las pruebas se añadieron helpers y mocks para `ActivatedRoute`, `RouterTestingModule`, `HttpClientTestingModule` y `NoopAnimationsModule` en los specs, de forma que los componentes con dependencias de Angular Router/Http/Material puedan testearse sin arrancar la aplicación completa.
 
 CI suggestions
+	---
+
+	### Pruebas End-to-end (E2E) — Selenium
+
+	El repositorio incluye la carpeta `e2e/` con pruebas end-to-end que usan Selenium WebDriver con Mocha y Chai. Estas pruebas ejecutan la aplicación en un navegador real y deben correr contra una instancia ya levantada del frontend (y del backend cuando la prueba lo requiera).
+
+	Pasos rápidos para ejecutar E2E localmente:
+
+	1. Arranca la aplicación bajo prueba:
+
+		- Frontend: `npm start` desde la carpeta `client/` (por defecto sirve en `http://localhost:4200`).
+		- Backend: asegúrate de que el servidor esté en funcionamiento (ver la sección Servidor, por defecto `http://localhost:5200`).
+
+	2. Instala dependencias de E2E y ejecuta las pruebas:
+
+	```bash
+	cd e2e
+	npm ci
+	npm test
+	```
+
+	Por defecto las pruebas apuntan a `http://localhost:4200`. Para cambiar la URL objetivo (por ejemplo, apuntar a una VM o contenedor), exporta la variable de entorno `E2E_BASE_URL`:
+
+	```bash
+	E2E_BASE_URL="http://10.6.130.212:4200" npm test
+	```
+
+	Notas y solución de problemas:
+
+	- Selenium Manager intentará localizar o descargar automáticamente los drivers de navegador. Asegúrate de disponer de una versión reciente de Chrome/Chromium o Firefox en la máquina donde se ejecutan las pruebas.
+	- Si ejecutas E2E en CI, instala el navegador en el runner (o usa una imagen que ya lo incluya), o ejecuta las pruebas dentro de un contenedor con el navegador instalado.
+	- Para ejecución headless en Linux puedes usar Chrome/Chromium en modo headless; asegúrate de instalar las librerías del sistema necesarias (ver la sección de pruebas del frontend para dependencias comunes).
+	- Si las pruebas fallan por errores del driver/binario, verifica el PATH del entorno y que la versión del navegador sea compatible.
+
+	Integración en CI:
+
+	- El flujo de trabajo de GitHub Actions incluido contiene un job que instala las dependencias de `e2e` y ejecuta las pruebas Mocha dentro de `e2e/`. El workflow prepara el entorno y el navegador para runners `ubuntu-latest`; revisa `.github/workflows/ci.yml` para más detalles.
+
+	If you want, I can add a short npm helper script in the root `package.json` to run E2E with sensible defaults (start server/client and run tests) — tell me if you want that automated helper and I will add it.
 - Para ejecutar tests en CI (GitHub Actions / GitLab CI) recomiendo usar `ubuntu-latest` y un job que:
 
 	- Instale dependencias del sistema (si se usan Puppeteer/Chromium).

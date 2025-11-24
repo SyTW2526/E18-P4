@@ -11,11 +11,6 @@ jobs:
     name: Run tests (server + client)
     runs-on: ubuntu-latest
     # Prefer Atlas when provided via secrets. If not provided, run a local Mongo service.
-    services:
-      mongodb:
-        image: mongo:6.0
-        ports:
-          - 27017:27017
 
     steps:
       - name: Checkout repository
@@ -30,16 +25,6 @@ jobs:
         run: |
           cd server && npm ci
           cd ../client && npm ci
-
-      - name: Note DB connection
-        run: |
-          if [ -z "${MONGO_TEST_URI}" ]; then
-            echo "MONGO_TEST_URI is empty - this should not happen." >&2
-            exit 1
-          else
-            echo "Using MONGO_TEST_URI=$MONGO_TEST_URI"
-          fi
-        shell: bash
 
       - name: Prepare CHROME_BIN for Puppeteer
         run: |
