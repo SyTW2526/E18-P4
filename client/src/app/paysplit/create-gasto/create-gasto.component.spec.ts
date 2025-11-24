@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Component } from '@angular/core';
 import { CreateGastoComponent } from './create-gasto.component';
 import { AuthService } from '../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
@@ -20,8 +21,15 @@ describe('CreateGastoComponent', () => {
   let fixture: ComponentFixture<CreateGastoComponent>;
 
   beforeEach(waitForAsync(() => {
+    @Component({
+      selector: 'test-dummy',
+      standalone: true,
+      template: ''
+    })
+    class DummyComponent {}
+
     TestBed.configureTestingModule({
-      imports: [CreateGastoComponent, NoopAnimationsModule, RouterTestingModule],
+      imports: [CreateGastoComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (k: string) => (k === 'id' ? 'g1' : null) } } } },
