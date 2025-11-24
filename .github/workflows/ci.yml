@@ -43,10 +43,13 @@ jobs:
       - name: Export Puppeteer chrome path (if available)
         shell: bash
         run: |
-          # Use single-quoted node -e scripts to avoid embedding nested double-quotes
-          if node -e 'try{console.log(require("puppeteer").executablePath());}catch(e){process.exit(0)}' >/dev/null 2>&1; then
-            CHROME_BIN=$(node -e 'console.log(require("puppeteer").executablePath())')
-            echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
+          # Run from the client folder so require('puppeteer') resolves to client/node_modules
+          if [ -d client ]; then
+            cd client
+            if node -e 'try{console.log(require("puppeteer").executablePath());}catch(e){process.exit(0)}' >/dev/null 2>&1; then
+              CHROME_BIN=$(node -e 'console.log(require("puppeteer").executablePath())')
+              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
+            fi
           fi
 
       - name: Set DB env vars
