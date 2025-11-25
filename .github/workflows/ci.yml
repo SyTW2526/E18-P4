@@ -132,17 +132,24 @@ jobs:
           cd ../client && npm ci
           cd ../e2e && npm ci
 
-      - name: Start server (background)
+      - name: Start server (Docker, background)
         env:
           ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
         run: |
+          # Decide which Mongo URI to provide to the container
           if [ -z "$ATLAS_SECRET" ]; then
-            export ATLAS_URI="mongodb://localhost:27017"
+            ATLAS_URI="mongodb://localhost:27017"
           else
-            export ATLAS_URI="$ATLAS_SECRET"
+            ATLAS_URI="$ATLAS_SECRET"
           fi
-          cd server
-          npm start &
+
+          # Build Docker image for the server
+          docker build -t paysplit-server:ci server
+
+          # Run the server container using host networking so it can reach the Actions' mongodb service on localhost
+          docker run -d --rm --network host -e ATLAS_URI="$ATLAS_URI" --name paysplit-server paysplit-server:ci
+
+          # Wait until the server answers on localhost:5200
           npx wait-on http://localhost:5200
         shell: bash
 
