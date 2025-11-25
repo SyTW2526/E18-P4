@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, NavigationEnd, RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
+import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './core/theme.service';
@@ -9,6 +9,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
 import { HttpClientModule } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -23,8 +24,35 @@ import { HttpClientModule } from '@angular/common/http';
     , HttpClientModule
     , FooterComponent
   ],
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styles: [
+    `
+      main {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 4rem;
+      }
+      .spacer {
+        flex: 1 1 auto;
+      }
+    `,
+  ],
+  template: `
+      <mat-toolbar color="primary">
+      <span>{{ lang.t('appTitle') }}</span>
+      <span class="spacer"></span>
+      <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language">{{ lang.current === 'es' ? 'ES' : 'EN' }}</button>
+      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/login">{{ lang.t('login') }}</button>
+      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/register">{{ lang.t('register') }}</button>
+      <button *ngIf="authService.isLoggedIn()" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
+      <button *ngIf="authService.isLoggedIn()" mat-icon-button (click)="logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+    <main>
+      <router-outlet></router-outlet>
+    </main>
+    <app-footer></app-footer>
+  `,
 })
 export class AppComponent implements OnInit {
   title = 'bill-splitter-client'; // Título actualizado
