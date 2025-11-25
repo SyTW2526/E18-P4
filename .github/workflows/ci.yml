@@ -136,18 +136,24 @@ jobs:
         env:
           ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
         run: |
-          # Decide which Mongo URI to provide to the container
-          if [ -z "$ATLAS_SECRET" ]; then
-            ATLAS_URI="mongodb://localhost:27017"
-          else
+          # If ATLAS_URI secret is provided, use Atlas. Otherwise start a local Mongo container
+          if [ -n "$ATLAS_SECRET" ]; then
+            echo "Using Mongo Atlas from secret"
             ATLAS_URI="$ATLAS_SECRET"
+
+            # Build and run the server container, expose port 5200 so the runner can reach it
+            docker build -t paysplit-server:ci server
+            docker run -d --rm -p 5200:5200 -e ATLAS_URI="$ATLAS_URI" --name paysplit-server paysplit-server:ci
+
+          else
+            echo "No ATLAS_URI secret found — starting local Mongo in Docker"
+            docker network create paysplit-ci-net || true
+            docker run -d --rm --network paysplit-ci-net --name ci-mongo -e MONGO_INITDB_DATABASE=test mongo:6.0
+
+            # Build and run the server container on the same network, map port 5200 back to the runner
+            docker build -t paysplit-server:ci server
+            docker run -d --rm --network paysplit-ci-net -p 5200:5200 -e ATLAS_URI="mongodb://ci-mongo:27017" --name paysplit-server paysplit-server:ci
           fi
-
-          # Build Docker image for the server
-          docker build -t paysplit-server:ci server
-
-          # Run the server container using host networking so it can reach the Actions' mongodb service on localhost
-          docker run -d --rm --network host -e ATLAS_URI="$ATLAS_URI" --name paysplit-server paysplit-server:ci
 
           # Wait until the server answers on localhost:5200
           npx wait-on http://localhost:5200
