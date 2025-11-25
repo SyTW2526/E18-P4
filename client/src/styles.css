@@ -1,20 +1,48 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  /* Paleta extraída de tu imagen de referencia */
+  --bg-color: #0a0a0a;       /* Fondo oscuro casi negro */
+  --text-main: #ffffff;      /* Texto blanco */
+  --text-muted: #a1a1aa;     /* Gris para descripciones */
+  --primary-color: #B8F12D;  /* Verde Lima (Botones de acción) */
+  --primary-hover: #a3d925;
+  --secondary-bg: #1c1c1c;   /* Para tarjetas o secciones secundarias */
+  
+  /* Tipografía */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+}
 
-/* Dark theme overrides when 'app-dark-theme' class is applied to body */
-.app-dark-theme {
-	background: #121212;
-	color: #e0e0e0;
+/* Clases de utilidad para botones estilo "Landing" */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 30px; /* Bordes redondeados como en la imagen */
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
-.app-dark-theme mat-card {
-	background: #1e1e1e;
-	color: #e0e0e0;
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
 }
-.app-dark-theme .mat-toolbar {
-	background: #1f1f1f !important;
-}
-.app-dark-theme input, .app-dark-theme textarea {
-	color: #e0e0e0;
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-main);
+  padding: 12px 24px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 30px;
+  text-decoration: none;
+  cursor: pointer;
 }

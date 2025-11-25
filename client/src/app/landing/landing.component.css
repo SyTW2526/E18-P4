@@ -1,0 +1,262 @@
+/* --- Variables Locales (si no las pusiste en global) --- */
+:host {
+  --bg-dark: #0a0a0a;
+  --bg-card: #171717;
+  --text-white: #ffffff;
+  --text-gray: #a3a3a3;
+  --primary-lime: #B8F12D;
+  --primary-hover: #a2d626;
+  --font-main: 'Inter', system-ui, sans-serif;
+}
+
+/* Contenedor Principal */
+.landing-container {
+  background-color: var(--bg-dark);
+  min-height: 100vh;
+  color: var(--text-white);
+  font-family: var(--font-main);
+  overflow-x: hidden; /* Evita scroll horizontal por animaciones */
+}
+
+/* --- Navbar --- */
+.landing-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 5%;
+  position: absolute;
+  width: 90%;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.nav-link {
+  color: var(--text-white);
+  text-decoration: none;
+  margin-right: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* --- Hero Section --- */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 140px 5% 80px 5%; /* Padding top para compensar navbar */
+  min-height: 80vh;
+}
+
+/* Columna Izquierda */
+.hero-content {
+  flex: 1;
+  max-width: 600px;
+  padding-right: 40px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: var(--primary-lime);
+  margin-bottom: 24px;
+  border: 1px solid rgba(184, 241, 45, 0.2);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary-lime);
+  border-radius: 50%;
+  margin-right: 8px;
+  box-shadow: 0 0 10px var(--primary-lime);
+}
+
+h1 {
+  font-size: 3.5rem; /* Grande e impactante */
+  line-height: 1.1;
+  font-weight: 800;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ffffff, #999);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: var(--text-gray);
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 480px;
+}
+
+/* Botones */
+.cta-group {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.btn-primary {
+  background-color: var(--primary-lime);
+  color: #000;
+  border-radius: 30px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-primary.sm { padding: 8px 20px; font-size: 0.9rem; }
+.btn-primary.lg { padding: 14px 32px; font-size: 1rem; }
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(184, 241, 45, 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-white);
+  border-radius: 30px;
+  padding: 14px 32px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-white);
+}
+
+.arrow { margin-left: 8px; transition: transform 0.2s; }
+.btn-primary:hover .arrow { transform: translateX(4px); }
+
+/* Stats */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-item { display: flex; flex-direction: column; }
+.stat-item strong { font-size: 1.5rem; color: var(--text-white); }
+.stat-item span { font-size: 0.85rem; color: var(--text-gray); }
+.divider { width: 1px; height: 40px; background: rgba(255,255,255,0.1); }
+
+/* --- Visual / Derecha --- */
+.hero-visual {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.visual-card-wrapper {
+  position: relative;
+  width: 400px;
+  height: 500px;
+}
+
+/* Mockup simulado */
+.main-visual {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.screen-placeholder {
+  background: var(--bg-dark);
+  height: 100%;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.app-header-mock { height: 40px; background: #333; border-radius: 8px; margin-bottom: 20px; }
+.mock-line { height: 12px; background: #222; border-radius: 6px; margin-bottom: 12px; }
+.w-70 { width: 70%; } .w-50 { width: 50%; } .w-90 { width: 90%; }
+
+/* Tarjetas Flotantes (Efecto 3D) */
+.floating-card {
+  position: absolute;
+  background: #222;
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.05);
+  animation: float 6s ease-in-out infinite;
+}
+
+.card-top { top: 40px; right: -20px; animation-delay: 0s; }
+.card-bottom { bottom: 60px; left: -30px; animation-delay: 3s; }
+
+.icon { font-size: 1.5rem; }
+.info { display: flex; flex-direction: column; font-size: 0.85rem; }
+.positive { color: var(--primary-lime); }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+/* --- Features Footer --- */
+.trust-section {
+  padding: 40px 5%;
+  text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.trust-section p { color: var(--text-gray); font-size: 0.8rem; letter-spacing: 1.5px; margin-bottom: 30px; }
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  opacity: 0.7;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-white);
+}
+
+/* Responsividad básica */
+@media (max-width: 900px) {
+  .hero { flex-direction: column; text-align: center; padding-top: 120px; }
+  .hero-content { padding-right: 0; margin-bottom: 60px; }
+  .subtitle { margin: 0 auto 40px auto; }
+  .cta-group { justify-content: center; }
+  .stats { justify-content: center; }
+  .landing-nav .nav-actions { display: none; } /* Ocultar botones nav en móvil si es necesario */
+  .visual-card-wrapper { width: 300px; height: 400px; }
+}

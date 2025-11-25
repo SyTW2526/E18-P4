@@ -1,28 +1,112 @@
+/* Contenedor principal para centrar y fondo oscuro */
 .auth-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top: 50px;
+  min-height: 100vh;
+  background-color: var(--bg-color, #0a0a0a); /* Usa la variable global o fallback */
+  padding: 20px;
 }
 
+/* Reestilizando la tarjeta de Material */
 mat-card {
-  width: 400px;
-}
-
-mat-card-content form {
-  display: flex;
-  flex-direction: column;
-}
-
-mat-form-field {
   width: 100%;
+  max-width: 400px;
+  background-color: var(--secondary-bg, #1c1c1c) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px !important;
+  padding: 30px 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important; /* Sombra profunda */
 }
 
-button {
-  margin-top: 16px;
-}
-
-mat-card-actions {
-  margin: 16px;
+/* Títulos */
+mat-card-title {
   text-align: center;
+  color: var(--text-main, #ffffff);
+  font-family: var(--font-family, sans-serif);
+  font-size: 2rem !important;
+  margin-bottom: 20px !important;
+  font-weight: 700;
+}
+
+/* --- Ajustes profundos para Angular Material en modo oscuro --- */
+/* Nota: ::ng-deep se usa para alcanzar estilos internos de Material */
+
+/* Color del texto de los inputs */
+::ng-deep .mat-mdc-input-element {
+  color: var(--text-main, #ffffff) !important;
+  caret-color: var(--primary-color, #B8F12D) !important; /* Cursor verde */
+}
+
+/* Color de las etiquetas (labels) */
+::ng-deep .mat-mdc-form-field-label {
+  color: var(--text-muted, #a1a1aa) !important;
+}
+
+/* Fondo de los campos de texto */
+::ng-deep .mat-mdc-form-field-flex {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-radius: 8px 8px 0 0;
+}
+
+/* Línea inferior / Borde al enfocar (Verde Lima) */
+::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-ripple {
+  background-color: var(--primary-color, #B8F12D) !important;
+}
+
+::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--primary-color, #B8F12D) !important;
+}
+
+/* Iconos (ojo de contraseña) */
+::ng-deep .mat-icon {
+  color: var(--text-muted, #a1a1aa);
+}
+
+/* Botón de acción principal */
+button[type="submit"] {
+  width: 100%;
+  margin-top: 15px;
+  padding: 8px !important; /* Ajuste de altura */
+  background-color: var(--primary-color, #B8F12D) !important;
+  color: #000000 !important; /* Texto negro para contraste */
+  border-radius: 30px !important;
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: none !important;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+button[type="submit"]:hover:not([disabled]) {
+  background-color: var(--primary-hover, #a3d925) !important;
+  transform: translateY(-2px);
+}
+
+button[disabled] {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Enlace inferior */
+mat-card-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-bottom: 0 !important;
+}
+
+mat-card-actions a {
+  color: var(--text-muted, #a1a1aa);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s;
+}
+
+mat-card-actions a:hover {
+  color: var(--primary-color, #B8F12D);
+}
+
+/* Mensajes de error */
+mat-error {
+  color: #ff5252; /* Rojo brillante para destacar sobre negro */
 }
