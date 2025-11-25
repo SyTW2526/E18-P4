@@ -23,6 +23,30 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Export Puppeteer chrome path (if available)
+        shell: bash
+        run: |
+          if [ -d client ]; then
+            cd client
+            if node -e 'try{console.log(require("puppeteer").executablePath());}catch(e){process.exit(0)}' >/dev/null 2>&1; then
+              CHROME_BIN=$(node -e 'console.log(require("puppeteer").executablePath())')
+              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Set DB env vars
+        env:
+          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
+        run: |
+          if [ -n "$ATLAS_SECRET" ]; then
+            echo "MONGO_TEST_URI=$ATLAS_SECRET" >> $GITHUB_ENV
+            echo "ATLAS_URI=$ATLAS_SECRET" >> $GITHUB_ENV
+          else
+            echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+            echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+          fi
+        shell: bash
+
       - name: Cache server dependencies
         uses: actions/cache@v4
         with:
@@ -89,8 +113,7 @@ jobs:
     name: E2E tests (Selenium)
     runs-on: ubuntu-latest
     needs: tests
-    # Only run E2E automatically on pushes to main; on dev it will be skipped.
-    if: github.ref == 'refs/heads/main'
+    # Run E2E on all branches (including dev). If you want to limit to main, re-add an `if` condition here.
     services:
       mongodb:
         image: mongo:6.0
