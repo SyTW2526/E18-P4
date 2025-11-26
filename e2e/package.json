@@ -8,6 +8,7 @@
   "devDependencies": {
     "selenium-webdriver": "^4.13.0",
     "mocha": "^10.2.0",
-    "chai": "^4.3.7"
+    "chai": "^4.3.7",
+    "wait-on": "^8.0.5"
   }
 }
