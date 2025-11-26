@@ -157,16 +157,21 @@ jobs:
       - name: Build and serve client
         run: |
           cd client
-          npm start
-          # Find first dist directory and serve it, otherwise run ng serve
-          DIST_DIR=$(find dist -maxdepth 1 -type d | head -n 1 || true)
+          # Build production bundle (disable watch explicitly)
+          npm run build -- --configuration production --watch=false
+
+          # Find dist/<project> directory (mindepth 1 to avoid the parent 'dist' dir)
+          DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1 || true)
           if [ -n "$DIST_DIR" ]; then
+            echo "Serving $DIST_DIR on port 4200"
             npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
           else
+            echo "No built dist found; falling back to ng serve (background)"
             npm start -- --host 127.0.0.1 --port 4200 &
           fi
-          # Use the wait-on installed in e2e folder (client step runs inside client/ so reference relative path)
-          ../e2e/node_modules/.bin/wait-on tcp:localhost:4200
+
+          # Wait until the client is available on localhost:4200
+          npx wait-on http://localhost:4200
         shell: bash
 
       - name: Run E2E Mocha tests
