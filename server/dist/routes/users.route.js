@@ -15,13 +15,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -59,11 +69,11 @@ exports.userRouter.get("/", (_req, res) => __awaiter(void 0, void 0, void 0, fun
 }));
 // GET /users/:id - get single user by Mongo _id
 exports.userRouter.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c, _d;
+    var _a, _b, _c;
     try {
-        const id = (_b = req === null || req === void 0 ? void 0 : req.params) === null || _b === void 0 ? void 0 : _b.id;
+        const id = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
         const query = { _id: new mongodb_1.ObjectId(id) };
-        const user = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.findOne(query));
+        const user = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.findOne(query));
         if (user) {
             const safe = Object.assign({}, user);
             delete safe.password_hash;
@@ -74,12 +84,12 @@ exports.userRouter.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
         }
     }
     catch (error) {
-        res.status(404).send(`Failed to find a user: ID ${(_d = req === null || req === void 0 ? void 0 : req.params) === null || _d === void 0 ? void 0 : _d.id}`);
+        res.status(404).send(`Failed to find a user: ID ${(_c = req === null || req === void 0 ? void 0 : req.params) === null || _c === void 0 ? void 0 : _c.id}`);
     }
 }));
 // POST /users - create a new user
 exports.userRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
+    var _a;
     try {
         const user = req.body;
         if (!user.fecha_registro) {
@@ -92,12 +102,12 @@ exports.userRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, fun
             user.password_hash = bcrypt.hashSync(String(user.password), 10);
             delete user.password;
         }
-        const result = yield ((_e = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _e === void 0 ? void 0 : _e.insertOne(user));
+        const result = yield ((_a = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _a === void 0 ? void 0 : _a.insertOne(user));
         if (result === null || result === void 0 ? void 0 : result.acknowledged) {
-            res.status(201).send(`Created a new user: ID ${result.insertedId}.`);
+            res.status(201).json({ id: result.insertedId.toString(), message: `Created a new user` });
         }
         else {
-            res.status(500).send("Failed to create a new user.");
+            res.status(500).json({ message: "Failed to create a new user." });
         }
     }
     catch (error) {
@@ -107,7 +117,7 @@ exports.userRouter.post("/", (req, res) => __awaiter(void 0, void 0, void 0, fun
 }));
 // POST /signup - register a new user and return a JWT
 exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _f, _g;
+    var _a, _b;
     try {
         const { nombre, email, password, foto_perfil, preferencia_tema } = req.body;
         if (!nombre || !email || !password) {
@@ -119,7 +129,7 @@ exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 
             return res.status(500).send("JWT_SECRET is not set on the server");
         }
         // ensure email is unique
-        const existing = yield ((_f = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _f === void 0 ? void 0 : _f.findOne({ email: String(email).toLowerCase() }));
+        const existing = yield ((_a = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _a === void 0 ? void 0 : _a.findOne({ email: String(email).toLowerCase() }));
         if (existing)
             return res.status(409).send("A user with that email already exists");
         const password_hash = bcrypt.hashSync(String(password), 10);
@@ -132,7 +142,7 @@ exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 
         };
         if (foto_perfil)
             userDoc.foto_perfil = foto_perfil;
-        const result = yield ((_g = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _g === void 0 ? void 0 : _g.insertOne(userDoc));
+        const result = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.insertOne(userDoc));
         if (!(result === null || result === void 0 ? void 0 : result.acknowledged))
             return res.status(500).send("Failed to create user");
         const userId = result.insertedId;
@@ -148,7 +158,7 @@ exports.userRouter.post("/signup", (req, res) => __awaiter(void 0, void 0, void 
 }));
 // POST /signin - authenticate and return JWT
 exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _h;
+    var _a;
     try {
         const { email, password } = req.body;
         if (!email || !password)
@@ -156,7 +166,7 @@ exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 
         const JWT_SECRET = process.env.JWT_SECRET;
         if (!JWT_SECRET)
             return res.status(500).send("JWT_SECRET is not set on the server");
-        const user = yield ((_h = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _h === void 0 ? void 0 : _h.findOne({ email: String(email).toLowerCase() }));
+        const user = yield ((_a = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _a === void 0 ? void 0 : _a.findOne({ email: String(email).toLowerCase() }));
         if (!user)
             return res.status(401).send("Invalid email or password");
         const ok = bcrypt.compareSync(String(password), String(user.password_hash || ''));
@@ -174,23 +184,23 @@ exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 
 }));
 // PUT /users/:id - update user (partial updates allowed)
 exports.userRouter.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _j, _k;
+    var _a, _b;
     try {
-        const id = (_j = req === null || req === void 0 ? void 0 : req.params) === null || _j === void 0 ? void 0 : _j.id;
+        const id = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
         const user = req.body;
         // if fecha_registro provided, convert to Date
         if (user.fecha_registro)
             user.fecha_registro = new Date(user.fecha_registro);
         const query = { _id: new mongodb_1.ObjectId(id) };
-        const result = yield ((_k = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _k === void 0 ? void 0 : _k.updateOne(query, { $set: user }));
+        const result = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.updateOne(query, { $set: user }));
         if (result && result.matchedCount) {
-            res.status(200).send(`Updated a user: ID ${id}.`);
+            res.status(200).json({ id, message: `Updated a user` });
         }
         else if (!(result === null || result === void 0 ? void 0 : result.matchedCount)) {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
+            res.status(404).json({ message: `Failed to find a user: ID ${id}` });
         }
         else {
-            res.status(304).send(`Failed to update a user: ID ${id}`);
+            res.status(304).json({ message: `Failed to update a user: ID ${id}` });
         }
     }
     catch (error) {
@@ -201,19 +211,19 @@ exports.userRouter.put("/:id", (req, res) => __awaiter(void 0, void 0, void 0, f
 }));
 // DELETE /users/:id - remove user by _id
 exports.userRouter.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _l, _m;
+    var _a, _b;
     try {
-        const id = (_l = req === null || req === void 0 ? void 0 : req.params) === null || _l === void 0 ? void 0 : _l.id;
+        const id = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
         const query = { _id: new mongodb_1.ObjectId(id) };
-        const result = yield ((_m = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _m === void 0 ? void 0 : _m.deleteOne(query));
+        const result = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.deleteOne(query));
         if (result && result.deletedCount) {
-            res.status(202).send(`Removed a user: ID ${id}`);
+            res.status(202).json({ id, message: `Removed a user` });
         }
         else if (!result) {
-            res.status(400).send(`Failed to remove a user: ID ${id}`);
+            res.status(400).json({ message: `Failed to remove a user: ID ${id}` });
         }
         else if (!result.deletedCount) {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
+            res.status(404).json({ message: `Failed to find a user: ID ${id}` });
         }
     }
     catch (error) {

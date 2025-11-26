@@ -15,13 +15,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -32,14 +42,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.connectToDatabase = exports.collections = void 0;
+exports.collections = void 0;
+exports.connectToDatabase = connectToDatabase;
+exports.closeDatabase = closeDatabase;
 const mongodb = __importStar(require("mongodb"));
 exports.collections = {};
 function connectToDatabase(uri) {
-    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c;
         const client = new mongodb.MongoClient(uri);
         yield client.connect();
+        // keep reference to client so tests and shutdown logic can close it
+        mongoClient = client;
         const db = client.db("meanStackExample");
         yield applySchemaValidation(db);
         const usersCollection = db.collection("users");
@@ -72,7 +86,20 @@ function connectToDatabase(uri) {
         }
     });
 }
-exports.connectToDatabase = connectToDatabase;
+let mongoClient = null;
+function closeDatabase() {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (mongoClient) {
+            try {
+                yield mongoClient.close();
+            }
+            catch (err) {
+                console.warn('Error closing MongoClient', err);
+            }
+            mongoClient = null;
+        }
+    });
+}
 function applySchemaValidation(db) {
     return __awaiter(this, void 0, void 0, function* () {
         const jsonSchema = {

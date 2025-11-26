@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.computeGroupBalances = void 0;
+exports.computeGroupBalances = computeGroupBalances;
 const database_1 = require("./database");
 /**
  * Calcula los balances de los usuarios en un grupo.
@@ -18,8 +18,8 @@ const database_1 = require("./database");
  *   Si hay participaciones, utiliza esos montos; si no, reparte el gasto igual entre los miembros del grupo (userGroups).
  */
 function computeGroupBalances(groupId) {
-    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b, _c, _d;
         if (!database_1.collections.gastos)
             throw new Error("Colección 'gastos' no está inicializada");
         const gastos = (yield database_1.collections.gastos.find({ id_grupo: groupId }).toArray());
@@ -81,4 +81,3 @@ function computeGroupBalances(groupId) {
         return result;
     });
 }
-exports.computeGroupBalances = computeGroupBalances;
