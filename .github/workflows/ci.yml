@@ -150,8 +150,8 @@ jobs:
             docker run -d --rm --network paysplit-ci-net -p 5200:5200 -e ATLAS_URI="mongodb://ci-mongo:27017" --name paysplit-server paysplit-server:ci
           fi
 
-          # Wait until the server answers on localhost:5200
-          npx wait-on http://localhost:5200
+          # Wait until the server answers on localhost:5200 (use the installed wait-on in e2e to avoid npx auto-install)
+          e2e/node_modules/.bin/wait-on http://localhost:5200
         shell: bash
 
       - name: Build and serve client
@@ -165,7 +165,8 @@ jobs:
           else
             npm start -- --host 127.0.0.1 --port 4200 &
           fi
-          npx wait-on http://localhost:4200
+          # Use the wait-on installed in e2e folder (client step runs inside client/ so reference relative path)
+          ../e2e/node_modules/.bin/wait-on http://localhost:4200
         shell: bash
 
       - name: Run E2E Mocha tests
