@@ -166,7 +166,7 @@ jobs:
             npm start -- --host 127.0.0.1 --port 4200 &
           fi
           # Use the wait-on installed in e2e folder (client step runs inside client/ so reference relative path)
-          ../e2e/node_modules/.bin/wait-on http://localhost:4200
+          ../e2e/node_modules/.bin/wait-on tcp:localhost:4200
         shell: bash
 
       - name: Run E2E Mocha tests
