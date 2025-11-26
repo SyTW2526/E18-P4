@@ -151,7 +151,7 @@ jobs:
           fi
 
           # Wait until the server answers on localhost:5200 (use the installed wait-on in e2e to avoid npx auto-install)
-          e2e/node_modules/.bin/wait-on http://localhost:5200
+          e2e/node_modules/.bin/wait-on tcp:localhost:5200
         shell: bash
 
       - name: Build and serve client
