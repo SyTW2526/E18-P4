@@ -195,7 +195,7 @@ jobs:
           ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 tcp:localhost:4200
         shell: bash
 
-      - name: Debug: verify chrome & driver before tests
+      - name: "Debug: verify chrome & driver before tests"
         run: |
           echo "ENV CHROME_BIN=$CHROME_BIN"
           if [ -n "$CHROME_BIN" ]; then
