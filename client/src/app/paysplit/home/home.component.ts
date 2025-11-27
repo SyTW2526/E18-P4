@@ -71,10 +71,10 @@ import { MatListModule } from '@angular/material/list';
         <section style="margin-top:1rem; text-align:left; max-width:900px; margin-left:auto; margin-right:auto">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <h3>Mis grupos</h3>
-            <div style="display:flex;gap:0.5rem">
-              <button mat-stroked-button (click)="createFormVisible = !createFormVisible">Crear</button>
-              <button mat-flat-button color="primary" (click)="joinFormVisible = !joinFormVisible">Unirse</button>
-              <button mat-button (click)="logout()">Cerrar sesión</button>
+              <div style="display:flex;gap:0.5rem">
+              <button mat-flat-button class="btn-primary" (click)="createFormVisible = !createFormVisible">Crear</button>
+              <button mat-flat-button class="btn-primary" (click)="joinFormVisible = !joinFormVisible">Unirse</button>
+              <button mat-flat-button class="btn-primary" (click)="logout()">Cerrar sesión</button>
             </div>
           </div>
 
@@ -96,16 +96,12 @@ import { MatListModule } from '@angular/material/list';
           <div *ngIf="groupsError" style="color:#b00020;margin-top:1rem">{{ groupsError }}</div>
 
           <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
-            <mat-card *ngFor="let g of sharedAccounts">
+            <mat-card *ngFor="let g of sharedAccounts" class="group-card" tabindex="0" (click)="openGroup(g)" (keydown.enter)="openGroup(g)">
               <mat-card-title>{{ g.nombre }}</mat-card-title>
               <mat-card-subtitle *ngIf="g.moneda">Moneda: {{ g.moneda }}</mat-card-subtitle>
               <mat-card-content>
                 <p *ngIf="g.descripcion">{{ g.descripcion }}</p>
-                <p style="color:#666;font-size:0.9rem">ID: {{ g._id }}</p>
               </mat-card-content>
-              <mat-card-actions>
-                <button mat-button (click)="openGroup(g)">Ver</button>
-              </mat-card-actions>
             </mat-card>
           </div>
 

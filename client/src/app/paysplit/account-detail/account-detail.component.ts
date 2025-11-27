@@ -39,6 +39,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ accountName || 'Cuenta compartida' }}</h2>
+        <div style="font-size:0.9rem;color:#888;margin-left:0.5rem">ID: {{ accountId }}</div>
         <span style="margin-left:auto; display:flex; gap:0.5rem">
           <button mat-stroked-button color="primary" (click)="openCreateGasto()">Añadir gasto</button>
           <button mat-stroked-button color="accent" (click)="openBalance()">Balances</button>
