@@ -192,7 +192,11 @@ jobs:
           fi
 
           # Wait until the client is available on localhost:4200 using the e2e wait-on binary
-          ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 tcp:localhost:4200
+          # Use an HTTP check to ensure the index returns 200 (not just that the port is open)
+          ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 http://127.0.0.1:4200/
+          echo "--- client HTTP HEAD ---"; curl -I --max-time 5 http://127.0.0.1:4200/ || true
+          # Give Angular a short moment to finish client-side bootstrapping
+          sleep 2
         shell: bash
 
       - name: "Debug: verify chrome & driver before tests"
