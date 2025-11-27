@@ -3,12 +3,14 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "test": "mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
+    "test": "mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
+    "test:local": "CHROME_BIN=$(node -e \"console.log(require('../client/node_modules/puppeteer').executablePath())\") PATH=./node_modules/.bin:$PATH mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
   },
   "devDependencies": {
     "selenium-webdriver": "^4.13.0",
     "mocha": "^10.2.0",
     "chai": "^4.3.7",
-    "wait-on": "^9.0.3"
+    "wait-on": "^9.0.3",
+    "chromedriver": "^142.0.0"
   }
 }
