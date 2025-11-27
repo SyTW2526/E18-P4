@@ -6,10 +6,13 @@ describe('E2E - Create group', function () {
   this.timeout(60000);
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
+  let createdGroupId = null;
 
   before(async function () {
     const options = new chrome.Options();
-    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
+    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
+    options.addArguments(...args);
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
@@ -37,6 +40,11 @@ describe('E2E - Create group', function () {
       .catch(err => cb({ error: err && err.message ? err.message : String(err) }));
     }, name, 'http://localhost:5200');
     if (!apiRes || apiRes.error) throw new Error('API seeding failed: ' + (apiRes && apiRes.error));
+    // capture created group id for cleanup
+    try {
+      const body = apiRes.body || {};
+      createdGroupId = body._id || body.id || body.insertedId || (body.result && body.result._id) || null;
+    } catch (e) { createdGroupId = null; }
     // now navigate to home so the component loads the seeded groups
     await driver.get(BASE + '/home');
     // open create form (if present) and wait for input
@@ -51,6 +59,21 @@ describe('E2E - Create group', function () {
       expect(await card.getText()).to.equal(name);
     } catch (e) {
       throw new Error('Timed out waiting for created group card after seeding. Last error: ' + e.message);
+    }
+  });
+
+  after(async function () {
+    if (!createdGroupId) return;
+    // attempt to delete the created group via the API; ignore errors
+    try {
+      await driver.executeAsyncScript(function(id, baseApi, cb) {
+        fetch(baseApi + '/user-group/shared-accounts/' + id, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        }).then(resp => cb({ status: resp.status })).catch(err => cb({ error: (err && err.message) || String(err) }));
+      }, createdGroupId, 'http://localhost:5200');
+    } catch (e) {
+      // swallow cleanup errors
     }
   });
 });

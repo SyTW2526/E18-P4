@@ -9,7 +9,9 @@ describe('E2E - Navigation and Account', function () {
 
   before(async function () {
     const options = new chrome.Options();
-    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
+    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
+    options.addArguments(...args);
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     // open the app origin so we can write to localStorage for that origin

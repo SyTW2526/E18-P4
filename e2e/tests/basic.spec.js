@@ -10,8 +10,10 @@ describe('E2E - Basic smoke tests', function () {
 
   before(async function () {
     const options = new chrome.Options();
-    // Headless and CI-friendly flags
-    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    // CI-friendly flags; allow disabling headless with E2E_HEADLESS=false
+    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
+    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
+    options.addArguments(...args);
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser(BROWSER).setChromeOptions(options).build();
   });
