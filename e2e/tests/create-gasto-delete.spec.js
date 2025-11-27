@@ -21,13 +21,31 @@ describe('E2E - Create and delete gasto', function () {
   it('creates a gasto inside the first available group and then deletes it', async function () {
     await driver.get(BASE + '/home');
     // ensure groups loaded (allow more time for network)
-    await driver.wait(until.elementLocated(By.css('mat-card')), 15000);
+    await driver.sleep(500);
+    let cards = await driver.findElements(By.css('mat-card'));
+    if (cards.length === 0) {
+      // no groups yet: create one via the UI create form
+      const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear')]")).catch(()=>null);
+      if (createToggle) await createToggle.click();
+      // wait for create input
+      await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 5000);
+      const gname = 'E2E Grupo ' + Date.now();
+      await driver.findElement(By.css('input[placeholder="Nombre del nuevo grupo"]')).sendKeys(gname);
+      const createBtn = await driver.findElement(By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Crear')]")).catch(()=>null);
+      if (createBtn) await createBtn.click();
+      // allow load
+      await driver.wait(until.elementLocated(By.css('mat-card')), 10000);
+      cards = await driver.findElements(By.css('mat-card'));
+    }
     // click first group's Ver button (try multiple possible labels)
-    const verBtn = await driver.findElement(By.xpath("(//mat-card//button[contains(. , 'Ver') or contains(. , 'Entrar') or contains(. , 'Abrir')])[1]")).catch(async ()=>{
-      // fallback: try a button inside first mat-card
-      return await driver.findElement(By.xpath('(//mat-card)[1]//button')).catch(()=>{throw new Error('Could not find a group card or Ver button');});
-    });
-    await verBtn.click();
+    const verBtn = await driver.findElement(By.xpath("(//mat-card//button[contains(. , 'Ver') or contains(. , 'Entrar') or contains(. , 'Abrir')])[1]"))
+      .catch(async () => {
+        // fallback: click the first mat-card directly
+        const card = await driver.findElement(By.xpath('(//mat-card)[1]')).catch(() => { throw new Error('Could not find a group card or Ver button'); });
+        await card.click();
+        return null;
+      });
+    if (verBtn) await verBtn.click();
 
     // wait for group page h2
     await driver.wait(until.elementLocated(By.css('h2')), 10000);

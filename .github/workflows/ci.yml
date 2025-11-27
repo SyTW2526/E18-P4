@@ -127,6 +127,22 @@ jobs:
           cd ../client && npm ci
           cd ../e2e && npm ci
 
+      - name: Export Puppeteer chrome path (if available)
+        shell: bash
+        run: |
+          if [ -d client ]; then
+            CHROME_BIN=$(find client/node_modules/puppeteer -type f -name chrome -print -quit 2>/dev/null || true)
+            if [ -n "$CHROME_BIN" ]; then
+              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
+            else
+              # Try puppeteer-core style executablePath lookup
+              CHROME_BIN=$(node -e "try{console.log(require('./client/node_modules/puppeteer').executablePath())}catch(e){process.exit(0)}") || true
+              if [ -n "$CHROME_BIN" ]; then
+                echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
+              fi
+            fi
+          fi
+
       - name: Start server (Docker, background)
         env:
           ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
@@ -170,12 +186,13 @@ jobs:
             npm start -- --host 127.0.0.1 --port 4200 &
           fi
 
-          # Wait until the client is available on localhost:4200
-          npx wait-on http://localhost:4200
+          # Wait until the client is available on localhost:4200 using the e2e wait-on binary
+          ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 tcp:localhost:4200
         shell: bash
 
       - name: Run E2E Mocha tests
-        working-directory: e2e
         run: |
-          npx mocha tests --reporter spec
+          cd e2e
+          # Ensure local node_modules/.bin is used (chromedriver etc.) and CHROME_BIN from earlier is available
+          PATH=./node_modules/.bin:$PATH npm test
         shell: bash
