@@ -1,4 +1,5 @@
 const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 const { expect } = require('chai');
 
 describe('E2E - Basic smoke tests', function () {
@@ -8,7 +9,11 @@ describe('E2E - Basic smoke tests', function () {
   const BROWSER = (process.env.BROWSER || 'chrome').toLowerCase();
 
   before(async function () {
-    driver = await new Builder().forBrowser(BROWSER).build();
+    const options = new chrome.Options();
+    // Headless and CI-friendly flags
+    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
+    driver = await new Builder().forBrowser(BROWSER).setChromeOptions(options).build();
   });
 
   after(async function () {

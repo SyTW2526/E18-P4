@@ -1,4 +1,5 @@
 const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 const { expect } = require('chai');
 
 describe('E2E - Join group (error cases)', function () {
@@ -7,7 +8,10 @@ describe('E2E - Join group (error cases)', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    driver = await new Builder().forBrowser('chrome').build();
+    const options = new chrome.Options();
+    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
+    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");

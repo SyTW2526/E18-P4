@@ -7,7 +7,11 @@ describe('E2E - Create and delete gasto', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    driver = await new Builder().forBrowser('chrome').build();
+    const chrome = require('selenium-webdriver/chrome');
+    const options = new chrome.Options();
+    options.addArguments('--no-sandbox', '--disable-dev-shm-usage', '--headless=new');
+    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
+    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
