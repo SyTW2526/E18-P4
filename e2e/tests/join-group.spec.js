@@ -13,6 +13,7 @@ describe('E2E - Join group (error cases)', function () {
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
+    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");

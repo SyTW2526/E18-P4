@@ -14,6 +14,7 @@ describe('E2E - User Settings', function () {
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     // navigate to the app origin first, then set localStorage on that origin
     await driver.get(BASE + '/');
+    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'Test', email:'t@t.com', preferencia_tema:'claro'}));");
   });

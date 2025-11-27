@@ -13,6 +13,8 @@ describe('E2E - Create group', function () {
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
+    // wait for SPA root to be present before manipulating localStorage
+    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");
@@ -41,7 +43,7 @@ describe('E2E - Create group', function () {
     const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear') or contains(.,'Crear grupo')]")).catch(()=>null);
     if (createToggle) await createToggle.click();
     // wait for input (give more time for backend/app initialization)
-    const input = await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 10000);
+    const input = await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 15000);
     // wait for the card with the group name to appear (may take longer)
     try {
       await driver.wait(until.elementLocated(By.xpath(`//mat-card-title[contains(., "${name}")]`)), 15000);

@@ -20,7 +20,9 @@ describe('E2E - Login page', function () {
 
   it('shows password field and toggles visibility', async function () {
     await driver.get(BASE + '/login');
-    await driver.wait(until.elementLocated(By.css('input[formcontrolname="password"]')), 5000);
+    // wait for the app root and then the password input
+    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    await driver.wait(until.elementLocated(By.css('input[formcontrolname="password"]')), 10000);
     const pwdInput = await driver.findElement(By.css('input[formcontrolname="password"]'));
     // initially should be type password
     const t1 = await pwdInput.getAttribute('type');
