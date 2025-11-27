@@ -142,6 +142,11 @@ jobs:
               fi
             fi
           fi
+          # Print what we found for debugging
+          echo "DEBUG: CHROME_BIN=$CHROME_BIN"
+          node -e "try{console.log('puppeteer.executablePath->', require('./client/node_modules/puppeteer').executablePath())}catch(e){console.log('puppeteer not available') }" || true
+          echo "-- e2e bin list --"; ls -la e2e/node_modules/.bin || true
+          echo "-- chromedriver version (if present) --"; e2e/node_modules/.bin/chromedriver --version || true
 
       - name: Start server (Docker, background)
         env:
@@ -188,6 +193,19 @@ jobs:
 
           # Wait until the client is available on localhost:4200 using the e2e wait-on binary
           ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 tcp:localhost:4200
+        shell: bash
+
+      - name: Debug: verify chrome & driver before tests
+        run: |
+          echo "ENV CHROME_BIN=$CHROME_BIN"
+          if [ -n "$CHROME_BIN" ]; then
+            echo "Chrome binary exists:"; ls -la "$CHROME_BIN" || true
+            echo "Chrome version:"; "$CHROME_BIN" --version || true
+          fi
+          echo "Which chromedriver:"; which chromedriver || which e2e/node_modules/.bin/chromedriver || true
+          echo "chromedriver --version:"; e2e/node_modules/.bin/chromedriver --version || true
+          echo "node version:"; node --version
+          echo "npm version:"; npm --version
         shell: bash
 
       - name: Run E2E Mocha tests
