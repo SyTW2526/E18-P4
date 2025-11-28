@@ -4,7 +4,23 @@
   "private": true,
   "scripts": {
     "test": "mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
-    "test:local": "CHROME_BIN=$(node -e \"console.log(require('../client/node_modules/puppeteer').executablePath())\") PATH=./node_modules/.bin:$PATH mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
+    "test:local": "CHROME_BIN=$(node -e \"console.log(require('../client/node_modules/puppeteer').executablePath())\") PATH=./node_modules/.bin:$PATH mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
+    "test:open": "bash -lc '\
+      # Ejecutar tests abriendo el navegador (no-headless). Intentamos primero usar el Chrome provisto por puppeteer (si existe en client/node_modules),\
+      # luego buscamos binarios comunes (/usr/bin/google-chrome, /usr/bin/google-chrome-stable, /usr/bin/chromium-browser, /usr/bin/chromium).\
+      export E2E_HEADLESS=false; export BROWSER=chrome;\
+      CHROME_BIN=$(node -e \"try{console.log(require(\'../client/node_modules/puppeteer\').executablePath());}catch(e){process.exit(0)}\") || true;\
+      if [ -z \"$CHROME_BIN\" ]; then\
+        if [ -x /usr/bin/google-chrome ]; then CHROME_BIN=/usr/bin/google-chrome;\
+        elif [ -x /usr/bin/google-chrome-stable ]; then CHROME_BIN=/usr/bin/google-chrome-stable;\
+        elif [ -x /usr/bin/chromium-browser ]; then CHROME_BIN=/usr/bin/chromium-browser;\
+        elif [ -x /usr/bin/chromium ]; then CHROME_BIN=/usr/bin/chromium;\
+        else echo \"No se encontró un binario de Chrome en el sistema ni en client/node_modules/puppeteer. Instala Chrome o exporta CHROME_BIN.\"; exit 2; fi;\
+      fi;\
+      export CHROME_BIN;\
+      PATH=./node_modules/.bin:$PATH mocha --timeout 60000 --exit \"tests/**/*.spec.js\"\
+    '
+    }
   },
   "devDependencies": {
     "selenium-webdriver": "^4.13.0",
