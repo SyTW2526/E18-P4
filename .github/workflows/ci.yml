@@ -145,10 +145,36 @@ jobs:
       - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
 
-      - name: Setup ChromeDriver
-        uses: nanasess/setup-chromedriver@v2
-        with:
-          chromedriver-version: 'latest'
+      - name: Setup ChromeDriver (match installed Chrome)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Try to find a chrome binary installed by setup-chrome or system
+          CHROME_BIN=$(which google-chrome || which google-chrome-stable || which chromium || which chromium-browser || true)
+          if [ -z "$CHROME_BIN" ]; then
+            echo "No Chrome binary found in PATH. Listing /usr/bin:"; ls -la /usr/bin | head -n 40 || true
+            exit 1
+          fi
+          echo "Found chrome at $CHROME_BIN"
+          CHROME_VER=$($CHROME_BIN --version | awk '{print $NF}')
+          echo "Chrome version: $CHROME_VER"
+          MAJOR=$(echo "$CHROME_VER" | cut -d. -f1)
+          echo "Chrome major version: $MAJOR"
+          # Query Google storage for the matching chromedriver release for that major
+          CD_VER=$(curl -fsSL "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$MAJOR" || true)
+          if [ -z "$CD_VER" ]; then
+            echo "Could not determine chromedriver version for major $MAJOR; falling back to latest"
+            CD_VER=$(curl -fsSL "https://chromedriver.storage.googleapis.com/LATEST_RELEASE")
+          fi
+          echo "Using chromedriver version: $CD_VER"
+          ARCH=linux64
+          URL="https://chromedriver.storage.googleapis.com/${CD_VER}/chromedriver_${ARCH}.zip"
+          echo "Downloading $URL"
+          curl -fsSL -o /tmp/chromedriver.zip "$URL"
+          unzip -o /tmp/chromedriver.zip -d /tmp
+          sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+          echo "Installed chromedriver: $(/usr/local/bin/chromedriver --version || true)"
 
       - name: Start server (Docker, background)
         env:
