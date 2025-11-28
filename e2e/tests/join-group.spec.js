@@ -2,6 +2,14 @@ const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const { expect } = require('chai');
 
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
+
 describe('E2E - Join group (error cases)', function () {
   this.timeout(60000);
   let driver;
@@ -15,7 +23,7 @@ describe('E2E - Join group (error cases)', function () {
     if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
     driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
     await driver.get(BASE + '/');
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    await waitForAppReady(driver, 20000);
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");

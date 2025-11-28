@@ -2,6 +2,14 @@ const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const { expect } = require('chai');
 
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
+
 describe('E2E - Login page', function () {
   this.timeout(60000);
   let driver;
@@ -22,8 +30,8 @@ describe('E2E - Login page', function () {
 
   it('shows password field and toggles visibility', async function () {
     await driver.get(BASE + '/login');
-    // wait for the app root and then the password input
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    // wait for the app render to be ready then find password input
+    await waitForAppReady(driver, 15000);
     await driver.wait(until.elementLocated(By.css('input[formcontrolname="password"]')), 10000);
     const pwdInput = await driver.findElement(By.css('input[formcontrolname="password"]'));
     // initially should be type password
