@@ -33,9 +33,13 @@ describe('E2E - Create and delete gasto', function () {
     if (cards.length === 0) {
       // no groups yet: create one via the UI create form
       const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear')]")).catch(()=>null);
-      if (createToggle) await createToggle.click();
-      // wait for create input
-      await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 5000);
+      if (createToggle) {
+        await createToggle.click();
+        // small pause to let Angular render the form
+        await driver.sleep(500);
+      }
+      // wait for create input (allow more time on CI)
+      await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 15000);
       const gname = 'E2E Grupo ' + Date.now();
       await driver.findElement(By.css('input[placeholder="Nombre del nuevo grupo"]')).sendKeys(gname);
       const createBtn = await driver.findElement(By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Crear')]")).catch(()=>null);
