@@ -109,6 +109,9 @@ jobs:
   e2e:
     name: E2E tests (Selenium)
     runs-on: ubuntu-latest
+    env:
+      # Default browser for E2E; can be overridden per-run with workflow env or job env
+      E2E_BROWSER: firefox
     needs: tests
     # Run E2E on all branches (including dev). If you want to limit to main, re-add an `if` condition here.
 
@@ -212,9 +215,23 @@ jobs:
           echo "npm version:"; npm --version
         shell: bash
 
+      - name: Install Firefox & geckodriver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y firefox geckodriver || true
+        shell: bash
+
+      - name: "Debug: verify firefox & geckodriver"
+        run: |
+          echo "Which firefox:"; which firefox || true
+          echo "firefox --version:"; firefox --version || true
+          echo "Which geckodriver:"; which geckodriver || true
+          echo "geckodriver --version:"; geckodriver --version || true
+        shell: bash
+
       - name: Run E2E Mocha tests
         run: |
           cd e2e
           # Ensure local node_modules/.bin is used (chromedriver etc.) and CHROME_BIN from earlier is available
-          PATH=./node_modules/.bin:$PATH npm test
+          PATH=./node_modules/.bin:$PATH npm run test:local
         shell: bash

@@ -1,6 +1,6 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
+const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
+const createDriver = require('../driver');
 
 async function waitForAppReady(driver, timeout = 15000) {
   await driver.wait(async () => {
@@ -16,12 +16,7 @@ describe('E2E - Join group (error cases)', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    const options = new chrome.Options();
-    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
-    options.addArguments(...args);
-    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+    driver = await createDriver();
     await driver.get(BASE + '/');
     await waitForAppReady(driver, 20000);
     // set fake auth
