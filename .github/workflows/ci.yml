@@ -23,6 +23,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Cache e2e dependencies
+        uses: actions/cache@v4
+        with:
+          path: e2e/node_modules
+          key: e2e-node-modules-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
+
+      
+
       - name: Export Puppeteer chrome path (if available)
         shell: bash
         run: |
@@ -62,29 +70,7 @@ jobs:
         run: |
           cd server && npm ci
           cd ../client && npm ci
-
-      - name: Export Puppeteer chrome path (if available)
-        shell: bash
-        run: |
-          if [ -d client ]; then
-            CHROME_BIN=$(find client/node_modules/puppeteer -type f -name chrome -print -quit 2>/dev/null || true)
-            if [ -n "$CHROME_BIN" ]; then
-              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Set DB env vars
-        env:
-          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
-        run: |
-          if [ -n "$ATLAS_SECRET" ]; then
-            echo "MONGO_TEST_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-            echo "ATLAS_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-          else
-            echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-            echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-          fi
-        shell: bash
+      
 
       - name: Show DB in use
         run: echo "Using MONGO_TEST_URI=${MONGO_TEST_URI}"
@@ -129,6 +115,11 @@ jobs:
           cd server && npm ci
           cd ../client && npm ci
           cd ../e2e && npm ci
+
+      - name: Add e2e node bin to PATH
+        shell: bash
+        run: |
+          echo "PATH=./e2e/node_modules/.bin:$PATH" >> $GITHUB_ENV
 
       - name: Export Puppeteer chrome path (if available)
         shell: bash
@@ -235,3 +226,14 @@ jobs:
           # Ensure local node_modules/.bin is used (chromedriver etc.) and CHROME_BIN from earlier is available
           PATH=./node_modules/.bin:$PATH npm run test:local
         shell: bash
+
+      - name: Upload e2e logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: |
+            e2e/test-output
+            e2e/logs
+            e2e/*.log
+            e2e/results
