@@ -23,9 +23,7 @@ describe('E2E - Create group', function () {
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");
   });
 
-  after(async function () {
-    if (driver) await driver.quit();
-  });
+  
 
   it('creates a new shared account via the create form', async function () {
     // helper: create an account directly via API so UI has deterministic data
@@ -63,17 +61,22 @@ describe('E2E - Create group', function () {
   });
 
   after(async function () {
-    if (!createdGroupId) return;
-    // attempt to delete the created group via the API; ignore errors
     try {
-      await driver.executeAsyncScript(function(id, baseApi, cb) {
-        fetch(baseApi + '/user-group/shared-accounts/' + id, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        }).then(resp => cb({ status: resp.status })).catch(err => cb({ error: (err && err.message) || String(err) }));
-      }, createdGroupId, 'http://localhost:5200');
-    } catch (e) {
-      // swallow cleanup errors
+      if (createdGroupId) {
+        // attempt to delete the created group via the API; ignore errors
+        try {
+          await driver.executeAsyncScript(function(id, baseApi, cb) {
+            fetch(baseApi + '/user-group/shared-accounts/' + id, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            }).then(resp => cb({ status: resp.status })).catch(err => cb({ error: (err && err.message) || String(err) }));
+          }, createdGroupId, 'http://localhost:5200');
+        } catch (e) {
+          // swallow cleanup errors
+        }
+      }
+    } finally {
+      if (driver) await driver.quit();
     }
   });
 });
