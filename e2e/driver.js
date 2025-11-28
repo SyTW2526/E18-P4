@@ -5,8 +5,15 @@ module.exports = async function createDriver() {
   if (browser === 'firefox') {
     const firefox = require('selenium-webdriver/firefox');
     const options = new firefox.Options();
-    // headless control
-    if (process.env.E2E_HEADLESS !== 'false') options.headless();
+    // headless control: prefer argument form, fallback to boolean property
+    if (process.env.E2E_HEADLESS !== 'false') {
+      try {
+        options.addArguments('-headless');
+      } catch (e) {
+        // older/newer selenium shims: set boolean if available
+        try { options.headless = true; } catch (__) {}
+      }
+    }
     // allow specifying a Firefox binary path
     if (process.env.FIREFOX_BIN) options.setBinary(process.env.FIREFOX_BIN);
     // some CI flags may be useful
