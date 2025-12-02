@@ -41,10 +41,10 @@ import { Router } from '@angular/router';
       <span>{{ lang.t('appTitle') }}</span>
       <span class="spacer"></span>
       <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language">{{ lang.current === 'es' ? 'ES' : 'EN' }}</button>
-      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/login">{{ lang.t('login') }}</button>
-      <button *ngIf="!authService.isLoggedIn()" mat-button routerLink="/register">{{ lang.t('register') }}</button>
-      <button *ngIf="authService.isLoggedIn()" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
-      <button *ngIf="authService.isLoggedIn()" mat-icon-button (click)="logout()">
+      <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/login">{{ lang.t('login') }}</button>
+      <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/register">{{ lang.t('register') }}</button>
+      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
+      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-icon-button (click)="logout()">
         <mat-icon>logout</mat-icon>
       </button>
     </mat-toolbar>
@@ -56,6 +56,7 @@ import { Router } from '@angular/router';
 })
 export class AppComponent implements OnInit {
   title = 'bill-splitter-client'; // Título actualizado
+  showAuthenticatedControls = true;
   constructor(public authService: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
   ngOnInit(): void {
@@ -65,6 +66,19 @@ export class AppComponent implements OnInit {
     const stored = this.theme.getStoredTheme();
     const themeToApply = (userPref === 'dark' || userPref === 'light') ? userPref : (stored || 'light');
     this.theme.applyTheme(themeToApply as 'dark' | 'light');
+    // hide settings/logout on the landing (root) route
+    this.updateHeaderVisibility();
+    this.router.events.subscribe((ev: any) => {
+      if (ev?.constructor?.name === 'NavigationEnd') {
+        this.updateHeaderVisibility();
+      }
+    });
+  }
+
+  private updateHeaderVisibility() {
+    const url = this.router.url || '/';
+    // hide authenticated-only controls on landing and on auth pages
+    this.showAuthenticatedControls = !(url === '/' || url === '' || url.startsWith('/login') || url.startsWith('/register'));
   }
 
   logout() {

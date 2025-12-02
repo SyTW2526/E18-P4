@@ -46,6 +46,7 @@ button.mat-mdc-button.btn-primary,
   background-color: var(--primary-color) !important;
   color: #000 !important;
   border: none !important;
+  border-radius: 8px !important;
 }
 
 button.btn-primary:hover,
@@ -61,7 +62,8 @@ button.mat-flat-button.btn-primary:active,
 button[mat-flat-button].btn-primary:active,
 button.mat-mdc-button.btn-primary:active {
   background-color: var(--primary-hover) !important;
-  color: #000 !important;
+  /* letras de botones de crear e unirse*/
+  color: var(--secondary-bg) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -144,13 +146,29 @@ button.mat-button.mat-primary {
   transition: background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
-/* Force Material toolbar to use the app primary color */
+/* Force Material toolbar to use the app primary color 
+Color del header en sí*/
 .mat-toolbar.mat-primary {
-  background-color: var(--primary-color) !important;
-  color: #000 !important;
+  background-color: var(--primary-color);
+  color: var(--secondary-bg);
 }
 
-/* Ensure toolbar buttons and icons contrast correctly */
+/* Make the app header stick to the top of the viewport */
+.mat-toolbar.mat-primary {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+}
+
+/* Ensure main content is pushed below the fixed header */
+main {
+  padding-top: 6px; /* adjust if toolbar height changes */
+}
+
+/* Ensure toolbar buttons and icons contrast correctly 
+Color del header por la derecha*/
 .mat-toolbar.mat-primary .mat-button,
 .mat-toolbar.mat-primary button,
 .mat-toolbar.mat-primary .mat-icon {
@@ -174,4 +192,12 @@ button.mat-button.mat-primary {
 
 .group-card:focus {
   outline: 2px solid color-mix(in srgb, var(--primary-hover) 40%, transparent);
+}
+
+/* Round all Material card variants and clip overflow (ripples/content) */
+mat-card,
+.mat-card,
+.mat-mdc-card {
+  border-radius: 8px !important;
+  overflow: hidden !important;
 }

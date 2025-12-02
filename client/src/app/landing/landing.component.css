@@ -30,6 +30,16 @@
   z-index: 10;
 }
 
+/* When the landing nav has no actionable items we shouldn't block clicks
+   so let pointer events pass through. If `.nav-actions` is present we
+   enable pointer events only for that area. */
+.landing-nav {
+  pointer-events: none;
+}
+.landing-nav .nav-actions {
+  pointer-events: auto;
+}
+
 .logo {
   font-size: 1.5rem;
   font-weight: 800;
@@ -49,7 +59,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 140px 5% 80px 5%; /* Padding top para compensar navbar */
+  padding: 10px 5% 80px 5%; /* Moved hero content up additional 30px (total ~50px) */
   min-height: 80vh;
 }
 
@@ -70,6 +80,7 @@
   color: var(--primary-lime);
   margin-bottom: 24px;
   border: 1px solid rgba(184, 241, 45, 0.2);
+  transform: translateY(50px); /* Moved up 10px */
 }
 
 .dot {
@@ -252,7 +263,7 @@ h1 {
 
 /* Responsividad básica */
 @media (max-width: 900px) {
-  .hero { flex-direction: column; text-align: center; padding-top: 120px; }
+  .hero { flex-direction: column; text-align: center; padding-top: 0px; }
   .hero-content { padding-right: 0; margin-bottom: 60px; }
   .subtitle { margin: 0 auto 40px auto; }
   .cta-group { justify-content: center; }

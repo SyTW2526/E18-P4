@@ -74,7 +74,6 @@ import { MatListModule } from '@angular/material/list';
               <div style="display:flex;gap:0.5rem">
               <button mat-flat-button class="btn-primary" (click)="createFormVisible = !createFormVisible">Crear</button>
               <button mat-flat-button class="btn-primary" (click)="joinFormVisible = !joinFormVisible">Unirse</button>
-              <button mat-flat-button class="btn-primary" (click)="logout()">Cerrar sesión</button>
             </div>
           </div>
 
