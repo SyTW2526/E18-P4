@@ -123,6 +123,21 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
 
+  // Get amigos (friends) list (returns { amigos: [...] })
+  getAmigos(userId: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${userId}/amigos`);
+  }
+
+  // Send a friend request (add senderId to receiver's peticiones_amistad)
+  addAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/add-amigo`, { senderId });
+  }
+
+  // Helper: find a user by username (server-side lookup)
+  findUserByUsername(username: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/users/lookup?username=${encodeURIComponent(String(username))}`);
+  }
+
   updateUser(id: string, payload: any) {
     // map client theme values to server schema ('light'/'dark' -> 'claro'/'oscuro')
     const payloadToSend = { ...payload };

@@ -162,6 +162,208 @@ Color del header en sí*/
   z-index: 1200;
 }
 
+/* Ensure Material overlay (menus, dialogs, tooltips) appears above the fixed toolbar */
+.cdk-overlay-container .cdk-overlay-pane {
+  z-index: 1300 !important;
+}
+
+/* Ensure the overlay container is positioned relative to the viewport
+   so CDK overlays (menus, tooltips, dialogs) are placed correctly.
+   Some transforms/containers can break overlay positioning — forcing
+   the container to be fixed and full-viewport prevents that. */
+.cdk-overlay-container {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+}
+.cdk-overlay-container .cdk-overlay-pane {
+  position: absolute !important;
+  pointer-events: auto !important;
+}
+
+/* Amigos / Mat-menu styling ------------------------------------------------- */
+/* Style the menu panel itself (both legacy and MDC variants) */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel,
+.cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-pane .mat-mdc-menu-panel {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4) !important;
+  padding: 6px 0 !important;
+  min-width: 200px !important;
+}
+
+/* Dialog styling ----------------------------------------------------------- */
+/* Style Material Dialog containers (legacy and MDC) to match app theme */
+.cdk-overlay-container .cdk-overlay-pane .mat-dialog-container,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-dialog-container,
+.cdk-overlay-pane .mat-dialog-container,
+.cdk-overlay-pane .mat-mdc-dialog-container {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.65), 0 6px 12px rgba(0,0,0,0.45) !important;
+  padding: 20px !important;
+  font-family: var(--font-family) !important;
+}
+
+.mat-dialog-title, .mat-mdc-dialog-title {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.mat-dialog-content, .mat-mdc-dialog-content {
+  color: var(--text-main);
+}
+
+.mat-dialog-actions, .mat-mdc-dialog-actions {
+  padding-top: 12px;
+}
+
+/* Dialog buttons: primary color and hover */
+.mat-dialog-actions button.mat-flat-button,
+.mat-mdc-dialog-actions button.mat-mdc-button.mat-flat {
+  background-color: var(--primary-color) !important;
+  color: #000 !important;
+}
+.mat-dialog-actions button.mat-flat-button:hover,
+.mat-mdc-dialog-actions button.mat-mdc-button.mat-flat:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* Inputs inside dialogs should use light text and subtle background */
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-container .mat-mdc-form-field .mdc-text-field__input,
+.cdk-overlay-pane .mat-mdc-form-field .mdc-text-field__input {
+  background: rgba(255,255,255,0.02) !important;
+  color: var(--text-main) !important;
+}
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-input-element,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-input-element,
+.cdk-overlay-container .mat-mdc-text-field__input,
+.cdk-overlay-pane .mat-mdc-text-field__input,
+.cdk-overlay-container input,
+.cdk-overlay-pane input,
+.cdk-overlay-container textarea,
+.cdk-overlay-pane textarea {
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+}
+
+/* Force input caret & placeholder color to light */
+.cdk-overlay-pane input::placeholder,
+.cdk-overlay-container input::placeholder,
+.cdk-overlay-pane textarea::placeholder {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* Ensure dialog close/secondary buttons contrast */
+.mat-dialog-actions button.mat-button,
+.mat-mdc-dialog-actions button.mat-button {
+  color: var(--text-main) !important;
+}
+
+/* VERY STRONG overrides for any remaining white input boxes inside overlays */
+/* Targets MDC and legacy Material form-field internals inside overlay panes */
+.cdk-overlay-pane .mat-form-field-infix,
+.cdk-overlay-container .mat-form-field-infix,
+.cdk-overlay-pane .mat-form-field-flex,
+.cdk-overlay-container .mat-form-field-flex,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-pane .mat-mdc-text-field__input,
+.cdk-overlay-container .mat-mdc-text-field__input,
+.cdk-overlay-pane input,
+.cdk-overlay-container input,
+.cdk-overlay-pane textarea,
+.cdk-overlay-container textarea {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  color: var(--text-main) !important;
+}
+
+.cdk-overlay-pane .mat-form-field-infix::before,
+.cdk-overlay-pane .mat-form-field-infix::after,
+.cdk-overlay-container .mat-form-field-infix::before,
+.cdk-overlay-container .mat-form-field-infix::after {
+  background: transparent !important;
+}
+
+/* If MDC applies a surface class, make sure it's dark */
+.cdk-overlay-pane .mdc-text-field,
+.cdk-overlay-container .mdc-text-field {
+  background: transparent !important;
+}
+
+/* Target MDC dialog inner elements (title/content/actions/surface) to remove white backgrounds */
+.cdk-overlay-pane .mat-mdc-dialog-container .mdc-dialog__surface,
+.cdk-overlay-pane .mat-mdc-dialog-container .mdc-dialog__scrim,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-actions,
+.cdk-overlay-container .mat-mdc-dialog-container .mdc-dialog__surface,
+.cdk-overlay-container .mat-mdc-dialog-container .mdc-dialog__scrim,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-actions {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  box-shadow: none !important;
+}
+
+/* Ensure titles/contents/actions don't have white backgrounds or borders */
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-title {
+  background: transparent !important;
+  color: var(--primary-color) !important;
+}
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-content {
+  background: transparent !important;
+  color: var(--text-main) !important;
+}
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-actions,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-actions {
+  background: transparent !important;
+}
+
+
+/* Menu item styles */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-menu-item,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item {
+  color: var(--text-main) !important;
+  background: transparent !important;
+  padding: 8px 16px !important;
+  font-weight: 600;
+}
+
+/* Hover state for menu items only (no persistent focus/active styling) */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-menu-item:hover,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item:hover {
+  background: var(--primary-color) !important;
+  color: #000 !important;
+}
+
+/* Small icon spacing inside menu items */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-icon,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-icon {
+  margin-right: 12px;
+  color: var(--text-main);
+}
+
+/* Align text and ensure menu uses app's font */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel {
+  font-family: var(--font-family);
+}
+
 /* Ensure main content is pushed below the fixed header */
 main {
   padding-top: 6px; /* adjust if toolbar height changes */

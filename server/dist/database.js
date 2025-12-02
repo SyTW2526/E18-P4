@@ -138,6 +138,20 @@ function applySchemaValidation(db) {
                         description: "'preferencia_tema' is required and is either 'claro' or 'oscuro'",
                         enum: ["claro", "oscuro"],
                     },
+                    amigos: {
+                        bsonType: "array",
+                        description: "Optional list of friend user ids (ObjectId or string)",
+                        items: {
+                            bsonType: ["objectId", "string"],
+                        },
+                    },
+                    peticiones_amistad: {
+                        bsonType: "array",
+                        description: "Optional list of pending friend request user ids (ObjectId or string)",
+                        items: {
+                            bsonType: ["objectId", "string"],
+                        },
+                    },
                 },
             },
         };
