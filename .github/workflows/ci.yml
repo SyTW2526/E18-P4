@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, frontend ]
 
 jobs:
   tests:
@@ -22,6 +22,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Cache e2e dependencies
+        uses: actions/cache@v4
+        with:
+          path: e2e/node_modules
+          key: e2e-node-modules-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
+
+      
 
       - name: Export Puppeteer chrome path (if available)
         shell: bash
@@ -62,29 +70,7 @@ jobs:
         run: |
           cd server && npm ci
           cd ../client && npm ci
-
-      - name: Export Puppeteer chrome path (if available)
-        shell: bash
-        run: |
-          if [ -d client ]; then
-            CHROME_BIN=$(find client/node_modules/puppeteer -type f -name chrome -print -quit 2>/dev/null || true)
-            if [ -n "$CHROME_BIN" ]; then
-              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Set DB env vars
-        env:
-          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
-        run: |
-          if [ -n "$ATLAS_SECRET" ]; then
-            echo "MONGO_TEST_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-            echo "ATLAS_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-          else
-            echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-            echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-          fi
-        shell: bash
+      
 
       - name: Show DB in use
         run: echo "Using MONGO_TEST_URI=${MONGO_TEST_URI}"
@@ -109,8 +95,9 @@ jobs:
   e2e:
     name: E2E tests (Selenium)
     runs-on: ubuntu-latest
+    env:
+      E2E_BROWSER: chrome   # Chrome recomendado para CI
     needs: tests
-    # Run E2E on all branches (including dev). If you want to limit to main, re-add an `if` condition here.
 
     steps:
       - name: Checkout repository
@@ -127,94 +114,75 @@ jobs:
           cd ../client && npm ci
           cd ../e2e && npm ci
 
-      - name: Export Puppeteer chrome path (if available)
+      - name: Add e2e node bin to PATH
         shell: bash
         run: |
-          if [ -d client ]; then
-            CHROME_BIN=$(find client/node_modules/puppeteer -type f -name chrome -print -quit 2>/dev/null || true)
-            if [ -n "$CHROME_BIN" ]; then
-              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
-            else
-              # Try puppeteer-core style executablePath lookup
-              CHROME_BIN=$(node -e "try{console.log(require('./client/node_modules/puppeteer').executablePath())}catch(e){process.exit(0)}") || true
-              if [ -n "$CHROME_BIN" ]; then
-                echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
-              fi
-            fi
-          fi
-          # Print what we found for debugging
-          echo "DEBUG: CHROME_BIN=$CHROME_BIN"
-          node -e "try{console.log('puppeteer.executablePath->', require('./client/node_modules/puppeteer').executablePath())}catch(e){console.log('puppeteer not available') }" || true
-          echo "-- e2e bin list --"; ls -la e2e/node_modules/.bin || true
-          echo "-- chromedriver version (if present) --"; e2e/node_modules/.bin/chromedriver --version || true
+          echo "PATH=./e2e/node_modules/.bin:$PATH" >> $GITHUB_ENV
 
-      - name: Start server (Docker, background)
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Setup ChromeDriver (auto-match version)
+        run: |
+          CHROME_BIN=$(which google-chrome || which google-chrome-stable)
+          echo "Using chrome: $CHROME_BIN"
+          CHROME_VER=$($CHROME_BIN --version | awk '{print $NF}')
+          echo "Version: $CHROME_VER"
+
+          MAJOR=$(echo "$CHROME_VER" | cut -d. -f1)
+          CD_VER=$(curl -fsSL "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$MAJOR")
+          curl -fsSL -o /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${CD_VER}/chromedriver_linux64.zip"
+          unzip -o /tmp/chromedriver.zip -d /tmp
+          sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
+          sudo chmod +x /usr/local/bin/chromedriver
+          chromedriver --version
+
+      - name: Start server (Docker)
         env:
           ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
         run: |
-          # If ATLAS_URI secret is provided, use Atlas. Otherwise start a local Mongo container
           if [ -n "$ATLAS_SECRET" ]; then
-            echo "Using Mongo Atlas from secret"
-            ATLAS_URI="$ATLAS_SECRET"
-
-            # Build and run the server container, expose port 5200 so the runner can reach it
+            echo "Using Mongo Atlas"
             docker build -t paysplit-server:ci server
-            docker run -d --rm -p 5200:5200 -e ATLAS_URI="$ATLAS_URI" --name paysplit-server paysplit-server:ci
-
+            docker run -d --rm -p 5200:5200 -e ATLAS_URI="$ATLAS_SECRET" --name paysplit-server paysplit-server:ci
           else
-            echo "No ATLAS_URI secret found — starting local Mongo in Docker"
+            echo "Using local Mongo"
             docker network create paysplit-ci-net || true
             docker run -d --rm --network paysplit-ci-net --name ci-mongo -e MONGO_INITDB_DATABASE=test mongo:6.0
 
-            # Build and run the server container on the same network, map port 5200 back to the runner
             docker build -t paysplit-server:ci server
             docker run -d --rm --network paysplit-ci-net -p 5200:5200 -e ATLAS_URI="mongodb://ci-mongo:27017" --name paysplit-server paysplit-server:ci
           fi
 
-          # Wait until the server answers on localhost:5200 (use the installed wait-on in e2e to avoid npx auto-install)
           e2e/node_modules/.bin/wait-on tcp:localhost:5200
-        shell: bash
 
-      - name: Build and serve client
+      - name: Build + Serve client
         run: |
           cd client
-          # Build production bundle (disable watch explicitly)
           npm run build -- --configuration production --watch=false
+          DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
+          npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
+          ../e2e/node_modules/.bin/wait-on http://127.0.0.1:4200/
 
-          # Find dist/<project> directory (mindepth 1 to avoid the parent 'dist' dir)
-          DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1 || true)
-          if [ -n "$DIST_DIR" ]; then
-            echo "Serving $DIST_DIR on port 4200"
-            npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
-          else
-            echo "No built dist found; falling back to ng serve (background)"
-            npm start -- --host 127.0.0.1 --port 4200 &
-          fi
-
-          # Wait until the client is available on localhost:4200 using the e2e wait-on binary
-          # Use an HTTP check to ensure the index returns 200 (not just that the port is open)
-          ../e2e/node_modules/.bin/wait-on --verbose --timeout 120000 http://127.0.0.1:4200/
-          echo "--- client HTTP HEAD ---"; curl -I --max-time 5 http://127.0.0.1:4200/ || true
-          # Give Angular a short moment to finish client-side bootstrapping
-          sleep 2
-        shell: bash
-
-      - name: "Debug: verify chrome & driver before tests"
+      - name: Debug chrome
         run: |
-          echo "ENV CHROME_BIN=$CHROME_BIN"
-          if [ -n "$CHROME_BIN" ]; then
-            echo "Chrome binary exists:"; ls -la "$CHROME_BIN" || true
-            echo "Chrome version:"; "$CHROME_BIN" --version || true
-          fi
-          echo "Which chromedriver:"; which chromedriver || which e2e/node_modules/.bin/chromedriver || true
-          echo "chromedriver --version:"; e2e/node_modules/.bin/chromedriver --version || true
-          echo "node version:"; node --version
-          echo "npm version:"; npm --version
-        shell: bash
+          echo "Chrome: $(which google-chrome || which google-chrome-stable)"
+          google-chrome --version || google-chrome-stable --version
+          which chromedriver
+          chromedriver --version
 
-      - name: Run E2E Mocha tests
+      - name: Run E2E tests
         run: |
           cd e2e
-          # Ensure local node_modules/.bin is used (chromedriver etc.) and CHROME_BIN from earlier is available
-          PATH=./node_modules/.bin:$PATH npm test
-        shell: bash
+          PATH=./node_modules/.bin:$PATH npm run test:local
+
+      - name: Upload e2e logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs
+          path: |
+            e2e/test-output
+            e2e/logs
+            e2e/*.log
+            e2e/results

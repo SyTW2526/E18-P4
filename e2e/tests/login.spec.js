@@ -1,6 +1,14 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
+const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
+const createDriver = require('../driver');
+
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
 
 describe('E2E - Login page', function () {
   this.timeout(60000);
@@ -8,12 +16,7 @@ describe('E2E - Login page', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    const options = new chrome.Options();
-    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
-    options.addArguments(...args);
-    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+    driver = await createDriver();
   });
 
   after(async function () {
@@ -22,8 +25,8 @@ describe('E2E - Login page', function () {
 
   it('shows password field and toggles visibility', async function () {
     await driver.get(BASE + '/login');
-    // wait for the app root and then the password input
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    // wait for the app render to be ready then find password input
+    await waitForAppReady(driver, 15000);
     await driver.wait(until.elementLocated(By.css('input[formcontrolname="password"]')), 10000);
     const pwdInput = await driver.findElement(By.css('input[formcontrolname="password"]'));
     // initially should be type password

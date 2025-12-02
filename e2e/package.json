@@ -11,6 +11,7 @@
     "mocha": "^10.2.0",
     "chai": "^4.3.7",
     "wait-on": "^9.0.3",
-    "chromedriver": "^142.0.0"
+    "chromedriver": "^142.0.0",
+    "geckodriver": "^4.0.0"
   }
 }

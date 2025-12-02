@@ -1,5 +1,14 @@
-const { Builder, By, until } = require('selenium-webdriver');
+const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
+const createDriver = require('../driver');
+
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
 
 describe('E2E - Create and delete gasto', function () {
   this.timeout(90000);
@@ -7,15 +16,9 @@ describe('E2E - Create and delete gasto', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    const chrome = require('selenium-webdriver/chrome');
-    const options = new chrome.Options();
-    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
-    options.addArguments(...args);
-    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+    driver = await createDriver();
     await driver.get(BASE + '/');
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    await waitForAppReady(driver, 20000);
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");
@@ -33,9 +36,13 @@ describe('E2E - Create and delete gasto', function () {
     if (cards.length === 0) {
       // no groups yet: create one via the UI create form
       const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear')]")).catch(()=>null);
-      if (createToggle) await createToggle.click();
-      // wait for create input
-      await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 5000);
+      if (createToggle) {
+        await createToggle.click();
+        // small pause to let Angular render the form
+        await driver.sleep(500);
+      }
+      // wait for create input (allow more time on CI)
+      await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 15000);
       const gname = 'E2E Grupo ' + Date.now();
       await driver.findElement(By.css('input[placeholder="Nombre del nuevo grupo"]')).sendKeys(gname);
       const createBtn = await driver.findElement(By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Crear')]")).catch(()=>null);
@@ -70,16 +77,20 @@ describe('E2E - Create and delete gasto', function () {
     const addGastoBtn = await driver.findElement(By.xpath('//button[contains(. , "Añadir") and not(contains(. , "Cancelar"))]'));
     await addGastoBtn.click();
 
-    // back to group page; wait for gasto label
-    await driver.wait(until.elementLocated(By.xpath(`//div[contains(., "${desc}")]`)), 12000);
-    const gastoEl = await driver.findElement(By.xpath(`//div[contains(., "${desc}")]`));
+    // back to group page; wait for gasto label inside a specific mat-list-item
+    const gastoXpath = `//mat-list-item[.//div[contains(., "${desc}")]]`;
+    await driver.wait(until.elementLocated(By.xpath(gastoXpath)), 12000);
+    const gastoEl = await driver.findElement(By.xpath(gastoXpath));
     expect(await gastoEl.getText()).to.contain('E2E Test Gasto');
 
-    // delete the gasto: click delete icon/button near that gasto
-    const deleteBtn = await driver.findElement(By.xpath(`//div[contains(., "${desc}")]//button[contains(@title,'Eliminar gasto') or contains(. , 'Eliminar') or contains(@title,'delete')]`)).catch(async ()=>{
-      // try generic delete button in the same list item
-      return await driver.findElement(By.xpath(`(//mat-list-item//button[contains(@title,'Eliminar gasto') or contains(. , 'Eliminar')])[1]`));
-    });
+    // delete the gasto: click delete icon/button inside that specific list item
+    let deleteBtn = null;
+    try {
+      deleteBtn = await gastoEl.findElement(By.xpath('.//button[contains(@title,"Eliminar gasto") or .//mat-icon[text()="delete"] or contains(. , "Eliminar")]'));
+    } catch (err) {
+      // fallback: first generic delete button in the list
+      deleteBtn = await driver.findElement(By.xpath('(//mat-list-item//button[contains(@title,"Eliminar gasto") or contains(. , "Eliminar")])[1]'));
+    }
     // confirm the browser dialog
     await deleteBtn.click();
     // accept confirm dialog
@@ -90,9 +101,12 @@ describe('E2E - Create and delete gasto', function () {
       // some browsers may not raise alert; ignore
     }
 
-    // wait briefly and assert the gasto text no longer present
-    await driver.sleep(1500);
-    const elements = await driver.findElements(By.xpath(`//div[contains(., "${desc}")]`));
+    // wait until the specific mat-list-item for the gasto is gone
+    await driver.wait(async () => {
+      const els = await driver.findElements(By.xpath(gastoXpath));
+      return els.length === 0;
+    }, 5000, 'gasto was not removed in time');
+    const elements = await driver.findElements(By.xpath(gastoXpath));
     expect(elements.length).to.equal(0);
   });
 });

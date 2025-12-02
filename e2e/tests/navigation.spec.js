@@ -1,6 +1,14 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
+const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
+const createDriver = require('../driver');
+
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
 
 describe('E2E - Navigation and Account', function () {
   this.timeout(60000);
@@ -8,15 +16,10 @@ describe('E2E - Navigation and Account', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    const options = new chrome.Options();
-    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
-    options.addArguments(...args);
-    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+    driver = await createDriver();
     // open the app origin so we can write to localStorage for that origin
     await driver.get(BASE + '/');
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    await waitForAppReady(driver, 20000);
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'Test', email:'t@t.com'}));");
   });

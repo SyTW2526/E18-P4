@@ -1,6 +1,14 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const chrome = require('selenium-webdriver/chrome');
+const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
+const createDriver = require('../driver');
+
+async function waitForAppReady(driver, timeout = 15000) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
 
 describe('E2E - Create group', function () {
   this.timeout(60000);
@@ -9,23 +17,16 @@ describe('E2E - Create group', function () {
   let createdGroupId = null;
 
   before(async function () {
-    const options = new chrome.Options();
-    const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-    if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
-    options.addArguments(...args);
-    if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-    driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
+    driver = await createDriver();
     await driver.get(BASE + '/');
-    // wait for SPA root to be present before manipulating localStorage
-    await driver.wait(until.elementLocated(By.css('app-root, body')), 15000);
+    // wait for SPA root to be present and rendered before manipulating localStorage
+    await waitForAppReady(driver, 20000);
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");
   });
 
-  after(async function () {
-    if (driver) await driver.quit();
-  });
+  
 
   it('creates a new shared account via the create form', async function () {
     // helper: create an account directly via API so UI has deterministic data
@@ -63,17 +64,22 @@ describe('E2E - Create group', function () {
   });
 
   after(async function () {
-    if (!createdGroupId) return;
-    // attempt to delete the created group via the API; ignore errors
     try {
-      await driver.executeAsyncScript(function(id, baseApi, cb) {
-        fetch(baseApi + '/user-group/shared-accounts/' + id, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        }).then(resp => cb({ status: resp.status })).catch(err => cb({ error: (err && err.message) || String(err) }));
-      }, createdGroupId, 'http://localhost:5200');
-    } catch (e) {
-      // swallow cleanup errors
+      if (createdGroupId) {
+        // attempt to delete the created group via the API; ignore errors
+        try {
+          await driver.executeAsyncScript(function(id, baseApi, cb) {
+            fetch(baseApi + '/user-group/shared-accounts/' + id, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' }
+            }).then(resp => cb({ status: resp.status })).catch(err => cb({ error: (err && err.message) || String(err) }));
+          }, createdGroupId, 'http://localhost:5200');
+        } catch (e) {
+          // swallow cleanup errors
+        }
+      }
+    } finally {
+      if (driver) await driver.quit();
     }
   });
 });
