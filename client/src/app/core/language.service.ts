@@ -104,6 +104,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     featureTrackDebtsDesc: 'Sabe quién debe qué a quién en todo momento con balances actualizados',
     featureSettleUp: 'Liquidación simplificada',
     featureSettleUpDesc: 'Calcula la forma más eficiente de saldar todas las deudas del grupo',
+    createAccount: 'Crear Cuenta',
+    username: 'Nombre de Usuario',
+    usernameError: 'El nombre debe tener al menos 3 caracteres.',
+    passwordMinError: 'La contraseña debe tener al menos 6 caracteres.',
+    alreadyHaveAccountLogin: '¿Ya tienes cuenta? Inicia sesión',
   },
   en: {
     appTitle: 'PaySplit',
@@ -205,6 +210,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     featureTrackDebtsDesc: 'Know who owes what to whom at all times with updated balances',
     featureSettleUp: 'Simplified settlement',
     featureSettleUpDesc: 'Calculate the most efficient way to settle all group debts',
+    createAccount: 'Create Account',
+    username: 'Username',
+    usernameError: 'Name must be at least 3 characters.',
+    passwordMinError: 'Password must be at least 6 characters.',
+    alreadyHaveAccountLogin: 'Already have an account? Sign in',
   },
 };
 

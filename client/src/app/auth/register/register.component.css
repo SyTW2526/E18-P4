@@ -6,17 +6,31 @@
   min-height: 100vh;
   background-color: var(--bg-color, #0a0a0a); /* Usa la variable global o fallback */
   padding: 20px;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  flex: 1 1 auto !important;
+}
+
+/* Target the component host to ensure it takes full width */
+::ng-deep app-register {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Reestilizando la tarjeta de Material */
 mat-card {
-  width: 100%;
-  max-width: 400px;
+  width: 100% !important;
+  max-width: 400px !important;
   background-color: var(--secondary-bg, #1c1c1c) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 16px !important;
-  padding: 30px 20px;
+  padding: 40px 30px !important;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6) !important; /* Sombra profunda */
+  display: block !important;
+  margin: 0 auto !important;
+  box-sizing: border-box !important;
 }
 
 /* Títulos */
@@ -41,12 +55,44 @@ mat-card-title {
 /* Color de las etiquetas (labels) */
 ::ng-deep .mat-mdc-form-field-label {
   color: var(--text-muted, #a1a1aa) !important;
+  overflow: visible !important;
+  clip: auto !important;
+  top: 22px !important;
+  transform: translateY(0) !important;
 }
 
 /* Fondo de los campos de texto */
 ::ng-deep .mat-mdc-form-field-flex {
   background-color: rgba(255, 255, 255, 0.05) !important;
   border-radius: 8px 8px 0 0;
+  overflow: visible !important;
+  align-items: center !important;
+}
+
+/* Icon button suffix sizing */
+::ng-deep .mat-mdc-form-field-icon-suffix {
+  margin-right: -8px !important;
+}
+
+/* Form field container - allow text to display properly */
+::ng-deep .mat-mdc-form-field {
+  overflow: visible !important;
+  margin-bottom: 24px !important;
+  width: 100% !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+
+::ng-deep form {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Error message styling */
+::ng-deep .mat-mdc-form-field-error {
+  font-size: 0.75rem !important;
+  margin-top: 8px !important;
 }
 
 /* Línea inferior / Borde al enfocar (Verde Lima) */
