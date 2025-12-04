@@ -39,10 +39,10 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ accountName || 'Cuenta compartida' }}</h2>
-        <div style="font-size:0.9rem;color:#888;margin-left:0.5rem">ID: {{ accountId }}</div>
         <span style="margin-left:auto; display:flex; gap:0.5rem">
           <button mat-stroked-button color="primary" (click)="openCreateGasto()">Añadir gasto</button>
           <button mat-stroked-button color="accent" (click)="openBalance()">Balances</button>
+          <button mat-stroked-button (click)="openSettings()"><mat-icon style="font-size:18px;margin-right:4px">settings</mat-icon>Configuración</button>
           <button mat-stroked-button color="warn" (click)="deleteGroup()">Eliminar</button>
         </span>
       </div>
@@ -52,6 +52,24 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
           <h3>Resumen</h3>
           <p>Total cuenta: <strong>{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
           <p>Tu total pagado: <strong>{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+        </mat-card>
+
+        <mat-card style="flex:1">
+          <h3>Miembros ({{ miembros.length }})</h3>
+          <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">No hay miembros</div>
+          <mat-list *ngIf="miembros.length">
+            <mat-list-item *ngFor="let m of miembros" style="height:auto; padding:8px 0">
+              <div style="display:flex; align-items:center; gap:12px; width:100%">
+                <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:600; flex-shrink:0">
+                  {{ (m.nombre || m.email || 'U').charAt(0).toUpperCase() }}
+                </div>
+                <div style="flex:1; min-width:0">
+                  <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.nombre || m.username || 'Usuario' }}</div>
+                  <div style="font-size:0.85rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.email }}</div>
+                </div>
+              </div>
+            </mat-list-item>
+          </mat-list>
         </mat-card>
 
         <mat-card style="flex:2">
@@ -74,6 +92,32 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
           </mat-list>
         </mat-card>
       </div>
+
+      <!-- Add friend modal -->
+      <div *ngIf="showAddFriendModal" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:1000;" (click)="closeAddFriendModal()">
+        <div style="background:var(--secondary-bg); padding:24px; border-radius:8px; width:400px; max-width:90%; color:var(--text-main);" (click)="$event.stopPropagation()">
+          <h3 style="margin:0 0 16px">Añadir amigo al grupo</h3>
+          <div *ngIf="loadingFriends" style="padding:16px; text-align:center">Cargando amigos...</div>
+          <div *ngIf="!loadingFriends && availableFriends.length === 0" style="padding:16px; text-align:center; color:var(--text-muted)">No hay amigos disponibles para añadir</div>
+          <div *ngIf="!loadingFriends && availableFriends.length > 0" style="max-height:300px; overflow-y:auto; margin-bottom:16px">
+            <div *ngFor="let friend of availableFriends" 
+                 style="padding:12px; margin:4px 0; border-radius:6px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; display:flex; align-items:center; justify-content:space-between"
+                 [style.background]="selectedFriendToAdd === friend._id ? 'rgba(var(--primary-color-rgb, 103, 58, 183), 0.1)' : 'transparent'"
+                 (click)="selectFriendToAdd(friend)">
+              <div>
+                <div style="font-weight:600">{{ friend.nombre || friend.username || friend.email }}</div>
+                <div style="font-size:0.85rem; color:var(--text-muted)">{{ friend.email }}</div>
+              </div>
+              <mat-icon *ngIf="selectedFriendToAdd === friend._id" color="primary">check_circle</mat-icon>
+            </div>
+          </div>
+          <div *ngIf="addFriendError" style="color:#d9534f; margin-bottom:12px; font-size:0.9rem">{{ addFriendError }}</div>
+          <div style="display:flex; gap:8px; justify-content:flex-end">
+            <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">Cancelar</button>
+            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? 'Añadiendo...' : 'Añadir' }}</button>
+          </div>
+        </div>
+      </div>
     </section>
   `,
 })
@@ -92,6 +136,14 @@ export class AccountDetailComponent implements OnInit {
   selectedPayer: string | null = null;
   creating = false;
   createError: string | null = null;
+  
+  // Add friend modal state
+  showAddFriendModal = false;
+  availableFriends: any[] = [];
+  selectedFriendToAdd: string | null = null;
+  loadingFriends = false;
+  addingFriend = false;
+  addFriendError: string | null = null;
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
 
@@ -276,6 +328,10 @@ export class AccountDetailComponent implements OnInit {
     this.router.navigate(['/group', this.accountId, 'balance']);
   }
 
+  openSettings() {
+    this.router.navigate(['/group', this.accountId, 'settings']);
+  }
+
   removeGasto(id: string) {
     if (!confirm('¿Eliminar este gasto?')) return;
     this.auth.deleteGasto(id).subscribe({
@@ -322,15 +378,95 @@ export class AccountDetailComponent implements OnInit {
     const me = this.auth.getUser();
     if (!m) return '—';
     const id = typeof m === 'object' ? (m._id || m.id) : m;
+    
+    // Try to find the member in miembros array
+    const member = this.miembros.find((mem: any) => String(mem._id || mem.id) === String(id));
+    
     // determine base label
     let label = '';
-    if (typeof m === 'object') {
-      label = m.nombre || m.email || m._id || JSON.stringify(m);
+    if (member) {
+      label = member.nombre || member.username || member.email || 'Usuario';
+    } else if (typeof m === 'object') {
+      label = m.nombre || m.username || m.email || 'Usuario';
     } else {
-      label = String(m).slice(0, 12);
+      label = 'Usuario';
     }
     // if this is the current user, append (yo)
     if (me && (id === me._id || id === me.id)) return `${label} (yo)`;
     return label;
+  }
+
+  closeAddFriendModal() {
+    this.showAddFriendModal = false;
+    this.selectedFriendToAdd = null;
+    this.addFriendError = null;
+    this.availableFriends = [];
+  }
+
+  openAddFriendModal() {
+    this.showAddFriendModal = true;
+    this.loadAvailableFriends();
+  }
+
+  loadAvailableFriends() {
+    this.loadingFriends = true;
+    this.addFriendError = null;
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    
+    if (!myId) {
+      this.addFriendError = 'No autenticado';
+      this.loadingFriends = false;
+      return;
+    }
+
+    // Get current user's friends
+    this.auth.getAmigos(String(myId)).subscribe({
+      next: (res: any) => {
+        const friends = res?.amigos || [];
+        // Filter out friends who are already members of this group
+        const memberIds = this.miembros.map((m: any) => String(m._id || m.id));
+        this.availableFriends = friends.filter((f: any) => {
+          const fid = String(f._id || f.id);
+          return !memberIds.includes(fid);
+        });
+        this.loadingFriends = false;
+      },
+      error: (err: any) => {
+        this.addFriendError = 'No se pudieron cargar los amigos';
+        this.loadingFriends = false;
+      }
+    });
+  }
+
+  selectFriendToAdd(friend: any) {
+    this.selectedFriendToAdd = friend._id || friend.id;
+  }
+
+  addFriendToGroup() {
+    if (!this.selectedFriendToAdd) return;
+    
+    this.addingFriend = true;
+    this.addFriendError = null;
+
+    // Add the friend to the group via createUserGroup endpoint
+    const payload = {
+      id_usuario: this.selectedFriendToAdd,
+      id_grupo: this.accountId,
+      rol: 'miembro'
+    };
+
+    this.auth.createUserGroup(payload).subscribe({
+      next: () => {
+        this.addingFriend = false;
+        this.closeAddFriendModal();
+        // Reload account and members
+        this.loadAccountAndGastos();
+      },
+      error: (err: any) => {
+        this.addingFriend = false;
+        this.addFriendError = err?.error?.message || 'No se pudo añadir el amigo al grupo';
+      }
+    });
   }
 }

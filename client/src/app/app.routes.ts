@@ -12,6 +12,7 @@ export const routes: Routes = [
   // Ruta principal de la app (accedida tras autenticarse)
   { path: 'home', loadComponent: () => import('./paysplit/home/home.component').then(m => m.HomeComponent), title: 'Inicio', canActivate: [AuthGuard] },
   { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
+  { path: 'group/:id/settings', loadComponent: () => import('./paysplit/group-settings/group-settings.component').then(m => m.GroupSettingsComponent), title: 'Configuración del grupo', canActivate: [AuthGuard] },
   { path: 'group/:id/create-gasto', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Crear Gasto', canActivate: [AuthGuard] },
   { path: 'group/:id/gasto/:gastoId', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Editar Gasto', canActivate: [AuthGuard] },
   { path: 'group/:id/balance', loadComponent: () => import('./paysplit/balance/balance.component').then(m => m.BalanceComponent), title: 'Balances', canActivate: [AuthGuard] },

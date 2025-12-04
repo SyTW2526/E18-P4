@@ -8,7 +8,7 @@ import { AuthService } from '../auth/auth.service';
   selector: 'app-user-profile',
   imports: [CommonModule, RouterModule],
   template: `
-    <div style="max-width:820px; margin:88px auto 24px; padding:18px; background:var(--secondary-bg); border-radius:8px; color:var(--text-main);">
+    <div style="max-width:1000px; margin:88px auto 24px; padding:18px; background:var(--secondary-bg); border-radius:8px; color:var(--text-main);">
       <button (click)="goBack()" style="margin-bottom:12px; background:transparent; border:none; color:var(--primary-color); cursor:pointer">← Volver</button>
 
       <ng-container *ngIf="notAllowed">
@@ -25,21 +25,44 @@ import { AuthService } from '../auth/auth.service';
 
       <ng-container *ngIf="!notAllowed">
         <ng-container *ngIf="user; else loading">
-          <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px">
-            <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:32px; font-weight:700; flex-shrink:0">
-              {{ (user.nombre || user.username || 'U').charAt(0).toUpperCase() }}
-            </div>
+          <!-- Two column layout -->
+          <div style="display:flex; gap:24px; align-items:flex-start">
+            <!-- Left column: Profile info -->
             <div style="flex:1">
-              <h2 style="margin:0 0 8px">{{ user.nombre || user.username || 'Usuario' }}</h2>
-              <div style="color:var(--text-muted)">{{ user.email }}</div>
+              <div style="display:flex; align-items:center; gap:16px; margin-bottom:16px">
+                <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:32px; font-weight:700; flex-shrink:0">
+                  {{ (user.nombre || user.username || 'U').charAt(0).toUpperCase() }}
+                </div>
+                <div style="flex:1">
+                  <h2 style="margin:0 0 8px">{{ user.nombre || user.username || 'Usuario' }}</h2>
+                  <div style="color:var(--text-muted)">{{ user.email }}</div>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px">
+                <div style="font-weight:600">Registrado:</div>
+                <div>{{ user.fecha_registro ? (user.fecha_registro | date:'mediumDate') : 'N/A' }}</div>
+              </div>
+              <div>
+                <button *ngIf="isFriend && (auth.getUser()?._id !== (user?._id || user?.id))" (click)="showConfirm = true" style="background:#d9534f; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">Eliminar amigo</button>
+              </div>
             </div>
-          </div>
-          <div style="display:flex; gap:12px; flex-wrap:wrap">
-            <div style="font-weight:600">Registrado:</div>
-            <div>{{ user.fecha_registro ? (user.fecha_registro | date:'mediumDate') : 'N/A' }}</div>
-          </div>
-          <div style="margin-top:12px">
-            <button *ngIf="isFriend && (auth.getUser()?._id !== (user?._id || user?.id))" (click)="showConfirm = true" style="background:#d9534f; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">Eliminar amigo</button>
+
+            <!-- Right column: Common groups -->
+            <div style="width:320px; flex-shrink:0">
+              <h3 style="margin:0 0 12px; font-size:1rem">Grupos en común ({{ commonGroups.length }})</h3>
+              <div *ngIf="loadingGroups" style="color:var(--text-muted); font-size:0.9rem">Cargando grupos...</div>
+              <div *ngIf="!loadingGroups && commonGroups.length === 0" style="color:var(--text-muted); font-size:0.9rem">No tenéis grupos en común</div>
+              <div *ngIf="!loadingGroups && commonGroups.length > 0" style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto">
+                <div *ngFor="let group of commonGroups" 
+                     (click)="openGroup(group)"
+                     style="padding:12px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); cursor:pointer; transition:all 0.2s"
+                     onmouseover="this.style.background='rgba(255,255,255,0.06)'" 
+                     onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                  <div style="font-weight:600; font-size:0.95rem">{{ group.nombre || 'Grupo sin nombre' }}</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ group.descripcion || 'Sin descripción' }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </ng-container>
         <ng-template #loading>
@@ -69,6 +92,8 @@ export class UserProfileComponent implements OnInit {
   targetDisplayName = '';
   isFriend = false;
   showConfirm = false;
+  commonGroups: any[] = [];
+  loadingGroups = false;
 
   constructor(private route: ActivatedRoute, public auth: AuthService, private router: Router) {}
 
@@ -147,9 +172,11 @@ export class UserProfileComponent implements OnInit {
         if (friendObj && (friendObj.nombre || friendObj.email)) {
           // Use the populated friend data directly
           this.user = friendObj;
+          this.loadCommonGroups(String(myId), id);
         } else {
           // Fall back to fetching if not populated
           this.loadProfile(id);
+          this.loadCommonGroups(String(myId), id);
         }
       },
       error: () => {
@@ -163,6 +190,11 @@ export class UserProfileComponent implements OnInit {
       next: (u) => { 
         this.user = u; 
         console.log('Loaded user profile:', u);
+        const me = this.auth.getUser();
+        const myId = me?._id || me?.id;
+        if (myId) {
+          this.loadCommonGroups(String(myId), id);
+        }
       },
       error: (err) => { 
         console.error('Failed to load profile:', err);
@@ -176,6 +208,42 @@ export class UserProfileComponent implements OnInit {
   }
 
   goBack() { this.router.navigate(['/home']); }
+
+  loadCommonGroups(myId: string, friendId: string) {
+    this.loadingGroups = true;
+    this.commonGroups = [];
+
+    // Get my groups
+    this.auth.getGroupsForUser(myId).subscribe({
+      next: (myGroups: any[]) => {
+        // Get friend's groups
+        this.auth.getGroupsForUser(friendId).subscribe({
+          next: (friendGroups: any[]) => {
+            // Find common groups by comparing group IDs
+            const myGroupIds = new Set((myGroups || []).map((g: any) => String(g._id || g.id)));
+            this.commonGroups = (friendGroups || []).filter((g: any) => {
+              const gid = String(g._id || g.id);
+              return myGroupIds.has(gid);
+            });
+            this.loadingGroups = false;
+          },
+          error: () => {
+            this.loadingGroups = false;
+          }
+        });
+      },
+      error: () => {
+        this.loadingGroups = false;
+      }
+    });
+  }
+
+  openGroup(group: any) {
+    const gid = group._id || group.id;
+    if (gid) {
+      this.router.navigate(['/group', gid]);
+    }
+  }
 
   sendFriendRequest() {
     if (this.sendingRequest) return;
