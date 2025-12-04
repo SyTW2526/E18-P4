@@ -48,15 +48,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 5% 80px 5%; /* Moved hero content up additional 30px (total ~50px) */
+  padding: 10px 2% 80px 2%; /* Reduced side padding from 5% to 2% */
   min-height: 80vh;
+  gap: 60px; /* Added gap between columns */
 }
 
 /* Columna Izquierda */
 .hero-content {
   flex: 1;
-  max-width: 600px;
-  padding-right: 40px;
+  max-width: 650px;
+  padding-left: 3%;
+  padding-right: 20px;
 }
 
 .badge {
@@ -81,12 +83,25 @@
   box-shadow: 0 0 10px var(--primary-color);
 }
 
-h1 {
-  font-size: 3.5rem; /* Grande e impactante */
+.brand-name {
+  font-size: 4.5rem;
   line-height: 1.1;
-  font-weight: 800;
+  font-weight: 900;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.tagline {
+  font-size: 2.5rem;
+  line-height: 1.2;
+  font-weight: 700;
   margin-bottom: 24px;
   letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .text-gradient {
@@ -169,16 +184,91 @@ h1 {
   flex: 1;
   display: flex;
   justify-content: center;
+  align-items: center;
   position: relative;
 }
 
-.visual-card-wrapper {
-  position: relative;
-  width: 400px;
-  height: 500px;
+.feature-cards-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 500px;
+  width: 100%;
+  padding-right: 3%;
 }
 
-/* Small visual helpers removed to reduce component CSS size */
+.feature-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  opacity: 0;
+  animation: slideInRight 0.6s ease forwards;
+}
+
+.feature-card:hover {
+  transform: translateX(-8px);
+  border-color: var(--primary-color);
+  box-shadow: 0 8px 30px rgba(184, 241, 45, 0.15);
+}
+
+.feature-card.card-1 {
+  animation-delay: 0.1s;
+}
+
+.feature-card.card-2 {
+  animation-delay: 0.3s;
+}
+
+.feature-card.card-3 {
+  animation-delay: 0.5s;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, rgba(184, 241, 45, 0.6) 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-icon i {
+  font-size: 24px;
+  color: #000;
+}
+
+.feature-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.feature-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
 
 /* --- Features Footer --- */
 .trust-section {
@@ -206,9 +296,14 @@ h1 {
 @media (max-width: 900px) {
   .hero { flex-direction: column; text-align: center; padding-top: 0px; }
   .hero-content { padding-right: 0; margin-bottom: 60px; }
+  .brand-name { font-size: 3rem; }
+  .tagline { font-size: 1.8rem; }
   .subtitle { margin: 0 auto 40px auto; }
   .cta-group { justify-content: center; }
   .stats { justify-content: center; }
-  .landing-nav .nav-actions { display: none; } /* Ocultar botones nav en móvil si es necesario */
-  .visual-card-wrapper { width: 300px; height: 400px; }
+  .landing-nav .nav-actions { display: none; }
+  .feature-cards-stack { max-width: 100%; padding: 0 20px; }
+  .feature-card { padding: 20px; }
+  .feature-icon { width: 40px; height: 40px; }
+  .feature-icon i { font-size: 20px; }
 }

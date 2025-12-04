@@ -7,67 +7,67 @@
   <header class="hero">
     
     <div class="hero-content">
-      <div class="badge">
-        <span class="dot"></span> Novedad: Gestión de grupos v2.0
-      </div>
-      
-      <h1>
-        Divide gastos,<br>
-        <span class="text-gradient">multiplica experiencias.</span>
-      </h1>
+      <h1 class="brand-name">PaySplit</h1>
+      <h2 class="tagline">
+        {{ lang.t('landingHeading') }}<br>
+        <span class="text-gradient">{{ lang.t('landingHeadingGradient') }}</span>
+      </h2>
       
       <p class="subtitle">
-        La forma más sencilla de llevar las cuentas claras con amigos, compañeros de piso o en viajes. Sin hojas de cálculo, sin estrés.
+        {{ lang.t('landingDescription') }}
       </p>
 
       <div class="cta-group">
         <a routerLink="/register" class="btn-primary lg">
-          Empezar Gratis <span class="arrow">→</span>
+          {{ lang.t('startFree') }} <span class="arrow">→</span>
         </a>
         <a routerLink="/login" class="btn-secondary lg">
-          Ya tengo cuenta
+          {{ lang.t('alreadyHaveAccount') }}
         </a>
       </div>
 
       <div class="stats">
         <div class="stat-item">
           <strong>+10k</strong>
-          <span>Usuarios</span>
+          <span>{{ lang.t('users') }}</span>
         </div>
         <div class="divider"></div>
         <div class="stat-item">
           <strong>4.8/5</strong>
-          <span>Valoración</span>
+          <span>{{ lang.t('rating') }}</span>
         </div>
       </div>
     </div>
 
     <div class="hero-visual">
-      <div class="visual-card-wrapper">
-        <div class="floating-card card-top">
-          <div class="icon">🍕</div>
-          <div class="info">
-            <span>Cena Pizza</span>
-            <strong>24.50€</strong>
+      <div class="feature-cards-stack">
+        <div class="feature-card card-1">
+          <div class="feature-icon">
+            <i class="material-icons">analytics</i>
+          </div>
+          <div class="feature-content">
+            <h3>{{ lang.t('featureEqualSplit') }}</h3>
+            <p>{{ lang.t('featureEqualSplitDesc') }}</p>
           </div>
         </div>
-
-        <div class="main-visual">
-          <div class="screen-placeholder">
-             <div class="app-header-mock"></div>
-             <div class="app-body-mock">
-               <div class="mock-line w-70"></div>
-               <div class="mock-line w-50"></div>
-               <div class="mock-line w-90"></div>
-             </div>
+        
+        <div class="feature-card card-2">
+          <div class="feature-icon">
+            <i class="material-icons">account_balance_wallet</i>
+          </div>
+          <div class="feature-content">
+            <h3>{{ lang.t('featureTrackDebts') }}</h3>
+            <p>{{ lang.t('featureTrackDebtsDesc') }}</p>
           </div>
         </div>
-
-        <div class="floating-card card-bottom">
-          <div class="icon">✅</div>
-          <div class="info">
-            <span>Tu parte</span>
-            <strong class="positive">Pagado</strong>
+        
+        <div class="feature-card card-3">
+          <div class="feature-icon">
+            <i class="material-icons">check_circle</i>
+          </div>
+          <div class="feature-content">
+            <h3>{{ lang.t('featureSettleUp') }}</h3>
+            <p>{{ lang.t('featureSettleUpDesc') }}</p>
           </div>
         </div>
       </div>
@@ -75,19 +75,19 @@
   </header>
 
   <section class="trust-section">
-    <p>SIMPLIFICA TUS FINANZAS COMPARTIDAS</p>
+    <p>{{ lang.t('simplifySharedFinances') }}</p>
     <div class="features-grid">
       <div class="feature">
         <i class="material-icons">group</i>
-        <span>Grupos Ilimitados</span>
+        <span>{{ lang.t('unlimitedGroups') }}</span>
       </div>
       <div class="feature">
         <i class="material-icons">sync</i>
-        <span>Sincronización Real</span>
+        <span>{{ lang.t('realTimeSync') }}</span>
       </div>
       <div class="feature">
         <i class="material-icons">pie_chart</i>
-        <span>Balances Claros</span>
+        <span>{{ lang.t('clearBalances') }}</span>
       </div>
     </div>
   </section>
