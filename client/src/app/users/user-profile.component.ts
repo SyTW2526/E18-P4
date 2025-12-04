@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { LanguageService } from '../core/language.service';
 
 @Component({
   standalone: true,
@@ -9,7 +10,7 @@ import { AuthService } from '../auth/auth.service';
   imports: [CommonModule, RouterModule],
   template: `
     <div style="max-width:1000px; margin:88px auto 24px; padding:18px; background:var(--secondary-bg); border-radius:8px; color:var(--text-main);">
-      <button (click)="goBack()" style="margin-bottom:12px; background:transparent; border:none; color:var(--primary-color); cursor:pointer">← Volver</button>
+      <button (click)="goBack()" style="margin-bottom:12px; background:transparent; border:none; color:var(--primary-color); cursor:pointer">← {{ lang.t('back') }}</button>
 
       <ng-container *ngIf="notAllowed">
         <div style="padding:24px; text-align:center;">
@@ -17,7 +18,7 @@ import { AuthService } from '../auth/auth.service';
           <p style="color:var(--text-muted); margin:0 0 12px">No puedes ver este perfil porque no sois amigos.</p>
           <div style="display:flex; justify-content:center; gap:8px">
             <button (click)="sendFriendRequest()" [disabled]="sendingRequest" style="background:var(--primary-color); border:none; padding:8px 12px; border-radius:6px; cursor:pointer">{{ sendingRequest ? 'Enviando...' : 'Enviar solicitud' }}</button>
-            <button (click)="goBack()" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text-main); padding:8px 12px; border-radius:6px; cursor:pointer">Volver</button>
+            <button (click)="goBack()" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text-main); padding:8px 12px; border-radius:6px; cursor:pointer">{{ lang.t('back') }}</button>
           </div>
           <div *ngIf="requestMessage" style="margin-top:10px; color:var(--text-muted)">{{ requestMessage }}</div>
         </div>
@@ -39,19 +40,19 @@ import { AuthService } from '../auth/auth.service';
                 </div>
               </div>
               <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px">
-                <div style="font-weight:600">Registrado:</div>
+                <div style="font-weight:600">{{ lang.t('registered') }}:</div>
                 <div>{{ user.fecha_registro ? (user.fecha_registro | date:'mediumDate') : 'N/A' }}</div>
               </div>
               <div>
-                <button *ngIf="isFriend && (auth.getUser()?._id !== (user?._id || user?.id))" (click)="showConfirm = true" style="background:#d9534f; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">Eliminar amigo</button>
+                <button *ngIf="isFriend && (auth.getUser()?._id !== (user?._id || user?.id))" (click)="showConfirm = true" style="background:#d9534f; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">{{ lang.t('removeFriend') }}</button>
               </div>
             </div>
 
             <!-- Right column: Common groups -->
             <div style="width:320px; flex-shrink:0">
-              <h3 style="margin:0 0 12px; font-size:1rem">Grupos en común ({{ commonGroups.length }})</h3>
-              <div *ngIf="loadingGroups" style="color:var(--text-muted); font-size:0.9rem">Cargando grupos...</div>
-              <div *ngIf="!loadingGroups && commonGroups.length === 0" style="color:var(--text-muted); font-size:0.9rem">No tenéis grupos en común</div>
+              <h3 style="margin:0 0 12px; font-size:1rem">{{ lang.t('commonGroups') }} ({{ commonGroups.length }})</h3>
+              <div *ngIf="loadingGroups" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('loading') }}...</div>
+              <div *ngIf="!loadingGroups && commonGroups.length === 0" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('noGroups') }}</div>
               <div *ngIf="!loadingGroups && commonGroups.length > 0" style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto">
                 <div *ngFor="let group of commonGroups" 
                      (click)="openGroup(group)"
@@ -66,18 +67,18 @@ import { AuthService } from '../auth/auth.service';
           </div>
         </ng-container>
         <ng-template #loading>
-          <div>Loading...</div>
+          <div>{{ lang.t('loading') }}...</div>
         </ng-template>
       </ng-container>
 
       <!-- Confirmation overlay -->
       <div *ngIf="showConfirm" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); z-index:1000;">
         <div style="background:var(--secondary-bg); padding:20px; border-radius:8px; width:320px; text-align:center; color:var(--text-main);">
-          <div style="font-weight:700; margin-bottom:8px">¿Eliminar amigo?</div>
+          <div style="font-weight:700; margin-bottom:8px">{{ lang.t('removeFriend') }}?</div>
           <div style="color:var(--text-muted); margin-bottom:16px">Esta acción eliminará la relación de amistad.</div>
           <div style="display:flex; gap:8px; justify-content:center;">
-            <button (click)="unfriend()" style="background:var(--danger-color, #d9534f); border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">Eliminar</button>
-            <button (click)="showConfirm=false" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text-main); padding:8px 12px; border-radius:6px; cursor:pointer">Cancelar</button>
+            <button (click)="unfriend()" style="background:var(--danger-color, #d9534f); border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">{{ lang.t('delete') }}</button>
+            <button (click)="showConfirm=false" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text-main); padding:8px 12px; border-radius:6px; cursor:pointer">{{ lang.t('cancel') }}</button>
           </div>
         </div>
       </div>
@@ -95,7 +96,7 @@ export class UserProfileComponent implements OnInit {
   commonGroups: any[] = [];
   loadingGroups = false;
 
-  constructor(private route: ActivatedRoute, public auth: AuthService, private router: Router) {}
+  constructor(private route: ActivatedRoute, public auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
     const id = String(this.route.snapshot.paramMap.get('id') || '');

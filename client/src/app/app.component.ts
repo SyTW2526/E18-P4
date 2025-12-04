@@ -54,14 +54,14 @@ import { Router } from '@angular/router';
       <mat-toolbar color="primary">
       <span>{{ lang.t('appTitle') }}</span>
       <span class="spacer"></span>
-      <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language">{{ lang.current === 'es' ? 'ES' : 'EN' }}</button>
+      <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language" style="font-size:24px">{{ lang.current === 'es' ? '🇪🇸' : '🇬🇧' }}</button>
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/login">{{ lang.t('login') }}</button>
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/register">{{ lang.t('register') }}</button>
       <!-- Amigos dropdown -->
-      <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">Amigos</button>
+      <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">{{ lang.t('friends') }}</button>
       <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
         <ng-container *ngIf="peticiones && peticiones.length">
-          <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">Solicitudes ({{ peticiones.length }})</button>
+          <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">{{ lang.t('requests') }} ({{ peticiones.length }})</button>
 
           <ng-template
             cdk-connected-overlay
@@ -87,10 +87,10 @@ import { Router } from '@angular/router';
         </ng-container>
 
         <button mat-menu-item *ngFor="let f of friends" (click)="openFriend(f)">{{ f?.nombre || f?.name || f?.email || f }}</button>
-        <button mat-menu-item disabled *ngIf="!friends || friends.length === 0">No hay amigos</button>
+        <button mat-menu-item disabled *ngIf="!friends || friends.length === 0">{{ lang.t('noMembers') }}</button>
 
         <!-- Añadir amigo: connected overlay anchored to this menu item -->
-        <button mat-menu-item #addFriendOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleAddFriend();">Añadir amigo</button>
+        <button mat-menu-item #addFriendOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleAddFriend();">{{ lang.t('addFriend') }}</button>
 
         <ng-template
           cdk-connected-overlay
@@ -103,20 +103,20 @@ import { Router } from '@angular/router';
           <div class="add-friend-panel" style="min-width:260px; padding:12px; background:var(--secondary-bg); color:var(--text-main); border-radius:8px;">
             <ng-container *ngIf="!addFriendSuccess; else addSuccess">
               <div style="display:flex; flex-direction:column; gap:8px;">
-                <label style="font-weight:600;">Nombre de usuario</label>
+                <label style="font-weight:600;">{{ lang.t('name') }}</label>
                 <input placeholder="username" [(ngModel)]="addFriendUsername" style="width:100%; padding:8px; background:transparent; color:var(--text-main); border:1px solid rgba(255,255,255,0.06); border-radius:4px;" />
                 <div *ngIf="addFriendError" style="color:var(--primary-color); font-weight:600">{{ addFriendError }}</div>
                 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px">
-                  <button mat-button (click)="closeAddFriend()" [disabled]="addFriendLoading">Cancelar</button>
-                  <button mat-flat-button color="primary" (click)="onAddFriend()" [disabled]="addFriendLoading || !addFriendUsername || !addFriendUsername.trim()">{{ addFriendLoading ? 'Enviando...' : 'Añadir' }}</button>
+                  <button mat-button (click)="closeAddFriend()" [disabled]="addFriendLoading">{{ lang.t('cancel') }}</button>
+                  <button mat-flat-button color="primary" (click)="onAddFriend()" [disabled]="addFriendLoading || !addFriendUsername || !addFriendUsername.trim()">{{ addFriendLoading ? lang.t('loading') : lang.t('add') }}</button>
                 </div>
               </div>
             </ng-container>
             <ng-template #addSuccess>
               <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px">
                 <mat-icon style="font-size:28px; color:var(--primary-color)">check_circle</mat-icon>
-                <div style="font-weight:700">Solicitud enviada</div>
-                <div style="color:var(--text-main); opacity:0.9">La solicitud fue enviada correctamente.</div>
+                <div style="font-weight:700">{{ lang.t('requests') }}</div>
+                <div style="color:var(--text-main); opacity:0.9">{{ lang.t('changesSaved') }}</div>
               </div>
             </ng-template>
           </div>

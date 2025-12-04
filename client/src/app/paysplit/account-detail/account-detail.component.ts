@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
+import { LanguageService } from '../../core/language.service';
 import { forkJoin, of } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
@@ -38,25 +39,25 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     <section style="max-width:900px; width:100%; margin:0 auto; text-align:left; padding-bottom:1.5rem">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">{{ accountName || 'Cuenta compartida' }}</h2>
+        <h2 style="margin:0">{{ accountName || lang.t('sharedAccount') }}</h2>
         <span style="margin-left:auto; display:flex; gap:0.5rem">
-          <button mat-stroked-button color="primary" (click)="openCreateGasto()">Añadir gasto</button>
-          <button mat-stroked-button color="accent" (click)="openBalance()">Balances</button>
-          <button mat-stroked-button (click)="openSettings()"><mat-icon style="font-size:18px;margin-right:4px">settings</mat-icon>Configuración</button>
-          <button mat-stroked-button color="warn" (click)="deleteGroup()">Eliminar</button>
+          <button mat-stroked-button color="primary" (click)="openCreateGasto()">{{ lang.t('addExpense') }}</button>
+          <button mat-stroked-button color="accent" (click)="openBalance()">{{ lang.t('balances') }}</button>
+          <button mat-stroked-button (click)="openSettings()"><mat-icon style="font-size:18px;margin-right:4px">settings</mat-icon>{{ lang.t('settings') }}</button>
+          <button mat-stroked-button color="warn" (click)="deleteGroup()">{{ lang.t('delete') }}</button>
         </span>
       </div>
 
       <div style="display:flex;gap:1rem;margin-top:0.5rem">
         <mat-card style="flex:1">
-          <h3>Resumen</h3>
-          <p>Total cuenta: <strong>{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
-          <p>Tu total pagado: <strong>{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+          <h3>{{ lang.t('summary') }}</h3>
+          <p>{{ lang.t('accountTotal') }}: <strong>{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+          <p>{{ lang.t('yourTotal') }}: <strong>{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
         </mat-card>
 
         <mat-card style="flex:1">
-          <h3>Miembros ({{ miembros.length }})</h3>
-          <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">No hay miembros</div>
+          <h3>{{ lang.t('members') }} ({{ miembros.length }})</h3>
+          <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('noMembers') }}</div>
           <mat-list *ngIf="miembros.length">
             <mat-list-item *ngFor="let m of miembros" style="height:auto; padding:8px 0">
               <div style="display:flex; align-items:center; gap:12px; width:100%">
@@ -73,19 +74,19 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
         </mat-card>
 
         <mat-card style="flex:2">
-          <h3>Historial de gastos</h3>
-          <div *ngIf="!gastos.length">No hay gastos todavía.</div>
+          <h3>{{ lang.t('expenseHistory') }}</h3>
+          <div *ngIf="!gastos.length">{{ lang.t('noExpensesYet') }}</div>
           <mat-list *ngIf="gastos.length">
               <mat-list-item *ngFor="let g of gastos">
                 <div style="display:flex;justify-content:space-between;width:100%">
                   <div>
                     <div style="font-weight:600">{{ g.descripcion }}</div>
-                    <div style="font-size:0.9rem;color:#666">por {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'short') : '' }}</div>
+                    <div style="font-size:0.9rem;color:#666">{{ lang.t('by') }} {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'short') : '' }}</div>
                   </div>
                   <div style="display:flex;gap:0.5rem;align-items:center">
                     <div style="font-weight:700">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</div>
-                    <button mat-icon-button title="Editar gasto" (click)="editGasto(g._id || g.id || g._id?.toString())"><mat-icon>edit</mat-icon></button>
-                    <button mat-icon-button color="warn" title="Eliminar gasto" (click)="removeGasto(g._id || g.id || g._id?.toString())"><mat-icon>delete</mat-icon></button>
+                    <button mat-icon-button [title]="lang.t('editExpense')" (click)="editGasto(g._id || g.id || g._id?.toString())"><mat-icon>edit</mat-icon></button>
+                    <button mat-icon-button color="warn" [title]="lang.t('deleteExpense')" (click)="removeGasto(g._id || g.id || g._id?.toString())"><mat-icon>delete</mat-icon></button>
                   </div>
                 </div>
               </mat-list-item>
@@ -96,9 +97,9 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
       <!-- Add friend modal -->
       <div *ngIf="showAddFriendModal" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:1000;" (click)="closeAddFriendModal()">
         <div style="background:var(--secondary-bg); padding:24px; border-radius:8px; width:400px; max-width:90%; color:var(--text-main);" (click)="$event.stopPropagation()">
-          <h3 style="margin:0 0 16px">Añadir amigo al grupo</h3>
-          <div *ngIf="loadingFriends" style="padding:16px; text-align:center">Cargando amigos...</div>
-          <div *ngIf="!loadingFriends && availableFriends.length === 0" style="padding:16px; text-align:center; color:var(--text-muted)">No hay amigos disponibles para añadir</div>
+          <h3 style="margin:0 0 16px">{{ lang.t('addFriend') }}</h3>
+          <div *ngIf="loadingFriends" style="padding:16px; text-align:center">{{ lang.t('loading') }}</div>
+          <div *ngIf="!loadingFriends && availableFriends.length === 0" style="padding:16px; text-align:center; color:var(--text-muted)">{{ lang.t('noMembers') }}</div>
           <div *ngIf="!loadingFriends && availableFriends.length > 0" style="max-height:300px; overflow-y:auto; margin-bottom:16px">
             <div *ngFor="let friend of availableFriends" 
                  style="padding:12px; margin:4px 0; border-radius:6px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; display:flex; align-items:center; justify-content:space-between"
@@ -113,8 +114,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
           </div>
           <div *ngIf="addFriendError" style="color:#d9534f; margin-bottom:12px; font-size:0.9rem">{{ addFriendError }}</div>
           <div style="display:flex; gap:8px; justify-content:flex-end">
-            <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">Cancelar</button>
-            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? 'Añadiendo...' : 'Añadir' }}</button>
+            <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">{{ lang.t('cancel') }}</button>
+            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? lang.t('loading') : lang.t('add') }}</button>
           </div>
         </div>
       </div>
@@ -145,7 +146,7 @@ export class AccountDetailComponent implements OnInit {
   addingFriend = false;
   addFriendError: string | null = null;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
+import { LanguageService } from '../../core/language.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,10 +25,10 @@ import { MatInputModule } from '@angular/material/input';
     <section style="max-width:1200px; width:100%; margin:0 auto; text-align:left; padding:1.5rem 1rem 1.5rem 1rem">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">Configuración del grupo</h2>
+        <h2 style="margin:0">{{ lang.t('groupSettings') }}</h2>
       </div>
 
-      <div *ngIf="loading" style="text-align:center; padding:2rem">Cargando...</div>
+      <div *ngIf="loading" style="text-align:center; padding:2rem">{{ lang.t('loading') }}...</div>
       <div *ngIf="error" style="color:#d9534f; padding:1rem; margin-bottom:1rem">{{ error }}</div>
 
       <div *ngIf="!loading && account" style="display:flex; gap:1.5rem; align-items:flex-start">
@@ -35,25 +36,25 @@ import { MatInputModule } from '@angular/material/input';
         <div style="flex:1; min-width:400px">
           <mat-card style="padding:0">
             <div style="padding:24px">
-              <h3 style="margin-top:0; margin-bottom:1rem">Perfil del grupo</h3>
+              <h3 style="margin-top:0; margin-bottom:1rem">{{ lang.t('groupProfile') }}</h3>
               <div style="display:flex; align-items:flex-start; gap:24px; margin-bottom:1.5rem">
                 <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:40px; font-weight:700; flex-shrink:0">
                   {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
                 </div>
                 <div style="flex:1; min-width:0">
                   <div style="margin-bottom:12px">
-                    <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">Nombre del grupo</label>
+                    <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('groupName') }}</label>
                     <input type="text" [(ngModel)]="account.nombre" name="nombre" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box" />
                   </div>
                 </div>
               </div>
               <div style="margin-bottom:12px">
-                <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">Descripción</label>
+                <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('description') }}</label>
                 <textarea [(ngModel)]="account.descripcion" name="descripcion" rows="3" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; font-family:inherit; resize:vertical; box-sizing:border-box"></textarea>
               </div>
               <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px">
-                <button mat-stroked-button (click)="cancelChanges()">Cancelar</button>
-                <button mat-flat-button color="primary" (click)="saveChanges()" [disabled]="saving">{{ saving ? 'Guardando...' : 'Guardar cambios' }}</button>
+                <button mat-stroked-button (click)="cancelChanges()">{{ lang.t('cancel') }}</button>
+                <button mat-flat-button color="primary" (click)="saveChanges()" [disabled]="saving">{{ saving ? lang.t('saving') + '...' : lang.t('saveChanges') }}</button>
               </div>
               <div *ngIf="saveMessage" style="margin-top:12px; color:var(--primary-color)">{{ saveMessage }}</div>
             </div>
@@ -65,12 +66,12 @@ import { MatInputModule } from '@angular/material/input';
           <mat-card style="padding:0">
             <div style="padding:24px">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
-                <h3 style="margin:0">Miembros ({{ miembros.length }})</h3>
-                <button mat-icon-button (click)="openAddFriendModal()" title="Añadir amigo" style="min-width:40px">
+                <h3 style="margin:0">{{ lang.t('members') }} ({{ miembros.length }})</h3>
+                <button mat-icon-button (click)="openAddFriendModal()" [title]="lang.t('addFriend')" style="min-width:40px">
                   <mat-icon>person_add</mat-icon>
                 </button>
               </div>
-              <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">No hay miembros</div>
+              <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('noMembers') }}</div>
               <div *ngIf="miembros.length" style="display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto">
                 <div *ngFor="let m of miembros" style="display:flex; align-items:center; gap:12px; padding:12px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06)">
                   <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:600; flex-shrink:0">
@@ -90,9 +91,9 @@ import { MatInputModule } from '@angular/material/input';
       <!-- Add friend modal -->
       <div *ngIf="showAddFriendModal" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); z-index:1000;" (click)="closeAddFriendModal()">
         <div style="background:var(--secondary-bg); padding:24px; border-radius:8px; width:400px; max-width:90%; color:var(--text-main);" (click)="$event.stopPropagation()">
-          <h3 style="margin:0 0 16px">Añadir amigo al grupo</h3>
-          <div *ngIf="loadingFriends" style="padding:16px; text-align:center">Cargando amigos...</div>
-          <div *ngIf="!loadingFriends && availableFriends.length === 0" style="padding:16px; text-align:center; color:var(--text-muted)">No hay amigos disponibles para añadir</div>
+          <h3 style="margin:0 0 16px">{{ lang.t('addFriend') }}</h3>
+          <div *ngIf="loadingFriends" style="padding:16px; text-align:center">{{ lang.t('loading') }}...</div>
+          <div *ngIf="!loadingFriends && availableFriends.length === 0" style="padding:16px; text-align:center; color:var(--text-muted)">{{ lang.t('noMembers') }}</div>
           <div *ngIf="!loadingFriends && availableFriends.length > 0" style="max-height:300px; overflow-y:auto; margin-bottom:16px">
             <div *ngFor="let friend of availableFriends" 
                  style="padding:12px; margin:4px 0; border-radius:6px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; display:flex; align-items:center; justify-content:space-between"
@@ -107,8 +108,8 @@ import { MatInputModule } from '@angular/material/input';
           </div>
           <div *ngIf="addFriendError" style="color:#d9534f; margin-bottom:12px; font-size:0.9rem">{{ addFriendError }}</div>
           <div style="display:flex; gap:8px; justify-content:flex-end">
-            <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">Cancelar</button>
-            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? 'Añadiendo...' : 'Añadir' }}</button>
+            <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">{{ lang.t('cancel') }}</button>
+            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? lang.t('loading') + '...' : lang.t('addFriend') }}</button>
           </div>
         </div>
       </div>
@@ -133,7 +134,7 @@ export class GroupSettingsComponent implements OnInit {
   addingFriend = false;
   addFriendError: string | null = null;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
@@ -202,7 +203,7 @@ export class GroupSettingsComponent implements OnInit {
     this.auth.updateSharedAccount(this.accountId, payload).subscribe({
       next: (res: any) => {
         this.saving = false;
-        this.saveMessage = 'Cambios guardados correctamente';
+        this.saveMessage = this.lang.t('changesSaved');
         this.originalAccount = { ...this.account };
         setTimeout(() => {
           this.saveMessage = null;
@@ -213,13 +214,13 @@ export class GroupSettingsComponent implements OnInit {
         console.error('Save error:', err);
         // Check if it's actually a successful response with error status
         if (err.status >= 200 && err.status < 300) {
-          this.saveMessage = 'Cambios guardados correctamente';
+          this.saveMessage = this.lang.t('changesSaved');
           this.originalAccount = { ...this.account };
           setTimeout(() => {
             this.saveMessage = null;
           }, 3000);
         } else {
-          this.error = err?.error?.message || 'No se pudieron guardar los cambios';
+          this.error = err?.error?.message || this.lang.t('errorSaving');
         }
       },
     });
