@@ -128,9 +128,30 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/users/${userId}/amigos`);
   }
 
+  // Get incoming friend requests (peticiones_amistad)
+  getPeticiones(userId: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${userId}/peticiones-amistad`);
+  }
+
   // Send a friend request (add senderId to receiver's peticiones_amistad)
   addAmigo(receiverId: string, senderId: string) {
     return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/add-amigo`, { senderId });
+  }
+
+  // Accept a friend request (current user accepts senderId)
+  acceptAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/accept-amigo`, { senderId });
+  }
+
+  // Reject a friend request (current user rejects senderId)
+  rejectAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/reject-amigo`, { senderId });
+  }
+
+  // Remove a friend (delete) - requests server to remove amigoId from user's amigos list
+  removeAmigo(userId: string, amigoId: string) {
+    // Use HTTP request to send a DELETE with a body (some Angular versions require request() helper)
+    return this.http.request('delete', `${this.baseUrl}/users/${userId}/remove-amigo`, { body: { amigoId } });
   }
 
   // Helper: find a user by username (server-side lookup)

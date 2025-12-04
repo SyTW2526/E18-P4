@@ -10,10 +10,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
@@ -30,10 +29,9 @@ import { Router } from '@angular/router';
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
-    MatDialogModule,
+    MatDividerModule,
+    OverlayModule,
     MatSnackBarModule,
-    MatFormFieldModule,
-    MatInputModule,
     FormsModule,
     HttpClientModule,
     FooterComponent,
@@ -62,9 +60,67 @@ import { Router } from '@angular/router';
       <!-- Amigos dropdown -->
       <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">Amigos</button>
       <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
+        <ng-container *ngIf="peticiones && peticiones.length">
+          <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">Solicitudes ({{ peticiones.length }})</button>
+
+          <ng-template
+            cdk-connected-overlay
+            [cdkConnectedOverlayOrigin]="requestsOrigin"
+            [cdkConnectedOverlayPositions]="overlayPositions"
+            [cdkConnectedOverlayOpen]="requestsOpen"
+            [cdkConnectedOverlayHasBackdrop]="true"
+            (backdropClick)="closeRequests()"
+          >
+            <div class="requests-panel" style="min-width:220px; padding:8px; background:var(--secondary-bg); color:var(--text-main); border-radius:8px;">
+              <ng-container *ngFor="let p of peticiones">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 4px;">
+                  <div style="flex:1; cursor:pointer;" (click)="openFriend(p)">{{ p?.nombre || p?.username || p?.email || p }}</div>
+                  <div style="display:flex; gap:4px;">
+                    <button mat-icon-button color="primary" (click)="acceptRequest(p)" [disabled]="p.processing"><mat-icon>check</mat-icon></button>
+                    <button mat-icon-button (click)="rejectRequest(p)" [disabled]="p.processing"><mat-icon>close</mat-icon></button>
+                  </div>
+                </div>
+              </ng-container>
+              <div *ngIf="!peticiones || peticiones.length === 0">No hay solicitudes</div>
+            </div>
+          </ng-template>
+        </ng-container>
+
         <button mat-menu-item *ngFor="let f of friends" (click)="openFriend(f)">{{ f?.nombre || f?.name || f?.email || f }}</button>
         <button mat-menu-item disabled *ngIf="!friends || friends.length === 0">No hay amigos</button>
-        <button mat-menu-item (click)="promptAddFriend()">Añadir amigo</button>
+
+        <!-- Añadir amigo: connected overlay anchored to this menu item -->
+        <button mat-menu-item #addFriendOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleAddFriend();">Añadir amigo</button>
+
+        <ng-template
+          cdk-connected-overlay
+          [cdkConnectedOverlayOrigin]="addFriendOrigin"
+          [cdkConnectedOverlayPositions]="overlayPositions"
+          [cdkConnectedOverlayOpen]="addFriendOpen"
+          [cdkConnectedOverlayHasBackdrop]="true"
+          (backdropClick)="closeAddFriend()"
+        >
+          <div class="add-friend-panel" style="min-width:260px; padding:12px; background:var(--secondary-bg); color:var(--text-main); border-radius:8px;">
+            <ng-container *ngIf="!addFriendSuccess; else addSuccess">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <label style="font-weight:600;">Nombre de usuario</label>
+                <input placeholder="username" [(ngModel)]="addFriendUsername" style="width:100%; padding:8px; background:transparent; color:var(--text-main); border:1px solid rgba(255,255,255,0.06); border-radius:4px;" />
+                <div *ngIf="addFriendError" style="color:var(--primary-color); font-weight:600">{{ addFriendError }}</div>
+                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px">
+                  <button mat-button (click)="closeAddFriend()" [disabled]="addFriendLoading">Cancelar</button>
+                  <button mat-flat-button color="primary" (click)="onAddFriend()" [disabled]="addFriendLoading || !addFriendUsername || !addFriendUsername.trim()">{{ addFriendLoading ? 'Enviando...' : 'Añadir' }}</button>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #addSuccess>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px">
+                <mat-icon style="font-size:28px; color:var(--primary-color)">check_circle</mat-icon>
+                <div style="font-weight:700">Solicitud enviada</div>
+                <div style="color:var(--text-main); opacity:0.9">La solicitud fue enviada correctamente.</div>
+              </div>
+            </ng-template>
+          </div>
+        </ng-template>
       </mat-menu>
       <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
       <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-icon-button (click)="logout()">
@@ -81,8 +137,21 @@ export class AppComponent implements OnInit {
   title = 'bill-splitter-client'; // Título actualizado
   showAuthenticatedControls = true;
   friends: any[] = [];
+  peticiones: any[] = [];
+  requestsOpen = false;
+  overlayPositions: any[] = [
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
+  ];
   @ViewChild('friendsBtn', { read: ElementRef }) friendsBtn?: ElementRef;
-  constructor(public authService: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService, private dialog: MatDialog, private snackBar: MatSnackBar) {}
+  // add-friend overlay state
+  addFriendOpen = false;
+  addFriendUsername = '';
+  addFriendLoading = false;
+  addFriendError = '';
+  addFriendSuccess = false;
+  constructor(public authService: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'
@@ -101,7 +170,10 @@ export class AppComponent implements OnInit {
 
     // load friends from the stored user object (if present)
     this.loadFriends();
+    this.loadPeticiones();
   }
+
+  
 
   private updateHeaderVisibility() {
     const url = this.router.url || '/';
@@ -118,6 +190,82 @@ export class AppComponent implements OnInit {
     this.lang.toggle();
   }
 
+  toggleRequests() {
+    this.requestsOpen = !this.requestsOpen;
+  }
+
+  closeRequests() {
+    this.requestsOpen = false;
+  }
+
+  toggleAddFriend() {
+    this.addFriendOpen = !this.addFriendOpen;
+    if (!this.addFriendOpen) {
+      this.addFriendUsername = '';
+      this.addFriendError = '';
+      this.addFriendLoading = false;
+    }
+  }
+
+  closeAddFriend() {
+    this.addFriendOpen = false;
+    this.addFriendUsername = '';
+    this.addFriendError = '';
+    this.addFriendLoading = false;
+  }
+
+  onAddFriend() {
+    const v = String(this.addFriendUsername || '').trim();
+    if (!v) return;
+    this.addFriendError = '';
+    this.addFriendLoading = true;
+
+    this.authService.findUserByUsername(v).subscribe({
+      next: (users: any[]) => {
+        const match = (users || []).find(u => String(u.nombre || u.username || u.email).toLowerCase() === String(v).toLowerCase());
+        if (!match) {
+          this.addFriendError = 'Usuario no encontrado';
+          this.addFriendLoading = false;
+          return;
+        }
+        const receiverId = match._id || match.id;
+        const me = this.authService.getUser();
+        const senderId = me?._id || me?.id;
+        if (!senderId) {
+          this.addFriendError = 'No autenticado';
+          this.addFriendLoading = false;
+          return;
+        }
+
+        this.authService.addAmigo(String(receiverId), String(senderId)).subscribe({
+          next: () => {
+            this.addFriendLoading = false;
+            // show inline success feedback, then auto-close shortly after
+            this.addFriendSuccess = true;
+            this.snackBar.open('Solicitud de amistad enviada', 'Cerrar', { duration: 3000 });
+            // refresh lists after a short delay
+            setTimeout(() => {
+              this.loadPeticiones();
+              this.loadFriends();
+              this.closeAddFriend();
+              this.addFriendSuccess = false;
+            }, 1400);
+          },
+          error: (err) => {
+            console.error(err);
+            this.addFriendError = err?.error?.message || err?.message || 'Error al enviar la solicitud';
+            this.addFriendLoading = false;
+          }
+        });
+      },
+      error: (err) => {
+        console.error(err);
+        this.addFriendError = err?.error?.message || err?.message || 'Error buscando usuario';
+        this.addFriendLoading = false;
+      }
+    });
+  }
+
   private loadFriends() {
     // prefer fetching the latest amigos from the server
     try {
@@ -128,9 +276,21 @@ export class AppComponent implements OnInit {
 
       this.authService.getAmigos(String(userId)).subscribe({
         next: (res: any) => {
-          const ids: any[] = res?.amigos || res || [];
-          if (!Array.isArray(ids) || ids.length === 0) { this.friends = []; return; }
-          const calls = ids.map((fid: any) => {
+          const idsOrObjs: any[] = res?.amigos || res || [];
+          if (!Array.isArray(idsOrObjs) || idsOrObjs.length === 0) { this.friends = []; return; }
+
+          // If server already returned full friend objects (with nombre/email), use them directly.
+          const looksLikeUserObjects = idsOrObjs.every(item => item && (item.nombre || item.email || item._id));
+          if (looksLikeUserObjects) {
+            this.friends = idsOrObjs.map((u: any) => {
+              // normalize id field
+              return { ...u, _id: u._id || u.id };
+            });
+            return;
+          }
+
+          // Otherwise treat them as ids (strings/ObjectId-like) and fetch each profile.
+          const calls = idsOrObjs.map((fid: any) => {
             try { return this.authService.getUserById(String(fid)); }
             catch { return of(null); }
           });
@@ -143,6 +303,74 @@ export class AppComponent implements OnInit {
       });
     } catch (e) {
       this.friends = [];
+    }
+  }
+
+  private loadPeticiones() {
+    try {
+      if (!this.authService.isLoggedIn()) { this.peticiones = []; return; }
+      const user = this.authService.getUser();
+      const userId = user?._id || user?.id;
+      if (!userId) { this.peticiones = []; return; }
+
+      this.authService.getPeticiones(String(userId)).subscribe({
+        next: (res: any) => {
+          const ids: any[] = res?.peticiones_amistad || res || [];
+          if (!Array.isArray(ids) || ids.length === 0) { this.peticiones = []; return; }
+          const calls = ids.map((fid: any) => {
+            try { return this.authService.getUserById(String(fid)); }
+            catch { return of(null); }
+          });
+          forkJoin(calls).subscribe({
+            next: (arr: any[]) => { this.peticiones = (arr || []).filter(Boolean); },
+            error: () => { this.peticiones = []; }
+          });
+        },
+        error: () => { this.peticiones = []; }
+      });
+    } catch (e) {
+      this.peticiones = [];
+    }
+  }
+
+  acceptRequest(p: any) {
+    try {
+      if (!p) return;
+      p.processing = true;
+      const me = this.authService.getUser();
+      const myId = me?._id || me?.id;
+      if (!myId) { this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 }); p.processing = false; return; }
+      const senderId = p._id || p.id;
+      this.authService.acceptAmigo(String(myId), String(senderId)).subscribe({
+        next: () => {
+          this.snackBar.open('Amigo aceptado', 'Cerrar', { duration: 3000 });
+          this.loadPeticiones();
+          this.loadFriends();
+        },
+        error: (err) => { console.error(err); this.snackBar.open('Error aceptando solicitud', 'Cerrar', { duration: 3000 }); p.processing = false; }
+      });
+    } catch (e) {
+      console.error(e); p.processing = false;
+    }
+  }
+
+  rejectRequest(p: any) {
+    try {
+      if (!p) return;
+      p.processing = true;
+      const me = this.authService.getUser();
+      const myId = me?._id || me?.id;
+      if (!myId) { this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 }); p.processing = false; return; }
+      const senderId = p._id || p.id;
+      this.authService.rejectAmigo(String(myId), String(senderId)).subscribe({
+        next: () => {
+          this.snackBar.open('Solicitud rechazada', 'Cerrar', { duration: 3000 });
+          this.loadPeticiones();
+        },
+        error: (err) => { console.error(err); this.snackBar.open('Error rechazando solicitud', 'Cerrar', { duration: 3000 }); p.processing = false; }
+      });
+    } catch (e) {
+      console.error(e); p.processing = false;
     }
   }
 
@@ -181,61 +409,5 @@ export class AppComponent implements OnInit {
     }
   }
 
-  promptAddFriend() {
-    // open dialog to ask for username, then run the same lookup/add flow
-    try {
-      // dynamic import and open
-      import('./add-friend-dialog/add-friend-dialog.component').then(m => {
-        const ref = this.dialog.open(m.AddFriendDialogComponent, { width: '360px' });
-        // Ensure dialog container uses app colors even if Material applies inline/author styles
-        try {
-          ref.afterOpened().subscribe(() => {
-            try {
-              const panes = document.querySelectorAll('.cdk-overlay-pane');
-              if (!panes || panes.length === 0) return;
-              const pane = panes[panes.length - 1] as HTMLElement;
-              // position the overlay pane itself on the right side so the dialog appears on the right
-              try {
-                pane.style.setProperty('right', '16px', 'important');
-                pane.style.setProperty('left', 'auto', 'important');
-                pane.style.setProperty('top', `${Math.max(16, window.scrollY + 80)}px`, 'important');
-                pane.style.setProperty('position', 'fixed', 'important');
-                pane.style.setProperty('transform', 'none', 'important');
-              } catch (e) { /* ignore */ }
-
-              const dialogEl = pane.querySelector('.mat-dialog-container, .mat-mdc-dialog-container') as HTMLElement | null;
-              if (dialogEl) {
-                dialogEl.style.setProperty('background', 'linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%)', 'important');
-                dialogEl.style.setProperty('color', 'var(--text-main)', 'important');
-                dialogEl.style.setProperty('border-radius', '10px', 'important');
-                // ensure inputs inside are dark/transparent
-                const inputs = dialogEl.querySelectorAll('input, textarea');
-                inputs.forEach((inp: any) => {
-                  try { inp.style.setProperty('background-color', 'transparent', 'important'); inp.style.setProperty('color', 'var(--text-main)', 'important'); } catch(e) {}
-                });
-                // position the dialog on the right side of the viewport
-                try {
-                  // anchor 16px from right and 80px from top
-                  dialogEl.style.setProperty('right', '16px', 'important');
-                  dialogEl.style.setProperty('left', 'auto', 'important');
-                  dialogEl.style.setProperty('top', `${Math.max(16, window.scrollY + 80)}px`, 'important');
-                  dialogEl.style.setProperty('transform', 'none', 'important');
-                } catch (e) { /* ignore */ }
-              }
-            } catch (e) { /* ignore */ }
-          });
-        } catch (e) { /* ignore errors if API missing */ }
-        ref.afterClosed().subscribe((result: any) => {
-          // dialog returns `true` on success — refresh friends and show a snackbar
-          if (result === true) {
-            this.snackBar.open('Solicitud de amistad enviada', 'Cerrar', { duration: 3000 });
-            this.loadFriends();
-          }
-        });
-      }).catch(err => { console.error(err); alert('Error abriendo el diálogo'); });
-    } catch (e) {
-      console.error(e);
-      this.snackBar.open('Error inesperado', 'Cerrar', { duration: 3000 });
-    }
-  }
+  
 }
