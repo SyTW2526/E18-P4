@@ -8,5 +8,7 @@ export interface User {
     foto_perfil?: string;
     fecha_registro: Date;
     preferencia_tema: "claro" | "oscuro";
+    amigos?: string[]; // Array of user IDs
+    peticiones_amistad?: string[]; // Array of user IDs
     _id?: mongodb.ObjectId;
 }

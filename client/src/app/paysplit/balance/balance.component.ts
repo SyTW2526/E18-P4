@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
+import { LanguageService } from '../../core/language.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
@@ -18,18 +19,18 @@ import { FormsModule } from '@angular/forms';
     <section style="max-width:900px;margin:0 auto;padding-bottom:1.5rem">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">Balances</h2>
+        <h2 style="margin:0">{{ lang.t('balances') }}</h2>
       </div>
 
       <mat-card>
-        <div *ngIf="loading">Cargando balances...</div>
+        <div *ngIf="loading">{{ lang.t('loadingBalances') }}</div>
         <div *ngIf="error" style="color:crimson">{{ error }}</div>
         <mat-list *ngIf="!loading && !error">
           <mat-list-item *ngFor="let b of balances">
             <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
               <div>
                 <div style="font-weight:600">{{ displayMember(b.user) }}</div>
-                <div style="font-size:0.9rem;color:#666">Pagó: {{ b.paid | number:'1.2-2' }} · Su parte: {{ b.share | number:'1.2-2' }}</div>
+                <div style="font-size:0.9rem;color:#666">{{ lang.t('paid') }}: {{ b.paid | number:'1.2-2' }} · {{ lang.t('share') }}: {{ b.share | number:'1.2-2' }}</div>
               </div>
               <div [style.color]="b.balance >= 0 ? 'green' : 'crimson'" style="font-weight:700">
                 {{ b.balance >= 0 ? '+' : '-' }}{{ (abs(b.balance) | number:'1.2-2') }}
@@ -47,7 +48,7 @@ export class BalanceComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
+import { LanguageService } from '../../core/language.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,17 +26,17 @@ import { MatDividerModule } from '@angular/material/divider';
     <section style="max-width:900px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">{{ editMode ? 'Editar gasto' : 'Añadir gasto' }}</h2>
+        <h2 style="margin:0">{{ editMode ? lang.t('edit') + ' ' + lang.t('expenses').toLowerCase() : lang.t('addExpense') }}</h2>
       </div>
 
       <mat-card>
         <mat-form-field style="width:100%">
-          <input matInput placeholder="Descripción" [(ngModel)]="descripcion" name="descripcion" />
+          <input matInput [placeholder]="lang.t('description')" [(ngModel)]="descripcion" name="descripcion" />
         </mat-form-field>
 
         <div style="display:flex;gap:0.5rem;align-items:center">
           <mat-form-field style="flex:1">
-            <input matInput placeholder="Monto" type="number" [(ngModel)]="monto" name="monto" />
+            <input matInput [placeholder]="lang.t('amount')" type="number" [(ngModel)]="monto" name="monto" />
           </mat-form-field>
           <mat-form-field style="width:120px">
             <mat-select [(ngModel)]="moneda" name="moneda">
@@ -47,13 +48,13 @@ import { MatDividerModule } from '@angular/material/divider';
         </div>
 
         <mat-form-field style="width:100%;margin-top:0.5rem">
-          <mat-select [(ngModel)]="pagador" name="pagador" placeholder="Pagado por">
+          <mat-select [(ngModel)]="pagador" name="pagador" [placeholder]="lang.t('paidBy')">
             <mat-option *ngFor="let m of miembros" [value]="m._id || m.id">{{ displayMember(m) }}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <div style="margin-top:1rem">
-          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">Dividir</mat-checkbox>
+          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">{{ lang.t('divide') }}</mat-checkbox>
 
           <mat-divider style="margin:0.5rem 0"></mat-divider>
 
@@ -67,8 +68,8 @@ import { MatDividerModule } from '@angular/material/divider';
         </div>
 
         <div style="margin-top:1rem;display:flex;gap:0.5rem">
-          <button mat-raised-button color="primary" (click)="createGasto()" [disabled]="creating">Añadir</button>
-          <button mat-button (click)="goBack()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="createGasto()" [disabled]="creating">{{ lang.t('add') }}</button>
+          <button mat-button (click)="goBack()">{{ lang.t('cancel') }}</button>
         </div>
       </mat-card>
     </section>
@@ -89,7 +90,7 @@ export class CreateGastoComponent implements OnInit {
   private membersReadyResolve: (() => void) | null = null;
   private membersReady: Promise<void> = new Promise((r) => (this.membersReadyResolve = r));
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
+  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';

@@ -1,30 +1,25 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/login/login.component';
-import { RegisterComponent } from './auth/register/register.component';
-import { HomeComponent } from '../app/paysplit/home/home.component';
 import { AuthGuard } from './auth/auth.guard';
-import { AccountDetailComponent } from './paysplit/account-detail/account-detail.component';
-import { CreateGastoComponent } from './paysplit/create-gasto/create-gasto.component';
-import { BalanceComponent } from './paysplit/balance/balance.component';
-import { UserSettingsComponent } from './settings/user-settings.component';
-
-import { LandingComponent } from './landing/landing.component';
 
 export const routes: Routes = [
   // Al inicio mostramos la pantalla de presentación (landing)
-  { path: '', component: LandingComponent, title: 'Bienvenido' },
+  { path: '', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent), title: 'Bienvenido' },
 
   // Rutas de autenticación
-  { path: 'login', component: LoginComponent, title: 'Iniciar Sesión' },
-  { path: 'register', component: RegisterComponent, title: 'Registrarse' },
+  { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent), title: 'Iniciar Sesión' },
+  { path: 'register', loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent), title: 'Registrarse' },
 
   // Ruta principal de la app (accedida tras autenticarse)
-  { path: 'home', component: HomeComponent, title: 'Inicio', canActivate: [AuthGuard] },
-  { path: 'group/:id', component: AccountDetailComponent, title: 'Cuenta', canActivate: [AuthGuard] },
-  { path: 'group/:id/create-gasto', component: CreateGastoComponent, title: 'Crear Gasto', canActivate: [AuthGuard] },
-  { path: 'group/:id/gasto/:gastoId', component: CreateGastoComponent, title: 'Editar Gasto', canActivate: [AuthGuard] },
-  { path: 'group/:id/balance', component: BalanceComponent, title: 'Balances', canActivate: [AuthGuard] },
-  { path: 'settings', component: UserSettingsComponent, title: 'Configuración', canActivate: [AuthGuard] },
+  { path: 'home', loadComponent: () => import('./paysplit/home/home.component').then(m => m.HomeComponent), title: 'Inicio', canActivate: [AuthGuard] },
+  { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
+  { path: 'group/:id/settings', loadComponent: () => import('./paysplit/group-settings/group-settings.component').then(m => m.GroupSettingsComponent), title: 'Configuración del grupo', canActivate: [AuthGuard] },
+  { path: 'group/:id/create-gasto', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Crear Gasto', canActivate: [AuthGuard] },
+  { path: 'group/:id/gasto/:gastoId', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Editar Gasto', canActivate: [AuthGuard] },
+  { path: 'group/:id/balance', loadComponent: () => import('./paysplit/balance/balance.component').then(m => m.BalanceComponent), title: 'Balances', canActivate: [AuthGuard] },
+  { path: 'settings', loadComponent: () => import('./settings/user-settings.component').then(m => m.UserSettingsComponent), title: 'Configuración', canActivate: [AuthGuard] },
+
+  // User profile route (friend links navigate here)
+  { path: 'users/:id', loadComponent: () => import('./users/user-profile.component').then(m => m.UserProfileComponent), title: 'Usuario', canActivate: [AuthGuard] },
 
   // Redirige cualquier otra ruta a landing
   { path: '**', redirectTo: '' }

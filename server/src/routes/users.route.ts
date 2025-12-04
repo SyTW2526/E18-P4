@@ -7,6 +7,26 @@ import * as jwt from "jsonwebtoken";
 export const userRouter = express.Router();
 userRouter.use(express.json());
 
+// Simple JWT auth middleware for protecting certain user routes
+function authenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
+    try {
+        const authHeader = (req.headers['authorization'] || req.headers['Authorization']) as string | undefined;
+        if (!authHeader) return res.status(401).send('Authorization header required');
+        const parts = authHeader.split(' ');
+        if (parts.length !== 2 || parts[0] !== 'Bearer') return res.status(401).send('Invalid Authorization format');
+        const token = parts[1];
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET) return res.status(500).send('Server JWT not configured');
+        const payload: any = jwt.verify(token, JWT_SECRET);
+        // attach the authenticated userId to the request for downstream handlers
+        (req as any).authUserId = payload?.userId;
+        return next();
+    } catch (err) {
+        console.error('Auth failure', err);
+        return res.status(401).send('Invalid or expired token');
+    }
+}
+
 // GET /users - list all users
 userRouter.get("/", async (_req: express.Request, res: express.Response) => {
     try {
@@ -23,22 +43,85 @@ userRouter.get("/", async (_req: express.Request, res: express.Response) => {
     }
 });
 
+// GET /users/lookup?username=... - find users by username (nombre) / username / email (case-insensitive)
+userRouter.get("/lookup", async (req: express.Request, res: express.Response) => {
+    try {
+        const raw = String(req.query.username || "").trim();
+        if (!raw) return res.status(400).send("'username' query parameter is required");
+
+        // exact case-insensitive match on nombre, username or email
+        const regex = new RegExp(`^${raw}$`, 'i');
+        const query = { $or: [{ nombre: regex }, { username: regex }, { email: regex }] };
+        const users = await collections?.users?.find(query).toArray();
+
+        const safe = (users || []).map((u: any) => {
+            const copy = { ...u };
+            delete copy.password_hash;
+            return copy;
+        });
+        res.status(200).json(safe);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send(error instanceof Error ? error.message : "Unknown error");
+    }
+});
+
 // GET /users/:id - get single user by Mongo _id
-userRouter.get("/:id", async (req: express.Request, res: express.Response) => {
+// GET /users/:id - get single user by Mongo _id
+// Protected: only the owner or friends may view full profile
+userRouter.get("/:id", authenticate, async (req: express.Request, res: express.Response) => {
     try {
         const id = req?.params?.id;
+        const requesterId = (req as any).authUserId;
+        if (!requesterId) return res.status(401).send('Not authenticated');
+
+        // allow viewing own profile
+        if (String(requesterId) === String(id)) {
+            const query = { _id: new ObjectId(id) };
+            const user = await collections?.users?.findOne(query);
+            if (user) {
+                const safe = { ...user } as any;
+                delete safe.password_hash;
+                return res.status(200).send(safe);
+            }
+            return res.status(404).send(`Failed to find a user: ID ${id}`);
+        }
+
+        // otherwise, only allow if requester is in the target user's amigos list
         const query = { _id: new ObjectId(id) };
         const user = await collections?.users?.findOne(query);
+        if (!user) return res.status(404).send(`Failed to find a user: ID ${id}`);
 
-        if (user) {
-            const safe = { ...user } as any;
-            delete safe.password_hash;
-            res.status(200).send(safe);
-        } else {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
+        const amigos = user.amigos || [];
+        const requesterObjId = new ObjectId(String(requesterId));
+        console.log(`[Profile Access] Target: ${id}, Requester: ${requesterId}`);
+        console.log(`[Profile Access] Target's amigos:`, amigos.map((a: any) => String(a?._id || a)));
+        console.log(`[Profile Access] Requester as ObjectId:`, String(requesterObjId));
+        
+        const isFriend = (Array.isArray(amigos) && amigos.some((a: any) => {
+            try {
+                // compare string forms to handle ObjectId or string stored values
+                const aStr = String(a?._id || a);
+                const reqStr = String(requesterObjId);
+                console.log(`[Profile Access] Comparing: ${aStr} === ${reqStr} => ${aStr === reqStr}`);
+                return aStr === reqStr;
+            } catch {
+                return false;
+            }
+        }));
+
+        console.log(`[Profile Access] isFriend result:`, isFriend);
+
+        if (!isFriend) {
+            return res.status(403).json({ message: 'Profile is private' });
         }
+
+        const safe = { ...user } as any;
+        delete safe.password_hash;
+        return res.status(200).send(safe);
     } catch (error) {
-        res.status(404).send(`Failed to find a user: ID ${req?.params?.id}`);
+        console.error(error);
+        return res.status(400).send(`Failed to find a user: ID ${req?.params?.id}`);
     }
 });
 
@@ -181,6 +264,203 @@ userRouter.delete("/:id", async (req: express.Request, res: express.Response) =>
             res.status(400).json({ message: `Failed to remove a user: ID ${id}` });
         } else if (!result.deletedCount) {
             res.status(404).json({ message: `Failed to find a user: ID ${id}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+
+//ADD amigo, adds the sending user to the receiver's peticiones_amistad list
+userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Response) => {
+    try {
+        const receiverId = req?.params?.id; // the user receiving the friend request
+        const { senderId } = req.body; // the user sending the friend request
+
+        if (!senderId) {
+            return res.status(400).send("'senderId' is required in the request body");
+        }
+
+        const query = { _id: new ObjectId(receiverId) };
+        const senderObjId = new ObjectId(senderId);
+        const update = { $addToSet: { peticiones_amistad: senderObjId as any } }; // add sender ObjectId to peticiones_amistad array
+
+        const result = await collections?.users?.updateOne(query, update, { bypassDocumentValidation: true });
+
+        if (result && result.matchedCount) {
+            res.status(200).json({ message: `Friend request sent from ${senderId} to ${receiverId}` });
+        } else if (!result?.matchedCount) {
+            res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
+        } else {
+            res.status(500).json({ message: `Failed to send friend request from ${senderId} to ${receiverId}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+// ACCEPT amigo, moves one user from peticiones_amistad to amigos list.
+// it also adds the user to the friend's amigos list
+userRouter.post("/:id/accept-amigo", async (req: express.Request, res: express.Response) => {
+    try {
+        const receiverId = req?.params?.id; // the user accepting the friend request
+        const { senderId } = req.body; // the user who sent the friend request
+
+        if (!senderId) {
+            return res.status(400).send("'senderId' is required in the request body");
+        }
+
+        // Remove senderId from peticiones_amistad and add to amigos
+        const receiverQuery = { _id: new ObjectId(receiverId) };
+        const senderObjId = new ObjectId(senderId);
+        const receiverObjId = new ObjectId(receiverId);
+        const receiverUpdate = {
+            $pull: { peticiones_amistad: senderObjId as any },
+            $addToSet: { amigos: senderObjId as any }
+        };
+        const receiverResult = await collections?.users?.updateOne(receiverQuery, receiverUpdate, { bypassDocumentValidation: true });
+
+        // Add receiverId to sender's amigos list (store as ObjectId)
+        const senderQuery = { _id: senderObjId };
+        const senderUpdate = { $addToSet: { amigos: receiverObjId as any } };
+        const senderResult = await collections?.users?.updateOne(senderQuery, senderUpdate, { bypassDocumentValidation: true });
+
+        if (receiverResult && receiverResult.matchedCount && senderResult && senderResult.matchedCount) {
+            res.status(200).json({ message: `User ${receiverId} accepted friend request from ${senderId}` });
+        } else {
+            res.status(404).json({ message: `Failed to find one or both users: ID ${receiverId}, ID ${senderId}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+// GET friend requests for a user
+userRouter.get("/:id/peticiones-amistad", async (req: express.Request, res: express.Response) => {
+    try {
+        const userId = req?.params?.id;
+
+        const query = { _id: new ObjectId(userId) };
+        const user = await collections?.users?.findOne(query);
+
+        if (user) {
+            const peticiones = user.peticiones_amistad || [];
+            res.status(200).json({ peticiones_amistad: peticiones });
+        } else {
+            res.status(404).json({ message: `Failed to find a user: ID ${userId}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+// GET friends list for a user
+userRouter.get("/:id/amigos", async (req: express.Request, res: express.Response) => {
+    try {
+        const userId = req?.params?.id;
+
+        const query = { _id: new ObjectId(userId) };
+        const user = await collections?.users?.findOne(query);
+
+        if (user) {
+            const amigos = user.amigos || [];
+            // If amigos contains ObjectIds or strings, fetch the corresponding user documents
+            try {
+                const ids = (Array.isArray(amigos) ? amigos : []).map((a: any) => {
+                    try { return new ObjectId(String(a?._id || a)); } catch { return null; }
+                }).filter(Boolean) as any[];
+
+                if (ids.length === 0) {
+                    return res.status(200).json({ amigos: [] });
+                }
+
+                const friends = await collections?.users?.find({ _id: { $in: ids } }).toArray();
+                const safe = (friends || []).map((f: any) => {
+                    const copy = { ...f };
+                    delete copy.password_hash;
+                    return copy;
+                });
+                return res.status(200).json({ amigos: safe });
+            } catch (err) {
+                // fallback: return the raw array
+                console.error('Failed to populate amigos', err);
+                return res.status(200).json({ amigos });
+            }
+        } else {
+            res.status(404).json({ message: `Failed to find a user: ID ${userId}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+// DELETE amigo, removes a friend from the user's amigos list, it also
+// removes the user from the friend's amigos list
+userRouter.delete("/:id/remove-amigo", async (req: express.Request, res: express.Response) => {
+    try {
+        const userId = req?.params?.id; // the user removing the friend
+        const { amigoId } = req.body; // the friend to be removed
+
+        if (!amigoId) {
+            return res.status(400).send("'amigoId' is required in the request body");
+        }
+
+        // Remove amigoId from user's amigos list
+        const userQuery = { _id: new ObjectId(userId) };
+        const amigoObjId = new ObjectId(amigoId);
+        const userUpdate = { $pull: { amigos: amigoObjId as any } };
+        const userResult = await collections?.users?.updateOne(userQuery, userUpdate, { bypassDocumentValidation: true });
+
+        // Remove userId from amigo's amigos list
+        const amigoQuery = { _id: amigoObjId };
+        const userObjId = new ObjectId(userId);
+        const amigoUpdate = { $pull: { amigos: userObjId as any } };
+        const amigoResult = await collections?.users?.updateOne(amigoQuery, amigoUpdate, { bypassDocumentValidation: true });
+
+        if (userResult && userResult.matchedCount && amigoResult && amigoResult.matchedCount) {
+            res.status(200).json({ message: `Removed amigo ${amigoId} from user ${userId} and vice versa` });
+        } else {
+            res.status(404).json({ message: `Failed to find one or both users: ID ${userId}, ID ${amigoId}` });
+        }
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
+// Reject amigo, removes one user from another user's peticiones_amistad list
+userRouter.post("/:id/reject-amigo", async (req: express.Request, res: express.Response) => {
+    try {
+        const receiverId = req?.params?.id; // the user rejecting the friend request
+        const { senderId } = req.body; // the user who sent the friend request
+
+        if (!senderId) {
+            return res.status(400).send("'senderId' is required in the request body");
+        }
+
+        const query = { _id: new ObjectId(receiverId) };
+        const senderObjId = new ObjectId(senderId);
+        const update = { $pull: { peticiones_amistad: senderObjId as any } }; // remove sender ObjectId from peticiones_amistad array
+
+        const result = await collections?.users?.updateOne(query, update, { bypassDocumentValidation: true });
+
+        if (result && result.matchedCount) {
+            res.status(200).json({ message: `Friend request from ${senderId} to ${receiverId} rejected` });
+        } else if (!result?.matchedCount) {
+            res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
+        } else {
+            res.status(500).json({ message: `Failed to reject friend request from ${senderId} to ${receiverId}` });
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
