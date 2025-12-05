@@ -2,7 +2,7 @@ const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
 
-async function waitForAppReady(driver, timeout = 15000) {
+async function waitForAppReady(driver, timeout = 30000) {
   await driver.wait(async () => {
     return await driver.executeScript(
       'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'

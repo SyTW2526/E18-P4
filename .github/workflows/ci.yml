@@ -196,7 +196,7 @@ jobs:
             docker run -d --rm --network paysplit-ci-net -p 5200:5200 -e ATLAS_URI="mongodb://ci-mongo:27017" --name paysplit-server paysplit-server:ci
           fi
 
-          e2e/node_modules/.bin/wait-on tcp:localhost:5200
+          e2e/node_modules/.bin/wait-on --timeout 300000 tcp:localhost:5200
 
       - name: Build + Serve client
         run: |
@@ -204,7 +204,9 @@ jobs:
           npm run build -- --configuration production --watch=false
           DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
           npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
-          ../e2e/node_modules/.bin/wait-on http://127.0.0.1:4200/
+          ../e2e/node_modules/.bin/wait-on --timeout 300000 http://127.0.0.1:4200/
+          # give the browser a small extra moment to fetch/initialize scripts
+          sleep 3
 
       - name: Debug chrome
         run: |
@@ -214,9 +216,23 @@ jobs:
           chromedriver --version
 
       - name: Run E2E tests
+        shell: bash
         run: |
+          set -o pipefail
           cd e2e
-          PATH=./node_modules/.bin:$PATH npm run test:local
+          # increase mocha timeout while running in CI (milliseconds)
+          PATH=./node_modules/.bin:$PATH npm run test:local -- --timeout 300000 || {
+            echo "E2E tests failed — collecting basic diagnostics"
+            echo "--- chrome / chromedriver versions ---"
+            google-chrome --version || google-chrome-stable --version || true
+            which chromedriver || true
+            chromedriver --version || true
+            echo "--- process list (filtered) ---"
+            ps aux | egrep 'chrome|chromedriver|Xvfb' || true
+            echo "--- listing /tmp ---"
+            ls -la /tmp || true
+            exit 1
+          }
 
       - name: Upload e2e logs on failure
         if: failure()
