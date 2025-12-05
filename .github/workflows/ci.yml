@@ -179,7 +179,29 @@ jobs:
           unzip -o /tmp/chromedriver.zip -d /tmp
           sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
           sudo chmod +x /usr/local/bin/chromedriver
+
           chromedriver --version || true
+
+          # verify major version matches installed Chrome; if mismatch, try using
+          # the chromedriver binary bundled by the e2e npm package as a fallback
+          CD_VER_INSTALLED=$(chromedriver --version 2>/dev/null | awk '{print $2}' || true)
+          CD_MAJOR=$(echo "$CD_VER_INSTALLED" | cut -d. -f1)
+          echo "Installed chromedriver major: $CD_MAJOR (full: $CD_VER_INSTALLED)"
+          if [ -n "$CD_MAJOR" ] && [ "$CD_MAJOR" != "$MAJOR" ]; then
+            echo "Chromedriver major ($CD_MAJOR) does not match Chrome major ($MAJOR). Attempting npm chromedriver fallback..."
+            NPM_CD="$(pwd)/e2e/node_modules/chromedriver/lib/chromedriver/chromedriver"
+            if [ -f "$NPM_CD" ]; then
+              echo "Found npm chromedriver at $NPM_CD -- copying to /usr/local/bin/chromedriver"
+              sudo cp "$NPM_CD" /usr/local/bin/chromedriver
+              sudo chmod +x /usr/local/bin/chromedriver
+              echo "Replaced chromedriver with npm package binary"
+              chromedriver --version || true
+            else
+              echo "No npm chromedriver binary found at $NPM_CD; leaving installed chromedriver in place" >&2
+            fi
+          else
+            echo "Chromedriver major matches Chrome major (or could not determine versions)."
+          fi
 
       - name: Start server (Docker)
         run: |
