@@ -69,6 +69,31 @@ userRouter.get("/lookup", async (req: express.Request, res: express.Response) =>
 // GET /users/:id - get single user by Mongo _id
 // GET /users/:id - get single user by Mongo _id
 // Protected: only the owner or friends may view full profile
+
+// GET /users/:id/basic - get basic user info (for friend requests, etc) - public endpoint
+userRouter.get("/:id/basic", async (req: express.Request, res: express.Response) => {
+    try {
+        const id = req?.params?.id;
+
+        const query = { _id: new ObjectId(id) };
+        const user = await collections?.users?.findOne(query);
+        if (user) {
+            const safe = {
+                _id: user._id,
+                nombre: user.nombre,
+                email: user.email,
+                foto_perfil: user.foto_perfil
+            };
+            return res.status(200).send(safe);
+        }
+        return res.status(404).send(`Failed to find a user: ID ${id}`);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+});
+
 userRouter.get("/:id", authenticate, async (req: express.Request, res: express.Response) => {
     try {
         const id = req?.params?.id;
@@ -283,16 +308,53 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
             return res.status(400).send("'senderId' is required in the request body");
         }
 
-        const query = { _id: new ObjectId(receiverId) };
+        // Check if they're already friends
+        const receiverObjId = new ObjectId(receiverId);
         const senderObjId = new ObjectId(senderId);
+        const receiver = await collections?.users?.findOne({ _id: receiverObjId });
+        
+        if (!receiver) {
+            return res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
+        }
+
+        // Check if already friends (try both ObjectId and string comparison)
+        const alreadyFriends = await collections?.users?.findOne({
+            _id: receiverObjId,
+            $or: [
+                { amigos: senderObjId as any },
+                { amigos: senderObjId.toString() }
+            ]
+        });
+
+        if (alreadyFriends) {
+            return res.status(400).json({ message: "Already friends with this user" });
+        }
+
+        // Check if request already exists (try both ObjectId and string comparison)
+        const requestExists = await collections?.users?.findOne({
+            _id: receiverObjId,
+            $or: [
+                { peticiones_amistad: senderObjId as any },
+                { peticiones_amistad: senderObjId.toString() }
+            ]
+        });
+
+        if (requestExists) {
+            return res.status(400).json({ message: "Friend request already sent to this user" });
+        }
+
+        const query = { _id: receiverObjId };
         const update = { $addToSet: { peticiones_amistad: senderObjId as any } }; // add sender ObjectId to peticiones_amistad array
 
         const result = await collections?.users?.updateOne(query, update, { bypassDocumentValidation: true });
 
         if (result && result.matchedCount) {
+            // Check if the element was actually added (modifiedCount > 0)
+            if (result.modifiedCount === 0) {
+                // Element already existed, so this is a duplicate request
+                return res.status(400).json({ message: "Friend request already sent to this user" });
+            }
             res.status(200).json({ message: `Friend request sent from ${senderId} to ${receiverId}` });
-        } else if (!result?.matchedCount) {
-            res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
         } else {
             res.status(500).json({ message: `Failed to send friend request from ${senderId} to ${receiverId}` });
         }

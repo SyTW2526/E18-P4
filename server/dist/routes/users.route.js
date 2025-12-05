@@ -50,6 +50,29 @@ const bcrypt = __importStar(require("bcryptjs"));
 const jwt = __importStar(require("jsonwebtoken"));
 exports.userRouter = express.Router();
 exports.userRouter.use(express.json());
+// Simple JWT auth middleware for protecting certain user routes
+function authenticate(req, res, next) {
+    try {
+        const authHeader = (req.headers['authorization'] || req.headers['Authorization']);
+        if (!authHeader)
+            return res.status(401).send('Authorization header required');
+        const parts = authHeader.split(' ');
+        if (parts.length !== 2 || parts[0] !== 'Bearer')
+            return res.status(401).send('Invalid Authorization format');
+        const token = parts[1];
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET)
+            return res.status(500).send('Server JWT not configured');
+        const payload = jwt.verify(token, JWT_SECRET);
+        // attach the authenticated userId to the request for downstream handlers
+        req.authUserId = payload === null || payload === void 0 ? void 0 : payload.userId;
+        return next();
+    }
+    catch (err) {
+        console.error('Auth failure', err);
+        return res.status(401).send('Invalid or expired token');
+    }
+}
 // GET /users - list all users
 exports.userRouter.get("/", (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -91,23 +114,83 @@ exports.userRouter.get("/lookup", (req, res) => __awaiter(void 0, void 0, void 0
     }
 }));
 // GET /users/:id - get single user by Mongo _id
-exports.userRouter.get("/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+// GET /users/:id - get single user by Mongo _id
+// Protected: only the owner or friends may view full profile
+// GET /users/:id/basic - get basic user info (for friend requests, etc) - public endpoint
+exports.userRouter.get("/:id/basic", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     try {
         const id = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
         const query = { _id: new mongodb_1.ObjectId(id) };
         const user = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.findOne(query));
         if (user) {
-            const safe = Object.assign({}, user);
-            delete safe.password_hash;
-            res.status(200).send(safe);
+            const safe = {
+                _id: user._id,
+                nombre: user.nombre,
+                email: user.email,
+                foto_perfil: user.foto_perfil
+            };
+            return res.status(200).send(safe);
         }
-        else {
-            res.status(404).send(`Failed to find a user: ID ${id}`);
-        }
+        return res.status(404).send(`Failed to find a user: ID ${id}`);
     }
     catch (error) {
-        res.status(404).send(`Failed to find a user: ID ${(_c = req === null || req === void 0 ? void 0 : req.params) === null || _c === void 0 ? void 0 : _c.id}`);
+        const message = error instanceof Error ? error.message : "Unknown error";
+        console.error(message);
+        res.status(400).send(message);
+    }
+}));
+exports.userRouter.get("/:id", authenticate, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    try {
+        const id = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
+        const requesterId = req.authUserId;
+        if (!requesterId)
+            return res.status(401).send('Not authenticated');
+        // allow viewing own profile
+        if (String(requesterId) === String(id)) {
+            const query = { _id: new mongodb_1.ObjectId(id) };
+            const user = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.findOne(query));
+            if (user) {
+                const safe = Object.assign({}, user);
+                delete safe.password_hash;
+                return res.status(200).send(safe);
+            }
+            return res.status(404).send(`Failed to find a user: ID ${id}`);
+        }
+        // otherwise, only allow if requester is in the target user's amigos list
+        const query = { _id: new mongodb_1.ObjectId(id) };
+        const user = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.findOne(query));
+        if (!user)
+            return res.status(404).send(`Failed to find a user: ID ${id}`);
+        const amigos = user.amigos || [];
+        const requesterObjId = new mongodb_1.ObjectId(String(requesterId));
+        console.log(`[Profile Access] Target: ${id}, Requester: ${requesterId}`);
+        console.log(`[Profile Access] Target's amigos:`, amigos.map((a) => String((a === null || a === void 0 ? void 0 : a._id) || a)));
+        console.log(`[Profile Access] Requester as ObjectId:`, String(requesterObjId));
+        const isFriend = (Array.isArray(amigos) && amigos.some((a) => {
+            try {
+                // compare string forms to handle ObjectId or string stored values
+                const aStr = String((a === null || a === void 0 ? void 0 : a._id) || a);
+                const reqStr = String(requesterObjId);
+                console.log(`[Profile Access] Comparing: ${aStr} === ${reqStr} => ${aStr === reqStr}`);
+                return aStr === reqStr;
+            }
+            catch (_a) {
+                return false;
+            }
+        }));
+        console.log(`[Profile Access] isFriend result:`, isFriend);
+        if (!isFriend) {
+            return res.status(403).json({ message: 'Profile is private' });
+        }
+        const safe = Object.assign({}, user);
+        delete safe.password_hash;
+        return res.status(200).send(safe);
+    }
+    catch (error) {
+        console.error(error);
+        return res.status(400).send(`Failed to find a user: ID ${(_d = req === null || req === void 0 ? void 0 : req.params) === null || _d === void 0 ? void 0 : _d.id}`);
     }
 }));
 // POST /users - create a new user
@@ -257,22 +340,52 @@ exports.userRouter.delete("/:id", (req, res) => __awaiter(void 0, void 0, void 0
 }));
 //ADD amigo, adds the sending user to the receiver's peticiones_amistad list
 exports.userRouter.post("/:id/add-amigo", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c, _d, _e;
     try {
         const receiverId = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id; // the user receiving the friend request
         const { senderId } = req.body; // the user sending the friend request
         if (!senderId) {
             return res.status(400).send("'senderId' is required in the request body");
         }
-        const query = { _id: new mongodb_1.ObjectId(receiverId) };
+        // Check if they're already friends
+        const receiverObjId = new mongodb_1.ObjectId(receiverId);
         const senderObjId = new mongodb_1.ObjectId(senderId);
-        const update = { $addToSet: { peticiones_amistad: senderObjId } }; // add sender ObjectId to peticiones_amistad array
-        const result = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.updateOne(query, update, { bypassDocumentValidation: true }));
-        if (result && result.matchedCount) {
-            res.status(200).json({ message: `Friend request sent from ${senderId} to ${receiverId}` });
+        const receiver = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.findOne({ _id: receiverObjId }));
+        if (!receiver) {
+            return res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
         }
-        else if (!(result === null || result === void 0 ? void 0 : result.matchedCount)) {
-            res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
+        // Check if already friends (try both ObjectId and string comparison)
+        const alreadyFriends = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.findOne({
+            _id: receiverObjId,
+            $or: [
+                { amigos: senderObjId },
+                { amigos: senderObjId.toString() }
+            ]
+        }));
+        if (alreadyFriends) {
+            return res.status(400).json({ message: "Already friends with this user" });
+        }
+        // Check if request already exists (try both ObjectId and string comparison)
+        const requestExists = yield ((_d = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _d === void 0 ? void 0 : _d.findOne({
+            _id: receiverObjId,
+            $or: [
+                { peticiones_amistad: senderObjId },
+                { peticiones_amistad: senderObjId.toString() }
+            ]
+        }));
+        if (requestExists) {
+            return res.status(400).json({ message: "Friend request already sent to this user" });
+        }
+        const query = { _id: receiverObjId };
+        const update = { $addToSet: { peticiones_amistad: senderObjId } }; // add sender ObjectId to peticiones_amistad array
+        const result = yield ((_e = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _e === void 0 ? void 0 : _e.updateOne(query, update, { bypassDocumentValidation: true }));
+        if (result && result.matchedCount) {
+            // Check if the element was actually added (modifiedCount > 0)
+            if (result.modifiedCount === 0) {
+                // Element already existed, so this is a duplicate request
+                return res.status(400).json({ message: "Friend request already sent to this user" });
+            }
+            res.status(200).json({ message: `Friend request sent from ${senderId} to ${receiverId}` });
         }
         else {
             res.status(500).json({ message: `Failed to send friend request from ${senderId} to ${receiverId}` });
@@ -343,14 +456,39 @@ exports.userRouter.get("/:id/peticiones-amistad", (req, res) => __awaiter(void 0
 }));
 // GET friends list for a user
 exports.userRouter.get("/:id/amigos", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a, _b, _c;
     try {
         const userId = (_a = req === null || req === void 0 ? void 0 : req.params) === null || _a === void 0 ? void 0 : _a.id;
         const query = { _id: new mongodb_1.ObjectId(userId) };
         const user = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.findOne(query));
         if (user) {
             const amigos = user.amigos || [];
-            res.status(200).json({ amigos: amigos });
+            // If amigos contains ObjectIds or strings, fetch the corresponding user documents
+            try {
+                const ids = (Array.isArray(amigos) ? amigos : []).map((a) => {
+                    try {
+                        return new mongodb_1.ObjectId(String((a === null || a === void 0 ? void 0 : a._id) || a));
+                    }
+                    catch (_a) {
+                        return null;
+                    }
+                }).filter(Boolean);
+                if (ids.length === 0) {
+                    return res.status(200).json({ amigos: [] });
+                }
+                const friends = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.find({ _id: { $in: ids } }).toArray());
+                const safe = (friends || []).map((f) => {
+                    const copy = Object.assign({}, f);
+                    delete copy.password_hash;
+                    return copy;
+                });
+                return res.status(200).json({ amigos: safe });
+            }
+            catch (err) {
+                // fallback: return the raw array
+                console.error('Failed to populate amigos', err);
+                return res.status(200).json({ amigos });
+            }
         }
         else {
             res.status(404).json({ message: `Failed to find a user: ID ${userId}` });
