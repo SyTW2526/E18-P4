@@ -73,8 +73,7 @@ import { MatListModule } from '@angular/material/list';
           <!-- Left sidebar with debt info -->
           <div style="flex:0 0 auto;padding:1.5rem;background:var(--secondary-bg);border-radius:8px;height:fit-content;min-width:180px">
             <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
-            <div style="font-size:2.5rem;font-weight:bold;color:#d32f2f;margin-bottom:0.5rem">{{ totalDebt.toFixed(2) }}</div>
-            <p style="margin:0;font-size:0.85rem;color:var(--text-secondary)">{{ lang.t('totalDebt') }}</p>
+            <div style="font-size:2.5rem;font-weight:bold;color:#d32f2f;margin-bottom:0.5rem">{{ totalDebt.toFixed(2) }} €</div>
           </div>
 
           <!-- Right content area with groups -->
