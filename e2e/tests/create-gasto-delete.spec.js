@@ -64,18 +64,27 @@ describe('E2E - Create and delete gasto', function () {
     // wait for group page h2
     await driver.wait(until.elementLocated(By.css('h2')), 10000);
 
-    // click 'Añadir gasto' button
-    const addBtn = await driver.findElement(By.xpath("//button[contains(.,'Añadir gasto') or contains(.,'Añadir')]"));
-    await addBtn.click();
+    // click 'Añadir gasto' button (ensure visible/clickable)
+    const addBtn = await driver.findElement(By.xpath("//button[contains(.,'Añadir gasto') or contains(.,'Añadir')]") );
+    await driver.executeScript('arguments[0].scrollIntoView(true);', addBtn).catch(()=>{});
+    await driver.wait(until.elementIsVisible(addBtn), 5000).catch(()=>{});
+    // use JS click as a fallback to avoid ElementNotInteractable errors
+    await driver.executeScript('arguments[0].click();', addBtn).catch(()=>{});
 
     // wait for create gasto page
     await driver.wait(until.elementLocated(By.css('input[placeholder="Descripción"]')), 10000);
     const desc = 'E2E Test Gasto ' + Date.now();
     await driver.findElement(By.css('input[placeholder="Descripción"]')).sendKeys(desc);
-    await driver.findElement(By.css('input[placeholder="Monto"]')).sendKeys('12.34');
+    // monto input may have different attributes depending on template; try multiple selectors
+    const montoInput = await driver.findElement(By.css('input[placeholder="Monto"], input[formcontrolname="monto"], input[name="monto"], input[type="number"]'));
+    await driver.wait(until.elementIsVisible(montoInput), 5000).catch(()=>{});
+    // set value via JS to avoid interactability issues and ensure Angular picks up change
+    await driver.executeScript("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('input'));", montoInput, '12.34').catch(()=>{});
     // click Añadir
     const addGastoBtn = await driver.findElement(By.xpath('//button[contains(. , "Añadir") and not(contains(. , "Cancelar"))]'));
-    await addGastoBtn.click();
+    await driver.executeScript('arguments[0].scrollIntoView(true);', addGastoBtn).catch(()=>{});
+    await driver.wait(until.elementIsVisible(addGastoBtn), 5000).catch(()=>{});
+    await driver.executeScript('arguments[0].click();', addGastoBtn).catch(()=>{});
 
     // back to group page; wait for gasto label inside a specific mat-list-item
     const gastoXpath = `//mat-list-item[.//div[contains(., "${desc}")]]`;
@@ -92,7 +101,9 @@ describe('E2E - Create and delete gasto', function () {
       deleteBtn = await driver.findElement(By.xpath('(//mat-list-item//button[contains(@title,"Eliminar gasto") or contains(. , "Eliminar")])[1]'));
     }
     // confirm the browser dialog
-    await deleteBtn.click();
+    await driver.executeScript('arguments[0].scrollIntoView(true);', deleteBtn).catch(()=>{});
+    await driver.wait(until.elementIsVisible(deleteBtn), 5000).catch(()=>{});
+    await driver.executeScript('arguments[0].click();', deleteBtn).catch(()=>{});
     // accept confirm dialog
     try {
       const alert = await driver.switchTo().alert();

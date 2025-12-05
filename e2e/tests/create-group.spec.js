@@ -48,18 +48,29 @@ describe('E2E - Create group', function () {
     } catch (e) { createdGroupId = null; }
     // now navigate to home so the component loads the seeded groups
     await driver.get(BASE + '/home');
-    // open create form (if present) and wait for input
-    const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear') or contains(.,'Crear grupo')]")).catch(()=>null);
-    if (createToggle) await createToggle.click();
-    // wait for input (give more time for backend/app initialization)
-    const input = await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 15000);
-    // wait for the card with the group name to appear (may take longer)
-    try {
-      await driver.wait(until.elementLocated(By.xpath(`//mat-card-title[contains(., "${name}")]`)), 15000);
-      const card = await driver.findElement(By.xpath(`//mat-card-title[contains(., "${name}")]`));
-      expect(await card.getText()).to.equal(name);
-    } catch (e) {
-      throw new Error('Timed out waiting for created group card after seeding. Last error: ' + e.message);
+    // If we seeded the group via the API, wait for its card directly.
+    if (createdGroupId) {
+      try {
+        await driver.wait(until.elementLocated(By.xpath(`//mat-card-title[contains(., "${name}")]`)), 15000);
+        const card = await driver.findElement(By.xpath(`//mat-card-title[contains(., "${name}")]`));
+        expect(await card.getText()).to.equal(name);
+      } catch (e) {
+        throw new Error('Timed out waiting for created group card after seeding. Last error: ' + e.message);
+      }
+    } else {
+      // open create form (if present) and wait for input
+      const createToggle = await driver.findElement(By.xpath("//button[contains(.,'Crear') or contains(.,'Crear grupo')]" )).catch(()=>null);
+      if (createToggle) await createToggle.click();
+      // wait for input (give more time for backend/app initialization)
+      const input = await driver.wait(until.elementLocated(By.css('input[placeholder="Nombre del nuevo grupo"]')), 15000);
+      // wait for the card with the group name to appear (may take longer)
+      try {
+        await driver.wait(until.elementLocated(By.xpath(`//mat-card-title[contains(., "${name}")]`)), 15000);
+        const card = await driver.findElement(By.xpath(`//mat-card-title[contains(., "${name}")]`));
+        expect(await card.getText()).to.equal(name);
+      } catch (e) {
+        throw new Error('Timed out waiting for created group card after creating via UI. Last error: ' + e.message);
+      }
     }
   });
 

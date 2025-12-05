@@ -97,6 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       E2E_BROWSER: chrome   # Chrome recomendado para CI
+      ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
     needs: tests
 
     steps:
@@ -138,8 +139,6 @@ jobs:
           chromedriver --version
 
       - name: Start server (Docker)
-        env:
-          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
         run: |
           if [ -n "$ATLAS_SECRET" ]; then
             echo "Using Mongo Atlas"
