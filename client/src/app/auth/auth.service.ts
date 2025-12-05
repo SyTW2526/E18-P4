@@ -123,6 +123,10 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
 
+  getUserBasicInfo(id: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${id}/basic`);
+  }
+
   // Get amigos (friends) list (returns { amigos: [...] })
   getAmigos(userId: string) {
     return this.http.get<any>(`${this.baseUrl}/users/${userId}/amigos`);

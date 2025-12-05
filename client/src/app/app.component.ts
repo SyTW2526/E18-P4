@@ -105,7 +105,7 @@ import { Router } from '@angular/router';
               <div style="display:flex; flex-direction:column; gap:8px;">
                 <label style="font-weight:600;">{{ lang.t('name') }}</label>
                 <input placeholder="username" [(ngModel)]="addFriendUsername" style="width:100%; padding:8px; background:transparent; color:var(--text-main); border:1px solid rgba(255,255,255,0.06); border-radius:4px;" />
-                <div *ngIf="addFriendError" style="color:var(--primary-color); font-weight:600">{{ addFriendError }}</div>
+                <div *ngIf="addFriendError" style="color:#ff4444; font-weight:600">{{ addFriendError }}</div>
                 <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px">
                   <button mat-button (click)="closeAddFriend()" [disabled]="addFriendLoading">{{ lang.t('cancel') }}</button>
                   <button mat-flat-button color="primary" (click)="onAddFriend()" [disabled]="addFriendLoading || !addFriendUsername || !addFriendUsername.trim()">{{ addFriendLoading ? lang.t('loading') : lang.t('add') }}</button>
@@ -115,8 +115,7 @@ import { Router } from '@angular/router';
             <ng-template #addSuccess>
               <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px">
                 <mat-icon style="font-size:28px; color:var(--primary-color)">check_circle</mat-icon>
-                <div style="font-weight:700">{{ lang.t('requests') }}</div>
-                <div style="color:var(--text-main); opacity:0.9">{{ lang.t('changesSaved') }}</div>
+                <div style="font-weight:700">{{ lang.t('friendRequestSent') }}</div>
               </div>
             </ng-template>
           </div>
@@ -238,7 +237,8 @@ export class AppComponent implements OnInit {
         }
 
         this.authService.addAmigo(String(receiverId), String(senderId)).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Friend request SUCCESS response:', response);
             this.addFriendLoading = false;
             // show inline success feedback, then auto-close shortly after
             this.addFriendSuccess = true;
@@ -252,8 +252,19 @@ export class AppComponent implements OnInit {
             }, 1400);
           },
           error: (err) => {
-            console.error(err);
-            this.addFriendError = err?.error?.message || err?.message || 'Error al enviar la solicitud';
+            console.error('Friend request ERROR:', err);
+            console.error('Error status:', err.status);
+            console.error('Error message:', err?.error?.message || err?.message);
+            
+            // Map English error messages to translation keys
+            const errorMsg = err?.error?.message || err?.message || '';
+            if (errorMsg.includes('Already friends')) {
+              this.addFriendError = this.lang.t('alreadyFriends');
+            } else if (errorMsg.includes('Friend request already sent')) {
+              this.addFriendError = this.lang.t('friendRequestExists');
+            } else {
+              this.addFriendError = errorMsg || 'Error al enviar la solicitud';
+            }
             this.addFriendLoading = false;
           }
         });
@@ -318,7 +329,7 @@ export class AppComponent implements OnInit {
           const ids: any[] = res?.peticiones_amistad || res || [];
           if (!Array.isArray(ids) || ids.length === 0) { this.peticiones = []; return; }
           const calls = ids.map((fid: any) => {
-            try { return this.authService.getUserById(String(fid)); }
+            try { return this.authService.getUserBasicInfo(String(fid)); }
             catch { return of(null); }
           });
           forkJoin(calls).subscribe({
