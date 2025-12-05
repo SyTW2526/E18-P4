@@ -255,17 +255,29 @@ jobs:
         run: |
           set -o pipefail
           cd e2e
-          # increase mocha timeout while running in CI (milliseconds)
-          PATH=./node_modules/.bin:$PATH npm run test:local -- --timeout 300000 || {
-            echo "E2E tests failed — collecting basic diagnostics"
-            echo "--- chrome / chromedriver versions ---"
-            google-chrome --version || google-chrome-stable --version || true
-            which chromedriver || true
-            chromedriver --version || true
-            echo "--- process list (filtered) ---"
-            ps aux | egrep 'chrome|chromedriver|Xvfb' || true
-            echo "--- listing /tmp ---"
-            ls -la /tmp || true
+          mkdir -p test-output logs || true
+          # Run tests and save output; on failure collect diagnostics into test-output
+          PATH=./node_modules/.bin:$PATH npm run test:local -- --timeout 300000 2>&1 | tee test-output/mocha-output.txt || {
+            echo "E2E tests failed — collecting basic diagnostics" | tee -a test-output/diagnostics.txt
+            echo "--- chrome / chromedriver versions ---" | tee -a test-output/diagnostics.txt
+            (google-chrome --version || google-chrome-stable --version) 2>&1 | tee -a test-output/diagnostics.txt || true
+            which chromedriver 2>&1 | tee -a test-output/diagnostics.txt || true
+            chromedriver --version 2>&1 | tee -a test-output/diagnostics.txt || true
+            echo "--- process list (filtered) ---" | tee -a test-output/diagnostics.txt
+            ps aux | egrep 'chrome|chromedriver|Xvfb' 2>&1 | tee -a test-output/diagnostics.txt || true
+            echo "--- listing /tmp ---" | tee -a test-output/diagnostics.txt
+            ls -la /tmp 2>&1 | tee -a test-output/diagnostics.txt || true
+            # copy chromedriver zip if present for inspection
+            if [ -f /tmp/chromedriver.zip ]; then
+              cp /tmp/chromedriver.zip test-output/ || true
+            fi
+            # list the chromedriver npm installation (if present)
+            echo "Listing e2e/node_modules/chromedriver/" | tee -a test-output/diagnostics.txt || true
+            ls -la node_modules/chromedriver 2>&1 | tee -a test-output/diagnostics.txt || true
+            # also copy any existing e2e logs
+            if [ -d logs ]; then
+              cp -r logs test-output/ || true
+            fi
             exit 1
           }
 
