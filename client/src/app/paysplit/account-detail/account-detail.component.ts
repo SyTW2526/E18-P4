@@ -36,7 +36,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     MatButtonToggleModule,
   ],
   template: `
-    <section style="max-width:900px; width:100%; margin:0 auto; text-align:left; padding-bottom:1.5rem">
+    <section style="max-width:900px; width:100%; margin:0 auto; text-align:left; padding-bottom:1.5rem; transform:translateY(2rem)">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ accountName || lang.t('sharedAccount') }}</h2>

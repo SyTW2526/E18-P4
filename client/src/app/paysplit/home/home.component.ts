@@ -16,7 +16,7 @@ import { MatListModule } from '@angular/material/list';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCardModule, MatListModule],
   template: `
-    <section style="max-width:900px; width:100%; text-align:center">
+    <section style="max-width:900px; width:100%; text-align:center; padding-top:2rem">
       <h1>{{ lang.t('welcome') }}</h1>
 
       <ng-container *ngIf="!auth.isLoggedIn()">
@@ -69,7 +69,16 @@ import { MatListModule } from '@angular/material/list';
       <div *ngIf="auth.isLoggedIn()" style="margin-top:1rem">
         <p>{{ lang.t('connectedAs') }} <strong>{{ auth.getUser()?.nombre || auth.getUser()?.email }}</strong></p>
 
-        <section style="margin-top:1rem; text-align:left; max-width:900px; margin-left:auto; margin-right:auto">
+        <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto">
+          <!-- Left sidebar with debt info -->
+          <div style="flex:0 0 auto;padding:1.5rem;background:var(--secondary-bg);border-radius:8px;height:fit-content;min-width:180px">
+            <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
+            <div style="font-size:2.5rem;font-weight:bold;color:#d32f2f;margin-bottom:0.5rem">{{ totalDebt.toFixed(2) }}</div>
+            <p style="margin:0;font-size:0.85rem;color:var(--text-secondary)">{{ lang.t('totalDebt') }}</p>
+          </div>
+
+          <!-- Right content area with groups -->
+          <div style="flex:1;min-width:280px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <h3>{{ lang.t('myGroups') }}</h3>
               <div style="display:flex;gap:0.5rem">
@@ -106,7 +115,8 @@ import { MatListModule } from '@angular/material/list';
           </div>
 
           <div *ngIf="!loadingGroups && !sharedAccounts.length" style="margin-top:1rem">No perteneces a ningún grupo todavía.</div>
-        </section>
+          </div>
+        </div>
       </div>
     </section>
   `,
@@ -115,6 +125,7 @@ export class HomeComponent {
   sharedAccounts: any[] = [];
   loadingGroups = false;
   groupsError: string | null = null;
+  totalDebt = 0;
   signupModel = { nombre: '', email: '', password: '' };
   signinModel = { email: '', password: '' };
   showSignupPassword = false;
@@ -184,6 +195,7 @@ export class HomeComponent {
   loadSharedAccounts() {
     this.groupsError = null;
     this.loadingGroups = true;
+    this.totalDebt = 0;
     const user = this.auth.getUser();
     const userId = user?._id || user?.id;
     if (!userId) {
@@ -203,7 +215,13 @@ export class HomeComponent {
           if (!g._id && g.id) g._id = g.id;
           return g;
         });
-        this.loadingGroups = false;
+        
+        // Load balances for each group and calculate total debt
+        if (this.sharedAccounts.length > 0) {
+          this.loadBalancesForAllGroups();
+        } else {
+          this.loadingGroups = false;
+        }
       },
       error: (err: any) => {
         this.groupsError = err?.error?.message || err?.message || 'No se pudieron cargar los grupos';
@@ -211,6 +229,49 @@ export class HomeComponent {
         this.loadingGroups = false;
         console.error('loadSharedAccounts error', err);
       },
+    });
+  }
+
+  private loadBalancesForAllGroups() {
+    const user = this.auth.getUser();
+    const userId = user?._id || user?.id;
+    let debtSum = 0;
+    let completedGroups = 0;
+
+    this.sharedAccounts.forEach((group) => {
+      const groupId = group._id || group.id;
+      if (!groupId) {
+        completedGroups++;
+        if (completedGroups === this.sharedAccounts.length) {
+          this.totalDebt = debtSum;
+          this.loadingGroups = false;
+        }
+        return;
+      }
+
+      this.auth.getBalancesForGroup(String(groupId)).subscribe({
+        next: (balances: any[]) => {
+          // Find the balance for the current user
+          const userBalance = balances.find((b: any) => String(b.userId) === String(userId));
+          if (userBalance && userBalance.balance < 0) {
+            // Negative balance means the user owes money
+            debtSum += Math.abs(userBalance.balance);
+          }
+          completedGroups++;
+          if (completedGroups === this.sharedAccounts.length) {
+            this.totalDebt = debtSum;
+            this.loadingGroups = false;
+          }
+        },
+        error: (err: any) => {
+          console.error(`Error loading balances for group ${groupId}:`, err);
+          completedGroups++;
+          if (completedGroups === this.sharedAccounts.length) {
+            this.totalDebt = debtSum;
+            this.loadingGroups = false;
+          }
+        },
+      });
     });
   }
 

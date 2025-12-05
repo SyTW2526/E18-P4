@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 import { ThemeService } from '../core/theme.service';
+import { LanguageService } from '../core/language.service';
 
 @Component({
   selector: 'app-user-settings',
@@ -23,42 +24,64 @@ import { ThemeService } from '../core/theme.service';
     MatSelectModule,
   ],
   template: `
-    <mat-card style="width: 480px;">
-      <mat-card-title>Configuración de usuario</mat-card-title>
+    <section style="transform:translateY(2rem)">
+      <mat-card style="width: 480px;">
+      <mat-card-title>{{ lang.t('userSettings') }}</mat-card-title>
       <mat-card-content>
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre" />
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('nombre') }}</label>
+            <mat-form-field appearance="fill" class="full-width">
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" />
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('email') }}</label>
+            <mat-form-field appearance="fill" class="full-width">
+              <input matInput formControlName="email" />
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tema</mat-label>
-            <mat-select formControlName="preferencia_tema">
-              <mat-option value="light">Claro</mat-option>
-              <mat-option value="dark">Oscuro</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('theme') }}</label>
+            <mat-form-field appearance="fill" class="full-width">
+              <mat-select formControlName="preferencia_tema">
+                <mat-option value="light">{{ lang.t('light') }}</mat-option>
+                <mat-option value="dark">{{ lang.t('dark') }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
 
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
-            <button mat-button type="button" (click)="cancel()">Cancelar</button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Guardar</button>
+            <button mat-button type="button" (click)="cancel()">{{ lang.t('cancel') }}</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">{{ lang.t('save') }}</button>
           </div>
           <div style="display:flex;gap:8px;justify-content:flex-start;margin-top:1rem;">
-            <button mat-stroked-button color="warn" type="button" (click)="confirmDelete()">Eliminar cuenta</button>
+            <button mat-stroked-button style="color:#d32f2f;border-color:#d32f2f" type="button" (click)="confirmDelete()">{{ lang.t('deleteAccount') }}</button>
           </div>
         </form>
       </mat-card-content>
     </mat-card>
+    </section>
   `,
   styles: [
     `
       .full-width { width: 100%; }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        color: var(--text-muted, #a1a1aa);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      ::ng-deep .mat-mdc-form-field-label {
+        display: none !important;
+      }
     `,
   ],
 })
@@ -71,7 +94,7 @@ export class UserSettingsComponent implements OnInit {
 
   userId: string | null = null;
 
-  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private theme: ThemeService) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
   ngOnInit(): void {
     const u = this.auth.getUser();

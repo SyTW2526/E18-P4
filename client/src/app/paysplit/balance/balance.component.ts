@@ -16,7 +16,7 @@ import { FormsModule } from '@angular/forms';
   standalone: true,
   imports: [CommonModule, FormsModule, MatCardModule, MatListModule, MatButtonModule, MatIconModule],
   template: `
-    <section style="max-width:900px;margin:0 auto;padding-bottom:1.5rem">
+    <section style="max-width:900px;margin:-2rem auto 0 auto;padding-top:2rem;padding-bottom:1.5rem">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ lang.t('balances') }}</h2>
