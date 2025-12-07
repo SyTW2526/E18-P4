@@ -45,8 +45,8 @@ import { LanguageService } from '../core/language.service';
 
           <div class="form-group">
             <label>{{ lang.t('theme') }}</label>
-            <mat-form-field appearance="fill" class="full-width">
-              <mat-select formControlName="preferencia_tema">
+            <mat-form-field appearance="fill" class="full-width" (click)="$event.stopPropagation(); themeOpen ? themeSelect.close() : themeSelect.open()">
+              <mat-select #themeSelect formControlName="preferencia_tema" (openedChange)="themeOpen=$event">
                 <mat-option value="light">{{ lang.t('light') }}</mat-option>
                 <mat-option value="dark">{{ lang.t('dark') }}</mat-option>
               </mat-select>
@@ -93,6 +93,7 @@ export class UserSettingsComponent implements OnInit {
   });
 
   userId: string | null = null;
+  themeOpen = false;
 
   constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
@@ -100,28 +101,13 @@ export class UserSettingsComponent implements OnInit {
     const u = this.auth.getUser();
     if (u && u._id) {
       this.userId = u._id;
-      // try to fetch fresh data
-      if (this.userId) {
-        this.auth.getUserById(this.userId).subscribe({
-        next: (data) => {
-          const theme = data.preferencia_tema === 'oscuro' ? 'dark' : (data.preferencia_tema === 'claro' ? 'light' : (data.preferencia_tema || 'light'));
-          this.form.patchValue({
-            nombre: data.nombre ?? data.name ?? '',
-            email: data.email ?? '',
-            preferencia_tema: theme,
-          });
-        },
-        error: () => {
-          // fallback to local data
-          const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
-          this.form.patchValue({
-            nombre: u.nombre ?? u.name ?? '',
-            email: u.email ?? '',
-            preferencia_tema: ut,
-          });
-        },
-        });
-      }
+      // Use local storage data directly to avoid 401 error
+      const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
+      this.form.patchValue({
+        nombre: u.nombre ?? u.name ?? '',
+        email: u.email ?? '',
+        preferencia_tema: ut,
+      });
     }
 
     // apply theme when user changes selection in the form
@@ -137,10 +123,12 @@ export class UserSettingsComponent implements OnInit {
     const payload = this.form.value;
     this.auth.updateUser(this.userId, payload).subscribe({
       next: () => {
-        // apply selected theme immediately
+        // apply selected theme immediately and store preference
         const t = payload?.preferencia_tema;
         if (t === 'dark' || t === 'light') {
-          try { this.theme.applyTheme(t); } catch(e) {}
+          try { 
+            this.theme.applyTheme(t);
+          } catch(e) {}
         }
         this.router.navigate(['/home']);
       },

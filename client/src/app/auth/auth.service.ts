@@ -175,13 +175,16 @@ export class AuthService {
       else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
     }
 
-    // After updating, fetch the fresh user document and update localStorage with real user data
+    // After updating, update localStorage with the updated data
     return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend).pipe(
-      switchMap(() => this.getUserById(id)),
-      tap((freshUser) => {
+      tap((updatedUser) => {
         try {
           if (typeof window !== 'undefined' && window?.localStorage) {
-            window.localStorage.setItem('auth_user', JSON.stringify(freshUser));
+            // Update auth_user in localStorage with the server-format response
+            const currentUser = this.getUser() || {};
+            // Ensure we use the server response's preferencia_tema (claro/oscuro format)
+            const merged = { ...currentUser, ...updatedUser, preferencia_tema: payloadToSend.preferencia_tema };
+            window.localStorage.setItem('auth_user', JSON.stringify(merged));
           }
         } catch (e) {
           console.warn('Failed to update auth_user in localStorage', e);

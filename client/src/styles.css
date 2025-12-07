@@ -244,6 +244,36 @@ Color del header en sí*/
   min-width: 200px !important;
 }
 
+/* Mat-select dropdown panel styling */
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-select-panel,
+.cdk-overlay-pane .mat-mdc-select-panel,
+.mat-mdc-select-panel {
+  background: var(--secondary-bg) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+}
+
+/* Mat-option (dropdown items) styling */
+.mat-mdc-option,
+.mat-option {
+  color: var(--text-main) !important;
+  background: transparent !important;
+}
+
+.mat-mdc-option:hover,
+.mat-option:hover,
+.mat-mdc-option.mat-mdc-option-active,
+.mat-option.mat-active {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+
+.mat-mdc-option.mat-mdc-selected:not(.mat-mdc-option-multiple),
+.mat-option.mat-selected {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+
 /* Dialog styling ----------------------------------------------------------- */
 /* Style Material Dialog containers (legacy and MDC) to match app theme */
 .cdk-overlay-container .cdk-overlay-pane .mat-dialog-container,
