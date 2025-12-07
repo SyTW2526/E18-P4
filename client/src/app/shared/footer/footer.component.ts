@@ -19,8 +19,8 @@ import { LanguageService } from '../../core/language.service';
         justify-content:space-between;
         align-items:center;
         padding:12px 24px;
-        border-top:1px solid rgba(0,0,0,0.08);
-        color: rgba(0,0,0,0.6);
+        border-top:1px solid var(--muted-border);
+        color: var(--text-muted);
         background: transparent;
         font-size:0.9rem;
       }

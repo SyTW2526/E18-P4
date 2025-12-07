@@ -52,7 +52,9 @@ import { Router } from '@angular/router';
   ],
     template: `
       <mat-toolbar color="primary">
-      <span>{{ lang.t('appTitle') }}</span>
+      <a routerLink="/" style="display:flex; align-items:center; text-decoration:none">
+        <img src="assets/images/logo-claro.jpg" alt="PaySplit" style="height:40px;" />
+      </a>
       <span class="spacer"></span>
       <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language" style="font-size:24px">{{ lang.current === 'es' ? '🇪🇸' : '🇬🇧' }}</button>
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/login">{{ lang.t('login') }}</button>
