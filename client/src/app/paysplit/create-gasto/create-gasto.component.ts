@@ -30,15 +30,18 @@ import { MatDividerModule } from '@angular/material/divider';
       </div>
 
       <mat-card>
-        <mat-form-field style="width:100%">
-          <input matInput [placeholder]="lang.t('description')" [(ngModel)]="descripcion" name="descripcion" />
+        <mat-form-field class="full-width">
+          <mat-label>{{ lang.t('description') }}</mat-label>
+          <input matInput [(ngModel)]="descripcion" name="descripcion" />
         </mat-form-field>
 
-        <div style="display:flex;gap:0.5rem;align-items:center">
-          <mat-form-field style="flex:1">
-            <input matInput [placeholder]="lang.t('amount')" type="number" [(ngModel)]="monto" name="monto" step="0.01" />
+        <div style="display:flex;gap:0.5rem;align-items:flex-start">
+          <mat-form-field class="amount-field">
+            <mat-label>{{ lang.t('amount') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="monto" name="monto" step="0.01" />
           </mat-form-field>
           <mat-form-field style="width:120px">
+            <mat-label>{{ lang.t('currency') }}</mat-label>
             <mat-select [(ngModel)]="moneda" name="moneda">
               <mat-option value="EUR">€</mat-option>
               <mat-option value="USD">$</mat-option>
@@ -47,8 +50,9 @@ import { MatDividerModule } from '@angular/material/divider';
           </mat-form-field>
         </div>
 
-        <mat-form-field style="width:100%;margin-top:0.5rem">
-          <mat-select [(ngModel)]="pagador" name="pagador" [placeholder]="lang.t('paidBy')">
+        <mat-form-field class="full-width" style="margin-top:0.5rem">
+          <mat-label>{{ lang.t('paidBy') }}</mat-label>
+          <mat-select [(ngModel)]="pagador" name="pagador">
             <mat-option *ngFor="let m of miembros" [value]="m._id || m.id">{{ displayMember(m) }}</mat-option>
           </mat-select>
         </mat-form-field>
@@ -62,7 +66,8 @@ import { MatDividerModule } from '@angular/material/divider';
             <mat-checkbox [(ngModel)]="p.selected" (change)="onToggleParticipant(i)"></mat-checkbox>
             <div style="flex:1">{{ displayMember(p.user) }}</div>
             <mat-form-field style="width:140px;margin:0">
-              <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" />
+              <mat-label>Monto</mat-label>
+              <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" step="0.01" />
             </mat-form-field>
           </div>
         </div>
@@ -74,6 +79,15 @@ import { MatDividerModule } from '@angular/material/divider';
       </mat-card>
     </section>
   `,
+  styles: [`
+    .full-width {
+      width: 100%;
+    }
+    .amount-field {
+      flex: 1;
+      min-width: 150px;
+    }
+  `],
 })
 export class CreateGastoComponent implements OnInit {
   accountId = '';
