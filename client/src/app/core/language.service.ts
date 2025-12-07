@@ -75,7 +75,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     currency: 'Moneda',
     sharedAccount: 'Cuenta compartida',
     addExpense: 'Añadir gasto',
-    accountTotal: 'Total cuenta',
+    accountTotal: 'Total pagado',
     yourTotal: 'Tu total pagado',
     noExpensesYet: 'No hay gastos todavía.',
     expenseHistory: 'Historial de gastos',
@@ -120,6 +120,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     light: 'Claro',
     dark: 'Oscuro',
     deleteAccount: 'Eliminar cuenta',
+    dailyExpenses: 'Gastos diarios',
   },
   en: {
     appTitle: 'PaySplit',
@@ -192,7 +193,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     currency: 'Currency',
     sharedAccount: 'Shared account',
     addExpense: 'Add expense',
-    accountTotal: 'Account total',
+    accountTotal: 'Total paid',
     yourTotal: 'Your total paid',
     noExpensesYet: 'No expenses yet.',
     expenseHistory: 'Expense history',
@@ -237,6 +238,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     light: 'Light',
     dark: 'Dark',
     deleteAccount: 'Delete Account',
+    dailyExpenses: 'Daily Expenses',
   },
 };
 

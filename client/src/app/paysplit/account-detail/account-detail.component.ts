@@ -36,7 +36,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     MatButtonToggleModule,
   ],
   template: `
-    <section style="max-width:900px; width:100%; margin:0 auto; text-align:left; padding-bottom:1.5rem; transform:translateY(2rem)">
+    <section style="max-width:1800px; width:95vw; margin:0 auto; text-align:left; padding-bottom:1.5rem; transform:translateY(2rem)">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ accountName || lang.t('sharedAccount') }}</h2>
@@ -49,31 +49,62 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
       </div>
 
       <div style="display:flex;gap:1rem;margin-top:0.5rem">
-        <mat-card style="flex:1">
+        <mat-card style="flex:0.9">
           <h3>{{ lang.t('summary') }}</h3>
-          <p>{{ lang.t('accountTotal') }}: <strong>{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
-          <p>{{ lang.t('yourTotal') }}: <strong>{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</strong></p>
+          <p style="margin-bottom:0.35rem">{{ lang.t('accountTotal') }}:</p>
+          <div style="font-size:1.4rem;font-weight:700;margin:0 0 0.75rem">{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
+          <p style="margin-bottom:0.35rem">{{ lang.t('yourTotal') }}:</p>
+          <div style="font-size:1.4rem;font-weight:700;margin:0">{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
         </mat-card>
 
-        <mat-card style="flex:1">
-          <h3>{{ lang.t('members') }} ({{ miembros.length }})</h3>
-          <div *ngIf="!miembros.length" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('noMembers') }}</div>
-          <mat-list *ngIf="miembros.length">
-            <mat-list-item *ngFor="let m of miembros" style="height:auto; padding:8px 0">
-              <div style="display:flex; align-items:center; gap:12px; width:100%">
-                <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:16px; font-weight:600; flex-shrink:0">
-                  {{ (m.nombre || m.email || 'U').charAt(0).toUpperCase() }}
-                </div>
-                <div style="flex:1; min-width:0">
-                  <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.nombre || m.username || 'Usuario' }}</div>
-                  <div style="font-size:0.85rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.email }}</div>
-                </div>
-              </div>
-            </mat-list-item>
-          </mat-list>
-        </mat-card>
+          <mat-card *ngIf="gastos.length" style="flex:2.0">
+            <h3>{{ lang.t('dailyExpenses') }}</h3>
+            <div style="padding:1rem 0">
+              <svg [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" style="width:100%; height:auto">
+                <!-- X-axis -->
+                <line [attr.x1]="chartPadding" [attr.y1]="chartHeight - chartPadding" 
+                      [attr.x2]="chartWidth - chartPadding" [attr.y2]="chartHeight - chartPadding" 
+                      stroke="var(--text-muted, #666)" stroke-width="1"/>
+                <!-- Y-axis -->
+                <line [attr.x1]="chartPadding" [attr.y1]="chartPadding" 
+                      [attr.x2]="chartPadding" [attr.y2]="chartHeight - chartPadding" 
+                      stroke="var(--text-muted, #666)" stroke-width="1"/>
+                <!-- Y-axis label (currency) -->
+                <text [attr.x]="chartPadding - 35"
+                      [attr.y]="chartPadding - 10"
+                      [attr.fill]="'var(--text-main, #fff)'"
+                      font-size="12"
+                      font-weight="600">{{ gastosCurrency() }}</text>
+              
+                <!-- Bars -->
+                <g *ngFor="let day of dailyExpenseData; let i = index">
+                  <rect [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2"
+                        [attr.y]="chartHeight - chartPadding - day.barHeight"
+                        [attr.width]="barWidth"
+                        [attr.height]="day.barHeight"
+                        [attr.fill]="'var(--primary-color, #B8F12D)'"
+                        opacity="0.8">
+                    <title>{{ day.date }}: {{ day.total | number:'1.2-2' }} {{ gastosCurrency() }}</title>
+                  </rect>
+                  <!-- Date labels -->
+                  <text [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2 + barWidth/2"
+                        [attr.y]="chartHeight - chartPadding + 15"
+                        text-anchor="middle"
+                        [attr.fill]="'var(--text-muted, #666)'"
+                        font-size="10">{{ day.label }}</text>
+                  <!-- Amount labels -->
+                  <text [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2 + barWidth/2"
+                        [attr.y]="chartHeight - chartPadding - day.barHeight - 5"
+                        text-anchor="middle"
+                        [attr.fill]="'var(--text-main, #fff)'"
+                        font-size="11"
+                        font-weight="600">{{ day.total | number:'1.0-0' }}</text>
+                </g>
+              </svg>
+            </div>
+          </mat-card>
 
-        <mat-card style="flex:2">
+          <mat-card style="flex:2.6">
           <h3>{{ lang.t('expenseHistory') }}</h3>
           <div *ngIf="!gastos.length">{{ lang.t('noExpensesYet') }}</div>
           <mat-list *ngIf="gastos.length">
@@ -145,6 +176,14 @@ export class AccountDetailComponent implements OnInit {
   loadingFriends = false;
   addingFriend = false;
   addFriendError: string | null = null;
+
+  // Chart properties
+  chartWidth = 800;
+  chartHeight = 300;
+  chartPadding = 50;
+  barWidth = 32;
+  barGap = 8;
+  dailyExpenseData: Array<{ date: string; label: string; total: number; barHeight: number }> = [];
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
@@ -242,6 +281,7 @@ export class AccountDetailComponent implements OnInit {
         this.gastos = Array.isArray(res) ? res : (res?.data || []);
         // normalize fecha if it's a string
         this.gastos = this.gastos.map((g: any) => ({ ...g, fecha: g.fecha ? new Date(g.fecha) : null }));
+        this.calculateDailyExpenses();
         this.loading = false;
       },
       error: (err: any) => {
@@ -249,6 +289,41 @@ export class AccountDetailComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  calculateDailyExpenses() {
+    // Group expenses by date
+    const dailyTotals = new Map<string, number>();
+    
+    this.gastos.forEach((g: any) => {
+      if (g.fecha && g.monto) {
+        const date = new Date(g.fecha);
+        const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const current = dailyTotals.get(dateKey) || 0;
+        dailyTotals.set(dateKey, current + Number(g.monto));
+      }
+    });
+
+    // Convert to array and sort by date
+    const sortedDays = Array.from(dailyTotals.entries())
+      .map(([date, total]) => ({ date, total }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate bar heights
+    const maxTotal = Math.max(...sortedDays.map(d => d.total), 1);
+    const availableHeight = this.chartHeight - (2 * this.chartPadding);
+
+    // Update chart dimensions based on number of days
+    const numDays = sortedDays.length;
+    const base = this.chartPadding * 2 + numDays * (this.barWidth + this.barGap);
+    this.chartWidth = Math.min(900, Math.max(520, base + 40));
+
+    this.dailyExpenseData = sortedDays.map(day => ({
+      date: day.date,
+      label: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
+      total: day.total,
+      barHeight: (day.total / maxTotal) * availableHeight
+    }));
   }
 
   createGastoFromForm() {
