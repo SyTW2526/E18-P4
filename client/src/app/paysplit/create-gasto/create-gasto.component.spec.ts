@@ -42,7 +42,7 @@ describe('CreateGastoComponent', () => {
 
   it('should create and recalc split correctly', () => {
     fixture.detectChanges();
-    component.monto = 100;
+    component.monto = '100';
     component.participaciones = [{ user: { _id: 'u1' }, selected: true, monto_asignado: 0 }, { user: { _id: 'u2' }, selected: true, monto_asignado: 0 } as any];
     component.recalcSplit();
     expect(component.participaciones[0].monto_asignado).toBeCloseTo(50);
@@ -51,7 +51,7 @@ describe('CreateGastoComponent', () => {
   it('createGasto requires fields and calls auth', () => {
     fixture.detectChanges();
     component.descripcion = 'Test';
-    component.monto = 20;
+    component.monto = '20';
     component.pagador = 'u1';
     component.participaciones = [{ user: { _id: 'u1' }, selected: true, monto_asignado: 20 } as any];
     component.createGasto();

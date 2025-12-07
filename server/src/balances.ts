@@ -10,6 +10,17 @@ type Balance = {
   balance: number;
 };
 
+export type DetailedBalance = {
+  userId: string;
+  userEmail?: string;
+  userName?: string;
+  paid: number;
+  share: number;
+  balance: number;
+  owes: Array<{ userId: string; userEmail?: string; userName?: string; amount: number }>;
+  owesMoney: Array<{ userId: string; userEmail?: string; userName?: string; amount: number }>;
+};
+
 /**
  * Calcula los balances de los usuarios en un grupo.
  * - Busca los gastos de la colección `gastos` con `id_grupo` igual a groupId.
@@ -81,4 +92,90 @@ export async function computeGroupBalances(groupId: string): Promise<Balance[]> 
   });
 
   return result;
+}
+
+/**
+ * Calcula el balance detallado: quién debe dinero a quién.
+ * Devuelve para cada usuario:
+ * - owes: lista de usuarios a los que le debe dinero y cantidad
+ * - owesMoney: lista de usuarios que le deben dinero a él y cantidad
+ */
+export async function computeDetailedBalances(groupId: string): Promise<DetailedBalance[]> {
+  const balances = await computeGroupBalances(groupId);
+  
+  // Obtener información de usuarios
+  const userMap: Record<string, { email?: string; name?: string }> = {};
+  if (collections.users) {
+    const users = await collections.users.find({}).toArray() as any[];
+    for (const u of users) {
+      userMap[String(u._id || u.id)] = { 
+        email: u.email, 
+        name: u.nombre || u.name 
+      };
+    }
+  }
+
+  // Crear un mapa de balances para cálculos de deudas
+  const balanceMap: Record<string, number> = {};
+  for (const b of balances) {
+    balanceMap[b.userId] = b.balance;
+  }
+
+  // Calcular quien debe a quién
+  const detailed: DetailedBalance[] = balances.map((b) => ({
+    userId: b.userId,
+    userEmail: userMap[b.userId]?.email,
+    userName: userMap[b.userId]?.name,
+    paid: b.paid,
+    share: b.share,
+    balance: b.balance,
+    owes: [],
+    owesMoney: [],
+  }));
+
+  // Algoritmo simple: si usuario A tiene balance positivo y B negativo, A es acreedor y B deudor
+  // Distribuir los montos entre deudores y acreedores
+  for (let i = 0; i < detailed.length; i++) {
+    if (detailed[i].balance < 0) {
+      // Este usuario debe dinero
+      let debtRemaining = Math.abs(detailed[i].balance);
+      
+      for (let j = 0; j < detailed.length; j++) {
+        if (i !== j && detailed[j].balance > 0 && debtRemaining > 0) {
+          // detailed[j] es acreedor, detailed[i] le debe
+          const amount = Math.min(debtRemaining, detailed[j].balance);
+          detailed[i].owes.push({
+            userId: detailed[j].userId,
+            userEmail: detailed[j].userEmail,
+            userName: detailed[j].userName,
+            amount: Math.round(amount * 100) / 100,
+          });
+          debtRemaining -= amount;
+        }
+      }
+    }
+  }
+
+  // Para acreedores: quién les debe dinero
+  for (let i = 0; i < detailed.length; i++) {
+    if (detailed[i].balance > 0) {
+      // Este usuario es acreedor
+      for (let j = 0; j < detailed.length; j++) {
+        if (i !== j && detailed[j].balance < 0) {
+          // detailed[j] tiene deuda, buscar si tiene deuda con detailed[i]
+          const owesEntry = detailed[j].owes.find(o => o.userId === detailed[i].userId);
+          if (owesEntry) {
+            detailed[i].owesMoney.push({
+              userId: detailed[j].userId,
+              userEmail: detailed[j].userEmail,
+              userName: detailed[j].userName,
+              amount: owesEntry.amount,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return detailed;
 }

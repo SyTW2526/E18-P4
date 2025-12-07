@@ -114,6 +114,10 @@ export class AuthService {
     return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances`);
   }
 
+  getDetailedBalancesForGroup(id: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances-detailed`);
+  }
+
   // User-group relations (join a group)
   createUserGroup(payload: { id_usuario: string; id_grupo: string; rol?: string }) {
     return this.http.post<any>(`${this.baseUrl}/user-group/user-groups`, payload);

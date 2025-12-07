@@ -1,7 +1,7 @@
 import * as express from "express";
 import { ObjectId } from "mongodb";
 import { collections } from "../database";
-import { computeGroupBalances } from "../balances";
+import { computeGroupBalances, computeDetailedBalances } from "../balances";
 
 export const sharedAccountsRouter = express.Router();
 
@@ -114,4 +114,17 @@ sharedAccountsRouter.get("/:id/balances", async (req: express.Request, res: expr
     res.status(500).json({ message: "Error al calcular balances.", error: error instanceof Error ? error.message : error });
   }
 });
+
+// Obtener balance detallado (quién debe a quién)
+sharedAccountsRouter.get("/:id/balances-detailed", async (req: express.Request, res: express.Response) => {
+  try {
+    const id = req.params.id;
+    const detailedBalances = await computeDetailedBalances(id);
+    res.status(200).json(detailedBalances);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al calcular balances detallados.", error: error instanceof Error ? error.message : error });
+  }
+});
+
 
