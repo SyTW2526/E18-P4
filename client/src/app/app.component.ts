@@ -155,9 +155,16 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'
     const user = this.authService.getUser();
-    const userPref = user?.preferencia_tema;
+    const userPrefRaw = user?.preferencia_tema;
+    const normalizedUserPref = (() => {
+      if (!userPrefRaw) return null;
+      const v = String(userPrefRaw).trim().toLowerCase();
+      if (v === 'oscuro' || v === 'dark') return 'dark';
+      if (v === 'claro' || v === 'light') return 'light';
+      return null;
+    })();
     const stored = this.theme.getStoredTheme();
-    const themeToApply = (userPref === 'dark' || userPref === 'light') ? userPref : (stored || 'light');
+    const themeToApply = (normalizedUserPref === 'dark' || normalizedUserPref === 'light') ? normalizedUserPref : (stored || 'light');
     this.theme.applyTheme(themeToApply as 'dark' | 'light');
     // hide settings/logout on the landing (root) route
     this.updateHeaderVisibility();

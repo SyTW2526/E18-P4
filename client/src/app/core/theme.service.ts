@@ -7,6 +7,8 @@ export class ThemeService {
   applyTheme(theme: 'dark' | 'light') {
     try {
       const body = document.body;
+      const root = document.documentElement;
+      root.setAttribute('data-theme', theme);
       if (theme === 'dark') {
         body.classList.add('app-dark-theme');
       } else {
