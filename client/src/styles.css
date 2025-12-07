@@ -33,7 +33,7 @@
   --text-muted: #475569;
   --primary-color: #4ade80;
   --primary-hover: #22c55e;
-  --secondary-bg: #ffffff;
+  --secondary-bg: #e2e8f0;
   --text-contrast: #052e16;
   --glass-start: rgba(0, 0, 0, 0.04);
   --glass-end: rgba(0, 0, 0, 0.02);
@@ -72,12 +72,10 @@ html, body {
   text-decoration: none;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s;
 }
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
-  transform: translateY(-2px);
 }
 
 /* Strong overrides to ensure .btn-primary wins over Angular Material styles */
@@ -107,7 +105,6 @@ button.mat-mdc-button.btn-primary:active {
   background-color: var(--primary-hover) !important;
   /* letras de botones de crear e unirse*/
   color: var(--secondary-bg) !important;
-  transform: translateY(-1px) !important;
 }
 
 .btn-outline {
@@ -122,7 +119,7 @@ button.mat-mdc-button.btn-primary:active {
 
 /* Group card styles */
 .group-card {
-  background: linear-gradient(180deg, var(--secondary-bg), #222);
+  background: var(--secondary-bg) !important;
   color: var(--text-main);
   border-radius: 8px;
   padding: 8px;
@@ -131,11 +128,15 @@ button.mat-mdc-button.btn-primary:active {
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
+}
+
+mat-card.group-card,
+.mat-mdc-card.group-card {
+  background: var(--secondary-bg) !important;
 }
 
 .group-card .mat-card-title {
-  color: var(--primary-color);
+  color: var(--text-main);
   font-weight: 700;
 }
 
@@ -190,14 +191,6 @@ button[mat-flat-button][color="primary"]:active {
   background-color: var(--primary-hover) !important;
   color: #000 !important;
   box-shadow: none !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Smooth transition for hover/focus/active changes */
-button.mat-flat-button.mat-primary,
-button.mat-raised-button.mat-primary,
-button.mat-button.mat-primary {
-  transition: background-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
 }
 
 /* Force Material toolbar to use the app primary color 
@@ -434,7 +427,6 @@ Color del header por la derecha*/
 /* Make the whole card show an accent highlight on hover/focus */
 .group-card:hover,
 .group-card:focus {
-  transform: translateY(-4px);
   box-shadow: 8px 5px 6px var(--primary-color);
   border: 1px solid var(--primary-hover);
   /* Make the hover tint darker but transition to the dark card background quickly
