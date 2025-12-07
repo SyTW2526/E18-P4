@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { LanguageService } from '../../core/language.service';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,79 +17,98 @@ import { MatExpansionModule } from '@angular/material/expansion';
   standalone: true,
   imports: [CommonModule, FormsModule, MatCardModule, MatListModule, MatButtonModule, MatIconModule, MatExpansionModule],
   template: `
-    <section style="max-width:900px;margin:-2rem auto 0 auto;padding-top:2rem;padding-bottom:1.5rem">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
+    <section style="max-width:1000px;margin:0 auto;padding-bottom:1.5rem">
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ lang.t('balances') }}</h2>
       </div>
 
-      <mat-card>
-        <div *ngIf="loading">{{ lang.t('loadingBalances') }}</div>
-        <div *ngIf="error" style="color:crimson">{{ error }}</div>
-        
-        <!-- Usar balances detallados si están disponibles -->
-        <div *ngIf="!loading && !error && detailedBalances && detailedBalances.length > 0">
-          <mat-accordion>
-            <mat-expansion-panel *ngFor="let b of detailedBalances">
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  <div style="display:flex;justify-content:space-between;width:100%;align-items:center;gap:1rem">
-                    <div>
-                      <div style="font-weight:600">{{ displayMember(b.user) }}</div>
-                      <div style="font-size:0.9rem;color:#666">{{ lang.t('paid') }}: {{ b.paid | number:'1.2-2' }} · {{ lang.t('share') }}: {{ b.share | number:'1.2-2' }}</div>
-                    </div>
-                    <div [style.color]="b.balance >= 0 ? 'green' : 'crimson'" style="font-weight:700;min-width:80px;text-align:right">
-                      {{ b.balance >= 0 ? '+' : '-' }}{{ (abs(b.balance) | number:'1.2-2') }}
-                    </div>
-                  </div>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-
-              <!-- Contenido expandible: detalles de deudas -->
-              <div style="padding:1rem;background:#f9f9f9">
-                <!-- Si está en positivo (es acreedor) -->
-                <div *ngIf="b.owesMoney && b.owesMoney.length > 0" style="margin-bottom:1rem">
-                  <div style="font-weight:600;color:green;margin-bottom:0.5rem">💰 A ti te deben</div>
-                  <ul style="list-style:none;padding:0;margin:0">
-                    <li *ngFor="let owe of b.owesMoney" style="padding:0.5rem;background:#e8f5e9;margin:0.25rem 0;border-radius:4px;border-left:3px solid green;color:#333">
-                      <strong>{{ displayMember(owe) }}</strong> debe <span style="color:green;font-weight:700">{{ owe.amount | number:'1.2-2' }}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <!-- Si está en negativo (es deudor) -->
-                <div *ngIf="b.owes && b.owes.length > 0">
-                  <div style="font-weight:600;color:crimson;margin-bottom:0.5rem">💳 Tú debes</div>
-                  <ul style="list-style:none;padding:0;margin:0">
-                    <li *ngFor="let ow of b.owes" style="padding:0.5rem;background:#ffebee;margin:0.25rem 0;border-radius:4px;border-left:3px solid crimson;color:#333">
-                      Debes a <strong>{{ displayMember(ow) }}</strong> <span style="color:crimson;font-weight:700">{{ ow.amount | number:'1.2-2' }}</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div *ngIf="(!b.owes || b.owes.length === 0) && (!b.owesMoney || b.owesMoney.length === 0)" style="font-size:0.9rem;color:#999;font-style:italic">
-                  Saldado
+      <div style="display:grid;grid-template-columns:1.1fr 0.9fr;gap:1rem;align-items:start">
+        <!-- Panel: saldos de todos -->
+        <mat-card>
+          <div *ngIf="loading">{{ lang.t('loadingBalances') }}</div>
+          <div *ngIf="error" style="color:crimson">{{ error }}</div>
+          <h3 style="margin:0 0 0.5rem 0">Saldos por integrante</h3>
+          <div *ngIf="!loading && !error && detailedBalances && detailedBalances.length > 0" style="display:flex;flex-direction:column;gap:0.75rem">
+            <div *ngFor="let b of detailedBalances" style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.75rem;background:#1a1a1a;border-radius:6px;border-left:4px solid #22c55e">
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:1rem;color:#22c55e;margin-bottom:0.25rem">{{ b.userName || b.userEmail || '—' }}</div>
+                <div style="font-size:0.85rem;color:#999;line-height:1.4">
+                  <div>Pagó: <span style="color:#e0e0e0;font-weight:600">{{ b.paid | number:'1.2-2' }}</span></div>
+                  <div>Su parte: <span style="color:#e0e0e0;font-weight:600">{{ b.share | number:'1.2-2' }}</span></div>
                 </div>
               </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </div>
-
-        <!-- Fallback: mostrar balances simples si no hay detallados -->
-        <mat-list *ngIf="!loading && !error && (!detailedBalances || detailedBalances.length === 0) && balances.length > 0">
-          <mat-list-item *ngFor="let b of balances">
-            <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-              <div>
-                <div style="font-weight:600">{{ displayMember(b.user) }}</div>
-                <div style="font-size:0.9rem;color:#666">{{ lang.t('paid') }}: {{ b.paid | number:'1.2-2' }} · {{ lang.t('share') }}: {{ b.share | number:'1.2-2' }}</div>
-              </div>
-              <div [style.color]="b.balance >= 0 ? 'green' : 'crimson'" style="font-weight:700">
-                {{ b.balance >= 0 ? '+' : '-' }}{{ (abs(b.balance) | number:'1.2-2') }}
+              <div style="text-align:right;min-width:100px">
+                <div [style.color]="b.balance >= 0 ? 'limegreen' : 'crimson'" style="font-weight:700;font-size:1.15rem">
+                  {{ b.balance >= 0 ? '+' : '' }}{{ (b.balance | number:'1.2-2') }}
+                </div>
               </div>
             </div>
-          </mat-list-item>
-        </mat-list>
-      </mat-card>
+          </div>
+
+          <div *ngIf="!loading && !error && (!detailedBalances || detailedBalances.length === 0) && balances.length > 0" style="display:flex;flex-direction:column;gap:0.75rem">
+            <div *ngFor="let b of balances" style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.75rem;background:#1a1a1a;border-radius:6px;border-left:4px solid #22c55e">
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:1rem;color:#22c55e;margin-bottom:0.25rem">{{ displayMember(b.user) }}</div>
+                <div style="font-size:0.85rem;color:#999;line-height:1.4">
+                  <div>Pagó: <span style="color:#e0e0e0;font-weight:600">{{ b.paid | number:'1.2-2' }}</span></div>
+                  <div>Su parte: <span style="color:#e0e0e0;font-weight:600">{{ b.share | number:'1.2-2' }}</span></div>
+                </div>
+              </div>
+              <div style="text-align:right;min-width:100px">
+                <div [style.color]="b.balance >= 0 ? 'limegreen' : 'crimson'" style="font-weight:700;font-size:1.15rem">
+                  {{ b.balance >= 0 ? '+' : '' }}{{ (b.balance | number:'1.2-2') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-card>
+
+        <!-- Panel: deudas/cobros del usuario -->
+        <mat-card>
+          <h3 style="margin:0 0 0.5rem 0">Tus deudas y cobros</h3>
+          <div *ngIf="!meDetailed" style="color:#666;font-size:0.95rem">No hay datos de balance para ti aún.</div>
+
+          <div *ngIf="meDetailed">
+            <div style="margin-bottom:0.25rem;font-weight:600;display:flex;align-items:center;gap:0.35rem">
+              <mat-icon fontIcon="account_balance_wallet"></mat-icon>
+              <span>Tu balance: <span [style.color]="meDetailed.balance >= 0 ? 'limegreen' : 'crimson'" style="font-weight:700">{{ meDetailed.balance >= 0 ? '+' : '-' }}{{ (abs(meDetailed.balance) | number:'1.2-2') }}</span></span>
+            </div>
+
+            <div *ngIf="myCredits && myCredits.length > 0" style="margin:0.5rem 0">
+              <div style="font-weight:600;color:green;margin-bottom:0.35rem">Te deben</div>
+              <ul style="list-style:none;padding:0;margin:0">
+                <li *ngFor="let owe of myCredits" style="padding:0.45rem;background:#e8f5e9;margin:0.25rem 0;border-radius:4px;border-left:3px solid green;color:#333;display:flex;align-items:center;gap:0.5rem;justify-content:space-between;flex-wrap:wrap">
+                  <span><strong>{{ displayMember(owe) }}</strong> te debe <span style="color:green;font-weight:700">{{ owe.amount | number:'1.2-2' }}</span></span>
+                  <button mat-stroked-button color="accent"
+                    (click)="requestPayment(owe)"
+                    [disabled]="isRequesting(owe) || owe.amount <= 0">
+                    {{ isRequesting(owe) ? 'Enviando...' : 'Reclamar pago' }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="myDebts && myDebts.length > 0" style="margin:0.5rem 0">
+              <div style="font-weight:600;color:crimson;margin-bottom:0.35rem">Tú debes</div>
+              <ul style="list-style:none;padding:0;margin:0">
+                <li *ngFor="let ow of myDebts" style="padding:0.45rem;background:#ffebee;margin:0.25rem 0;border-radius:4px;border-left:3px solid crimson;color:#333;display:flex;align-items:center;gap:0.5rem;justify-content:space-between;flex-wrap:wrap">
+                  <span>Debes a <strong>{{ displayMember(ow) }}</strong> <span style="color:crimson;font-weight:700">{{ ow.amount | number:'1.2-2' }}</span></span>
+                  <button mat-stroked-button color="primary"
+                    (click)="payDebt(meDetailed, ow)"
+                    [disabled]="isPaying(meDetailed, ow) || meDetailed.balance >= 0 || ow.amount <= 0">
+                    {{ isPaying(meDetailed, ow) ? 'Pagando...' : 'Pagar' }}
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div *ngIf="(!myDebts || myDebts.length === 0) && (!myCredits || myCredits.length === 0)" style="font-size:0.9rem;color:#999;font-style:italic">
+              No tienes deudas ni cobros pendientes.
+            </div>
+          </div>
+        </mat-card>
+      </div>
     </section>
   `,
 })
@@ -97,81 +116,177 @@ export class BalanceComponent implements OnInit {
   accountId = '';
   balances: Array<any> = [];
   detailedBalances: Array<any> = [];
+  meDetailed: any | null = null;
+  myDebts: Array<any> = [];
+  myCredits: Array<any> = [];
   loading = false;
   error: string | null = null;
+  payingKeys = new Set<string>();
+  requestingKeys = new Set<string>();
+  abs = Math.abs;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private auth: AuthService,
+    public lang: LanguageService
+  ) {}
 
-  ngOnInit(): void {
-    this.accountId = this.route.snapshot.paramMap.get('id') || '';
+  ngOnInit() {
+    this.accountId = this.route.snapshot.paramMap.get('id') || this.route.snapshot.paramMap.get('accountId') || '';
     this.loadBalances();
   }
 
-  abs(v: number) {
-    return Math.abs(v || 0);
-  }
+  private loadBalances() {
+    if (!this.accountId) {
+      this.error = 'No se encontró el grupo';
+      return;
+    }
 
-  loadBalances() {
     this.loading = true;
     this.error = null;
 
-    // Try to load detailed balances first (new endpoint), fall back to simple balances
-    const detailedBalances$ = this.auth.getDetailedBalancesForGroup(this.accountId).pipe(catchError(() => of([])));
-    const members$ = this.auth.getMembersForGroup(this.accountId).pipe(catchError(() => of([])));
-    const balances$ = this.auth.getBalancesForGroup(this.accountId).pipe(catchError(() => of([])));
-
-    (forkJoin([detailedBalances$, members$, balances$]) as any).subscribe({
-      next: ([detailedBalances, members, balances]: [any[], any[], any[]]) => {
-        const memberList = Array.isArray(members) ? members : [];
-        const balanceList = Array.isArray(balances) ? balances : [];
-        const detailedList = Array.isArray(detailedBalances) ? detailedBalances : [];
-
-        console.log('Detailed balances received:', detailedList);
-        console.log('Simple balances received:', balanceList);
-
-        if (detailedList && detailedList.length > 0) {
-          // Usar balances detallados si están disponibles
-          this.detailedBalances = detailedList;
-          // Enriquecer con información de usuario si es necesario
-          this.detailedBalances = this.detailedBalances.map((b: any) => ({
-            ...b,
-            user: b.userName ? { nombre: b.userName, email: b.userEmail, _id: b.userId } : { _id: b.userId }
-          }));
-          // Ordenar por balance descendente
-          this.detailedBalances.sort((a: any, b: any) => Number(b.balance) - Number(a.balance));
-        } else {
-          // Fallback: construir balances simples
-          const balMap: Record<string, any> = {};
-          balanceList.forEach((b: any) => {
-            balMap[String(b.userId)] = { paid: Number(b.paid) || 0, share: Number(b.share) || 0, balance: Number(b.balance) || 0, user: b.user || null };
-          });
-
-          const normalizedMembers = memberList.map((m: any) => (typeof m === 'object' ? m : { _id: m }));
-
-          const me = this.auth.getUser();
-          const meId = me?._id || me?.id;
-          if (meId && !normalizedMembers.find((x: any) => String(x._id || x.id) === String(meId))) {
-            normalizedMembers.unshift(me);
-          }
-
-          this.balances = normalizedMembers.map((u: any) => {
-            const uid = String(u._id || u.id || u);
-            const b = balMap[uid] || { paid: 0, share: 0, balance: 0, user: u };
-            b.user = b.user || u;
-            b.userId = uid;
-            return b;
-          });
-
-          this.balances.sort((a: any, b: any) => Number(b.balance) - Number(a.balance));
-        }
-
+    forkJoin({
+      balances: this.auth.getBalancesForGroup(this.accountId).pipe(catchError(() => of([]))),
+      detailed: this.auth.getDetailedBalancesForGroup(this.accountId).pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ balances, detailed }) => {
         this.loading = false;
+        this.balances = balances || [];
+        const sortedDetailed = Array.isArray(detailed) ? [...detailed] : [];
+        sortedDetailed.sort((a: any, b: any) => {
+          const aName = a?.userName || a?.nombre || a?.user?.nombre || a?.user?.name || a?.user?.email || '';
+          const bName = b?.userName || b?.nombre || b?.user?.nombre || b?.user?.name || b?.user?.email || '';
+          return aName.localeCompare(bName);
+        });
+        this.detailedBalances = sortedDetailed;
+
+        const me = this.auth.getUser();
+        this.meDetailed = null;
+        this.myDebts = [];
+        this.myCredits = [];
+        if (me) {
+          const meDet = this.detailedBalances.find((d) => {
+            const id = d?.userId || d?.user?._id || d?.user?.id || d?.user?.userId;
+            return id && (id === me._id || id === me.id);
+          });
+          if (meDet) {
+            this.meDetailed = meDet;
+            this.myDebts = meDet.owes || [];
+            this.myCredits = meDet.owesMoney || [];
+          }
+        }
       },
       error: (err: any) => {
         this.loading = false;
         this.error = err?.error?.message || err?.message || 'No se pudieron cargar balances';
       },
     });
+  }
+
+  private getDebtKey(b: any, ow: any): string {
+    const debtorId = String(b?.userId || b?.user?._id || b?.user?.id || '');
+    const creditorId = String(ow?.userId || ow?._id || ow?.id || '');
+    const amount = Number(ow?.amount || 0).toFixed(2);
+    return `${debtorId}-${creditorId}-${amount}`;
+  }
+
+  isPaying(b: any, ow: any) {
+    return this.payingKeys.has(this.getDebtKey(b, ow));
+  }
+
+  payDebt(b: any, ow: any) {
+    const key = this.getDebtKey(b, ow);
+    if (!key || this.payingKeys.has(key)) return;
+    const debtorId = String(b?.userId || b?.user?._id || b?.user?.id || '');
+    const creditorId = String(ow?.userId || ow?._id || ow?.id || '');
+    const amount = Number(ow?.amount || 0);
+    if (!debtorId || !creditorId || !amount) return;
+    // Solo permitir pago si este usuario está en negativo (debe dinero)
+    if (Number(b?.balance || 0) >= 0) return;
+
+    this.payingKeys.add(key);
+    this.error = null;
+
+    const desc = `Pago a ${ow?.userName || ow?.nombre || ow?.email || ow?.userEmail || creditorId}`;
+    // Modelar el pago: el deudor paga (paid += amount) y el acreedor recibe (share += amount).
+    const payload: any = {
+      id_grupo: this.accountId,
+      descripcion: desc,
+      monto: amount,
+      id_pagador: debtorId,
+      fecha: new Date(),
+      categoria: 'pago',
+    };
+
+    this.auth
+      .createGasto(payload)
+      .pipe(
+        switchMap((res: any) => {
+          const gastoId = res?.id || res?.insertedId || res?._id;
+          if (!gastoId) throw new Error('No se obtuvo id de gasto');
+          const body = { id_usuario: creditorId, id_gasto: gastoId, monto_asignado: amount };
+          return this.auth.createParticipacion(body);
+        }),
+        catchError((err) => {
+          console.error('payDebt error', err);
+          this.error = 'No se pudo registrar el pago';
+          return of(null);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.payingKeys.delete(key);
+          this.loadBalances();
+        },
+        error: () => {
+          this.payingKeys.delete(key);
+        },
+      });
+  }
+
+  private getRequestKey(ow: any): string {
+    const debtorId = String(ow?.userId || ow?._id || ow?.id || '');
+    const amount = Number(ow?.amount || 0).toFixed(2);
+    return `${debtorId}-${amount}`;
+  }
+
+  isRequesting(ow: any) {
+    return this.requestingKeys.has(this.getRequestKey(ow));
+  }
+
+  requestPayment(ow: any) {
+    const key = this.getRequestKey(ow);
+    if (!key || this.requestingKeys.has(key)) return;
+    
+    const debtorId = String(ow?.userId || ow?._id || ow?.id || '');
+    const amount = Number(ow?.amount || 0);
+    
+    if (!debtorId || !amount) return;
+
+    this.requestingKeys.add(key);
+    
+    const me = this.auth.getUser();
+    const creditorName = me?.nombre || me?.name || me?.email || 'Alguien';
+    const debtorName = ow?.userName || ow?.nombre || ow?.email || ow?.userEmail || debtorId;
+    
+    // Crear una notificación/recordatorio en el sistema
+    const notification = {
+      tipo: 'solicitud_pago',
+      de_usuario: me?._id || me?.id,
+      para_usuario: debtorId,
+      id_grupo: this.accountId,
+      mensaje: `${creditorName} te solicita el pago de ${amount.toFixed(2)}`,
+      monto: amount,
+      fecha: new Date(),
+      leida: false
+    };
+
+    // Por ahora mostrar alert y enviar notificación (puedes implementar endpoint en backend)
+    console.log('Solicitud de pago:', notification);
+    alert(`Se ha enviado una solicitud de pago a ${debtorName} por ${amount.toFixed(2)}`);
+    
+    this.requestingKeys.delete(key);
   }
 
   displayMember(u: any) {

@@ -22,103 +22,77 @@ import { MatDividerModule } from '@angular/material/divider';
   selector: 'app-create-gasto',
   standalone: true,
   imports: [CommonModule, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCardModule, MatDatepickerModule, MatNativeDateModule, MatIconModule, MatCheckboxModule, MatListModule, MatDividerModule],
-  styles: [`
-    ::ng-deep .app-create-gasto mat-form-field {
-      max-width: 100%;
-    }
-    ::ng-deep .app-create-gasto .mat-mdc-form-field-infix {
-      max-width: none;
-    }
-    ::ng-deep .app-create-gasto .mat-mdc-text-field__input {
-      max-width: none;
-    }
-    ::ng-deep .app-create-gasto .mat-mdc-select-arrow {
-      display: none !important;
-    }
-    ::ng-deep .app-create-gasto .select-arrow-open {
-      transform: rotate(180deg);
-      transition: transform 0.3s ease-in-out;
-    }
-    ::ng-deep .app-create-gasto mat-icon[matPrefix] {
-      cursor: pointer;
-      transition: transform 0.3s ease-in-out;
-      pointer-events: auto;
-    }
-    ::ng-deep .app-create-gasto input[type="number"]::-webkit-outer-spin-button,
-    ::ng-deep .app-create-gasto input[type="number"]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    ::ng-deep .app-create-gasto input[type="number"] {
-      -moz-appearance: textfield;
-    }
-  `],
   template: `
-    <section class="app-create-gasto" style="max-width:900px;margin:0 auto;padding-top:2rem">
+    <section style="max-width:900px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
         <h2 style="margin:0">{{ editMode ? lang.t('edit') + ' ' + lang.t('expenses').toLowerCase() : lang.t('addExpense') }}</h2>
       </div>
 
-      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:start">
-        <!-- Buttons on the left -->
-        <div style="display:flex;flex-direction:column;gap:0.5rem;min-width:120px">
-          <button mat-raised-button (click)="createGasto()" [disabled]="creating" style="width:100%;background-color:var(--primary-color);color:#000 !important">{{ lang.t('add') }}</button>
-          <button mat-raised-button (click)="goBack()" style="width:100%;background-color:#d32f2f;color:white">{{ lang.t('cancel') }}</button>
-        </div>
+      <mat-card>
+        <mat-form-field class="full-width">
+          <mat-label>{{ lang.t('description') }}</mat-label>
+          <input matInput [(ngModel)]="descripcion" name="descripcion" />
+        </mat-form-field>
 
-        <!-- Form Content -->
-        <mat-card style="margin:0;width:100%">
-          <mat-form-field style="width:100%;margin-bottom:0.5rem">
-            <input matInput [placeholder]="lang.t('description')" [(ngModel)]="descripcion" name="descripcion" style="padding-left:0.5rem" />
+        <div style="display:flex;gap:0.5rem;align-items:flex-start">
+          <mat-form-field class="amount-field">
+            <mat-label>{{ lang.t('amount') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="monto" name="monto" step="0.01" />
           </mat-form-field>
-
-          <div style="display:flex;gap:1rem;margin-top:0.5rem;align-items:center;width:100%">
-            <mat-form-field style="flex:1;min-width:0">
-              <input matInput [placeholder]="lang.t('amount')" type="number" [(ngModel)]="monto" name="monto" style="padding-left:0.5rem" />
-            </mat-form-field>
-            <mat-form-field style="flex:0 0 150px" (click)="$event.stopPropagation(); monedaOpen ? monedaSelect.close() : monedaSelect.open()">
-              <mat-icon matPrefix [class.select-arrow-open]="monedaOpen" style="cursor:pointer;padding-right:0.5rem">expand_more</mat-icon>
-              <mat-select #monedaSelect [(ngModel)]="moneda" (openedChange)="monedaOpen=$event" name="moneda" style="padding-left:0.5rem;cursor:pointer">
-                <mat-option value="EUR">€</mat-option>
-                <mat-option value="USD">$</mat-option>
-                <mat-option value="GBP">£</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-
-          <mat-form-field style="width:100%;margin-top:0.5rem" (click)="$event.stopPropagation(); pagadorOpen ? pagadorSelect.close() : pagadorSelect.open()">
-            <mat-icon matPrefix [class.select-arrow-open]="pagadorOpen" style="cursor:pointer;padding-right:0.5rem">expand_more</mat-icon>
-            <mat-select #pagadorSelect [(ngModel)]="pagador" (openedChange)="pagadorOpen=$event" name="pagador" [placeholder]="lang.t('paidBy')" style="padding-left:0.5rem;cursor:pointer">
-              <mat-option *ngFor="let m of miembros" [value]="m._id || m.id">{{ displayMember(m) }}</mat-option>
+          <mat-form-field style="width:120px">
+            <mat-label>{{ lang.t('currency') }}</mat-label>
+            <mat-select [(ngModel)]="moneda" name="moneda">
+              <mat-option value="EUR">€</mat-option>
+              <mat-option value="USD">$</mat-option>
+              <mat-option value="GBP">£</mat-option>
             </mat-select>
           </mat-form-field>
-        </mat-card>
+        </div>
 
-        <!-- Divide menu on the right -->
-        <mat-card style="margin:0;min-width:250px">
-          <div style="margin-top:0">
-            <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">{{ lang.t('divide') }}</mat-checkbox>
+        <mat-form-field class="full-width" style="margin-top:0.5rem">
+          <mat-label>{{ lang.t('paidBy') }}</mat-label>
+          <mat-select [(ngModel)]="pagador" name="pagador">
+            <mat-option *ngFor="let m of miembros" [value]="m._id || m.id">{{ displayMember(m) }}</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-            <mat-divider style="margin:0.5rem 0"></mat-divider>
+        <div style="margin-top:1rem">
+          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">{{ lang.t('divide') }}</mat-checkbox>
 
-            <div *ngFor="let p of participaciones; let i = index" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;flex-wrap:wrap">
-              <mat-checkbox [(ngModel)]="p.selected" (change)="onToggleParticipant(i)" style="flex-shrink:0"></mat-checkbox>
-              <div style="flex:1;min-width:120px;font-size:0.9rem">{{ displayMember(p.user) }}</div>
-              <mat-form-field style="width:100%">
-                <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" style="padding-left:0.5rem" />
-              </mat-form-field>
-            </div>
+          <mat-divider style="margin:0.5rem 0"></mat-divider>
+
+          <div *ngFor="let p of participaciones; let i = index" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0">
+            <mat-checkbox [(ngModel)]="p.selected" (change)="onToggleParticipant(i)"></mat-checkbox>
+            <div style="flex:1">{{ displayMember(p.user) }}</div>
+            <mat-form-field style="width:140px;margin:0">
+              <mat-label>Monto</mat-label>
+              <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" step="0.01" />
+            </mat-form-field>
           </div>
-        </mat-card>
-      </div>
+        </div>
+
+        <div style="margin-top:1rem;display:flex;gap:0.5rem">
+          <button mat-raised-button color="primary" (click)="createGasto()" [disabled]="creating">{{ lang.t('add') }}</button>
+          <button mat-button (click)="goBack()">{{ lang.t('cancel') }}</button>
+        </div>
+      </mat-card>
     </section>
   `,
+  styles: [`
+    .full-width {
+      width: 100%;
+    }
+    .amount-field {
+      flex: 1;
+      min-width: 150px;
+    }
+  `],
 })
 export class CreateGastoComponent implements OnInit {
   accountId = '';
   descripcion = '';
-  monto: number | null = null;
+  monto = '';
   moneda = 'EUR';
   pagador: string | null = null;
   miembros: any[] = [];
@@ -127,8 +101,6 @@ export class CreateGastoComponent implements OnInit {
   creating = false;
   editMode = false;
   gastoId: string | null = null;
-  monedaOpen = false;
-  pagadorOpen = false;
   private membersReadyResolve: (() => void) | null = null;
   private membersReady: Promise<void> = new Promise((r) => (this.membersReadyResolve = r));
 
