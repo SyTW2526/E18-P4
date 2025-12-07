@@ -36,7 +36,7 @@ import { MatDividerModule } from '@angular/material/divider';
 
         <div style="display:flex;gap:0.5rem;align-items:center">
           <mat-form-field style="flex:1">
-            <input matInput [placeholder]="lang.t('amount')" type="number" [(ngModel)]="monto" name="monto" />
+            <input matInput [placeholder]="lang.t('amount')" type="number" [(ngModel)]="monto" name="monto" step="0.01" />
           </mat-form-field>
           <mat-form-field style="width:120px">
             <mat-select [(ngModel)]="moneda" name="moneda">
@@ -78,7 +78,7 @@ import { MatDividerModule } from '@angular/material/divider';
 export class CreateGastoComponent implements OnInit {
   accountId = '';
   descripcion = '';
-  monto: number | null = null;
+  monto = '';
   moneda = 'EUR';
   pagador: string | null = null;
   miembros: any[] = [];
