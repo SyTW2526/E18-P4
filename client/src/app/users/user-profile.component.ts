@@ -41,7 +41,7 @@ import { LanguageService } from '../core/language.service';
               </div>
               <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px">
                 <div style="font-weight:600">{{ lang.t('registered') }}:</div>
-                <div>{{ user.fecha_registro ? (user.fecha_registro | date:'mediumDate') : 'N/A' }}</div>
+                <div>{{ user.fecha_registro ? (user.fecha_registro | date:'dd/MM/yyyy') : 'N/A' }}</div>
               </div>
               <div>
                 <button *ngIf="isFriend && (auth.getUser()?._id !== (user?._id || user?.id))" (click)="showConfirm = true" style="background:#d9534f; border:none; color:white; padding:8px 12px; border-radius:6px; cursor:pointer">{{ lang.t('removeFriend') }}</button>
