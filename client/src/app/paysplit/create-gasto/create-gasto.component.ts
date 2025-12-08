@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { LanguageService } from '../../core/language.service';
+import { NotificationService } from '../../core/notification.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -104,7 +105,13 @@ export class CreateGastoComponent implements OnInit {
   private membersReadyResolve: (() => void) | null = null;
   private membersReady: Promise<void> = new Promise((r) => (this.membersReadyResolve = r));
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private auth: AuthService, 
+    private router: Router, 
+    public lang: LanguageService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
@@ -291,7 +298,11 @@ export class CreateGastoComponent implements OnInit {
                   const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
                   const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
                   (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                    next: () => { this.creating = false; this.router.navigate(['/group', this.accountId]); },
+                    next: () => { 
+                      this.sendEditNotificationsToParticipants(gastoId, selectedParts);
+                      this.creating = false; 
+                      this.router.navigate(['/group', this.accountId]); 
+                    },
                     error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
                   });
                 },
@@ -303,7 +314,11 @@ export class CreateGastoComponent implements OnInit {
               const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
               const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
               (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                next: () => { this.creating = false; this.router.navigate(['/group', this.accountId]); },
+                next: () => { 
+                  this.sendEditNotificationsToParticipants(gastoId, selectedParts);
+                  this.creating = false; 
+                  this.router.navigate(['/group', this.accountId]); 
+                },
                 error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
               });
             }
@@ -351,6 +366,8 @@ export class CreateGastoComponent implements OnInit {
 
         (forkJoin(calls) as any).subscribe({
           next: () => {
+            // Enviar notificaciones a todos los participantes excepto el creador
+            this.sendNotificationsToParticipants(gastoId, selectedParts);
             this.creating = false;
             this.router.navigate(['/group', this.accountId]);
           },
@@ -364,6 +381,68 @@ export class CreateGastoComponent implements OnInit {
         this.creating = false;
         console.error('createGasto error', err);
       },
+    });
+  }
+
+  sendNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+    const me = this.auth.getUser();
+    if (!me || !me._id) return;
+
+    const creatorName = me.nombre || me.name || me.email || 'Alguien';
+    
+    // Enviar notificación a cada participante excepto el creador
+    selectedParts.forEach(part => {
+      const userId = String(part.user._id || part.user.id);
+      if (userId === me._id) return; // No notificar al creador
+
+      const notification = {
+        tipo: 'gasto_creado' as const,
+        de_usuario: me._id,
+        para_usuario: userId,
+        id_grupo: this.accountId,
+        id_gasto: gastoId,
+        mensaje: `${creatorName} creó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+      };
+
+      this.notificationService.createNotification(notification).subscribe({
+        next: () => {
+          console.log('Notificación enviada a', userId);
+        },
+        error: (err: any) => {
+          console.error('Error enviando notificación:', err);
+        }
+      });
+    });
+  }
+
+  sendEditNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+    const me = this.auth.getUser();
+    if (!me || !me._id) return;
+
+    const editorName = me.nombre || me.name || me.email || 'Alguien';
+    
+    // Enviar notificación a cada participante excepto el editor
+    selectedParts.forEach(part => {
+      const userId = String(part.user._id || part.user.id);
+      if (userId === me._id) return; // No notificar al editor
+
+      const notification = {
+        tipo: 'gasto_creado' as const,
+        de_usuario: me._id,
+        para_usuario: userId,
+        id_grupo: this.accountId,
+        id_gasto: gastoId,
+        mensaje: `${editorName} editó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+      };
+
+      this.notificationService.createNotification(notification).subscribe({
+        next: () => {
+          console.log('Notificación de edición enviada a', userId);
+        },
+        error: (err: any) => {
+          console.error('Error enviando notificación de edición:', err);
+        }
+      });
     });
   }
 

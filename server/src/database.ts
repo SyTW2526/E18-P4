@@ -4,6 +4,7 @@ import { SharedAccount } from "./shared-account";
 import { UserGroup } from "./user-group";
 import { Gasto } from "./gastos";
 import { Participacion } from "./participacion";
+import { Notification } from "./notifications";
 
 
 export const collections: {
@@ -12,6 +13,7 @@ export const collections: {
   gastos?: mongodb.Collection<Gasto>;
   userGroups?: mongodb.Collection<UserGroup>;
   participaciones?: mongodb.Collection<Participacion>;
+  notifications?: mongodb.Collection<Notification>;
 } = {};
 
 export async function connectToDatabase(uri: string) {
@@ -33,6 +35,8 @@ export async function connectToDatabase(uri: string) {
   collections.userGroups = userGroupsCollection;
   const participacionesCollection = db.collection<Participacion>("participaciones");
   collections.participaciones = participacionesCollection;
+  const notificationsCollection = db.collection<Notification>("notifications");
+  collections.notifications = notificationsCollection;
 
 
     try {

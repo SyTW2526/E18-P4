@@ -4,17 +4,21 @@ import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { LanguageService } from '../../core/language.service';
+import { NotificationService } from '../../core/notification.service';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
+import { MatBadgeModule } from '@angular/material/badge';
+import { interval } from 'rxjs';
+import { switchMap, startWith } from 'rxjs/operators';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCardModule, MatListModule],
+  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCardModule, MatListModule, MatBadgeModule],
   template: `
     <section style="max-width:900px; width:100%; text-align:center; padding-top:2rem">
       <h1>{{ lang.t('welcome') }}</h1>
@@ -67,7 +71,12 @@ import { MatListModule } from '@angular/material/list';
       </ng-container>
 
       <div *ngIf="auth.isLoggedIn()" style="margin-top:1rem">
-        <p>{{ lang.t('connectedAs') }} <strong>{{ auth.getUser()?.nombre || auth.getUser()?.email }}</strong></p>
+        <div style="display:flex;justify-content:space-between;align-items:center;max-width:900px;margin:0 auto 1rem">
+          <p style="margin:0">{{ lang.t('connectedAs') }} <strong>{{ auth.getUser()?.nombre || auth.getUser()?.email }}</strong></p>
+          <button mat-icon-button (click)="goToNotifications()" matBadge="{{ unreadCount }}" matBadgeColor="warn" [matBadgeHidden]="unreadCount === 0">
+            <mat-icon>notifications</mat-icon>
+          </button>
+        </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto">
           <!-- Left sidebar with debt info -->
@@ -140,13 +149,55 @@ export class HomeComponent {
   joinId = '';
   createLoading = false;
   joinLoading = false;
+  unreadCount = 0;
 
-  constructor(public auth: AuthService, private router: Router, public lang: LanguageService) {}
+  constructor(
+    public auth: AuthService, 
+    private router: Router, 
+    public lang: LanguageService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     if (this.auth.isLoggedIn()) {
       this.loadSharedAccounts();
+      this.loadUnreadCount();
+      // Poll cada 30 segundos
+      const user = this.auth.getUser();
+      if (user && user._id) {
+        interval(30000)
+          .pipe(
+            startWith(0),
+            switchMap(() => this.notificationService.getUnreadCount(user._id))
+          )
+          .subscribe({
+            next: (result) => {
+              this.unreadCount = result.count || 0;
+            },
+            error: (err) => {
+              console.error('Error polling unread count:', err);
+            }
+          });
+      }
     }
+  }
+
+  loadUnreadCount() {
+    const user = this.auth.getUser();
+    if (user && user._id) {
+      this.notificationService.getUnreadCount(user._id).subscribe({
+        next: (result) => {
+          this.unreadCount = result.count || 0;
+        },
+        error: (err) => {
+          console.error('Error loading unread count:', err);
+        }
+      });
+    }
+  }
+
+  goToNotifications() {
+    this.router.navigate(['/notifications']);
   }
 
   toggleSignupPassword() {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { LanguageService } from '../../core/language.service';
+import { NotificationService } from '../../core/notification.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
@@ -129,7 +130,8 @@ export class BalanceComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private auth: AuthService,
-    public lang: LanguageService
+    public lang: LanguageService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit() {
@@ -262,31 +264,48 @@ export class BalanceComponent implements OnInit {
     const debtorId = String(ow?.userId || ow?._id || ow?.id || '');
     const amount = Number(ow?.amount || 0);
     
-    if (!debtorId || !amount) return;
+    if (!debtorId || !amount) {
+      console.error('Invalid debtor ID or amount:', { debtorId, amount });
+      return;
+    }
 
     this.requestingKeys.add(key);
     
     const me = this.auth.getUser();
-    const creditorName = me?.nombre || me?.name || me?.email || 'Alguien';
+    if (!me || !me._id) {
+      console.error('User not authenticated');
+      alert('Error: Usuario no autenticado');
+      this.requestingKeys.delete(key);
+      return;
+    }
+
+    const creditorName = me.nombre || me.name || me.email || 'Alguien';
     const debtorName = ow?.userName || ow?.nombre || ow?.email || ow?.userEmail || debtorId;
     
-    // Crear una notificación/recordatorio en el sistema
+    // Crear notificación en el backend
     const notification = {
-      tipo: 'solicitud_pago',
-      de_usuario: me?._id || me?.id,
+      tipo: 'solicitud_pago' as const,
+      de_usuario: me._id,
       para_usuario: debtorId,
       id_grupo: this.accountId,
       mensaje: `${creditorName} te solicita el pago de ${amount.toFixed(2)}`,
-      monto: amount,
-      fecha: new Date(),
-      leida: false
+      monto: amount
     };
 
-    // Por ahora mostrar alert y enviar notificación (puedes implementar endpoint en backend)
-    console.log('Solicitud de pago:', notification);
-    alert(`Se ha enviado una solicitud de pago a ${debtorName} por ${amount.toFixed(2)}`);
-    
-    this.requestingKeys.delete(key);
+    console.log('Enviando notificación:', notification);
+
+    this.notificationService.createNotification(notification).subscribe({
+      next: () => {
+        alert(`Se ha enviado una solicitud de pago a ${debtorName} por ${amount.toFixed(2)}`);
+        this.requestingKeys.delete(key);
+      },
+      error: (err: any) => {
+        console.error('Error creando notificación:', err);
+        const errorMsg = err?.error?.error || err?.message || 'Error desconocido';
+        alert(`Error al enviar solicitud de pago: ${errorMsg}`);
+        this.requestingKeys.delete(key);
+      }
+    });
   }
 
   displayMember(u: any) {
