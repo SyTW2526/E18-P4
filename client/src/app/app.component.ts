@@ -61,6 +61,8 @@ import { Router } from '@angular/router';
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/register">{{ lang.t('register') }}</button>
       <!-- Amigos dropdown -->
       <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">{{ lang.t('friends') }}</button>
+      <!-- Notificaciones -->
+      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/notifications">{{ lang.t('notifications') || 'Notificaciones' }}</button>
       <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
         <ng-container *ngIf="peticiones && peticiones.length">
           <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">{{ lang.t('requests') }} ({{ peticiones.length }})</button>
