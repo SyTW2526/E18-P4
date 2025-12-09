@@ -52,7 +52,7 @@ import { Router } from '@angular/router';
   ],
     template: `
       <mat-toolbar color="primary">
-      <a routerLink="/" style="display:flex; align-items:center; text-decoration:none">
+      <a [routerLink]="showAuthenticatedControls ? '/home' : '/'" style="display:flex; align-items:center; text-decoration:none">
         <img src="assets/images/logo-claro.jpg" alt="PaySplit" style="height:40px;" />
       </a>
       <span class="spacer"></span>
