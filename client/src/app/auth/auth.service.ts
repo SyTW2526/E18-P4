@@ -27,6 +27,12 @@ export class AuthService {
     );
   }
 
+  signinGoogle(token: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/users/signin-google`, { token }).pipe(
+      tap((res) => this.saveAuth(res))
+    );
+  }
+
   private saveAuth(res: AuthResponse) {
     try {
       if (typeof window !== 'undefined' && window?.localStorage) {

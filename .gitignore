@@ -4,6 +4,8 @@ dist
 /.env
 npm-debug.log
 yarn-error.log
+GOOGLE_SIGNIN_FIX.md
+GOOGLE_SIGNIN_FIX_REGISTRO.md
 
 # Ignore log files
 logs

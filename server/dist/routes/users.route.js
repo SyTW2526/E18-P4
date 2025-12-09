@@ -48,6 +48,7 @@ const mongodb_1 = require("mongodb");
 const database_1 = require("../database");
 const bcrypt = __importStar(require("bcryptjs"));
 const jwt = __importStar(require("jsonwebtoken"));
+const google_auth_library_1 = require("google-auth-library");
 exports.userRouter = express.Router();
 exports.userRouter.use(express.json());
 // Simple JWT auth middleware for protecting certain user routes
@@ -286,6 +287,67 @@ exports.userRouter.post("/signin", (req, res) => __awaiter(void 0, void 0, void 
     catch (err) {
         console.error(err);
         return res.status(500).send(err instanceof Error ? err.message : 'Unknown error');
+    }
+}));
+// POST /signin-google - authenticate with Google token
+exports.userRouter.post("/signin-google", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d;
+    try {
+        const { token } = req.body;
+        if (!token)
+            return res.status(400).send("'token' is required");
+        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+        if (!GOOGLE_CLIENT_ID)
+            return res.status(500).send("GOOGLE_CLIENT_ID is not configured");
+        const client = new google_auth_library_1.OAuth2Client(GOOGLE_CLIENT_ID);
+        const ticket = yield client.verifyIdToken({
+            idToken: token,
+            audience: GOOGLE_CLIENT_ID,
+        });
+        const payload = ticket.getPayload();
+        if (!payload)
+            return res.status(401).send("Invalid token");
+        const { sub: googleId, email, name, picture } = payload;
+        // Find or create user
+        let user = yield ((_a = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _a === void 0 ? void 0 : _a.findOne({ email: String(email).toLowerCase() }));
+        if (!user) {
+            // Auto-create user on first Google login
+            const newUser = {
+                nombre: name || (email === null || email === void 0 ? void 0 : email.split('@')[0]) || 'Usuario',
+                email: String(email).toLowerCase(),
+                password_hash: '', // No password for OAuth users
+                foto_perfil: picture || '',
+                google_id: googleId,
+                fecha_registro: new Date(),
+                amigos: [],
+                peticiones_amistad: [],
+                preferencia_tema: 'light',
+            };
+            const result = yield ((_b = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _b === void 0 ? void 0 : _b.insertOne(newUser));
+            if (!result)
+                return res.status(500).send("Failed to create user");
+            user = yield ((_c = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _c === void 0 ? void 0 : _c.findOne({ _id: result.insertedId }));
+        }
+        else {
+            // Update google_id if not present
+            if (!user.google_id) {
+                yield ((_d = database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.users) === null || _d === void 0 ? void 0 : _d.updateOne({ _id: user._id }, { $set: { google_id: googleId } }));
+            }
+        }
+        if (!user)
+            return res.status(500).send("Failed to retrieve user");
+        // Generate JWT
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET)
+            return res.status(500).send("JWT_SECRET is not configured");
+        const jwtToken = jwt.sign({ userId: user._id.toString(), email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+        const safe = Object.assign({}, user);
+        delete safe.password_hash;
+        return res.status(200).json({ user: safe, token: jwtToken });
+    }
+    catch (err) {
+        console.error('Google signin error:', err);
+        return res.status(401).send(err.message || 'Invalid token');
     }
 }));
 // PUT /users/:id - update user (partial updates allowed)

@@ -325,13 +325,24 @@ exports.userGroupRouter.put("/shared-accounts/:id", (req, res) => __awaiter(void
         res.status(400).send(error instanceof Error ? error.message : "Unknown error");
     }
 }));
-// Eliminar cuenta/grupo compartido
+// Eliminar cuenta/grupo compartido (solo owner)
 exports.userGroupRouter.delete("/shared-accounts/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
+        const { requesterId } = req.body || {};
+        if (!requesterId) {
+            return res.status(400).send({ message: 'requesterId es requerido' });
+        }
+        // Check if requester is owner of the group
+        const requester = yield database_1.collections.userGroups.findOne({ id_usuario: String(requesterId), id_grupo: String(id) });
+        if (!requester || requester.rol !== 'owner') {
+            return res.status(403).send({ message: 'Solo el owner puede eliminar el grupo' });
+        }
         const query = { _id: new mongodb_1.ObjectId(id) };
         const result = yield (database_1.collections === null || database_1.collections === void 0 ? void 0 : database_1.collections.sharedAccounts.deleteOne(query));
         if (result && result.deletedCount) {
+            // Also delete all user_groups relations for this group
+            yield database_1.collections.userGroups.deleteMany({ id_grupo: String(id) }).catch(err => console.error('Failed to clean up user_groups', err));
             res.status(202).send({ message: "Cuenta compartida eliminada." });
         }
         else {

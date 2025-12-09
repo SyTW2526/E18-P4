@@ -87,7 +87,7 @@ async function applySchemaValidation(db: mongodb.Db) {
         $jsonSchema: {
             bsonType: "object",
             required: ["nombre", "email", "password_hash", "fecha_registro", "preferencia_tema"],
-            additionalProperties: false,
+            additionalProperties: true,
             properties: {
                 _id: {},
                 id_usuario: {
@@ -110,14 +110,18 @@ async function applySchemaValidation(db: mongodb.Db) {
                     bsonType: ["string", "null"],
                     description: "Optional URL to profile picture",
                 },
+                google_id: {
+                    bsonType: "string",
+                    description: "Optional Google OAuth ID for Google Sign-In",
+                },
                 fecha_registro: {
                     bsonType: "date",
                     description: "'fecha_registro' is required and is a date",
                 },
                 preferencia_tema: {
                     bsonType: "string",
-                    description: "'preferencia_tema' is required and is either 'claro' or 'oscuro'",
-                    enum: ["claro", "oscuro"],
+                    description: "'preferencia_tema' is required and is either 'light', 'dark', 'claro' or 'oscuro'",
+                    enum: ["light", "dark", "claro", "oscuro"],
                 },
                 amigos: {
                     bsonType: "array",

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit, NgZone } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
@@ -28,7 +28,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, AfterViewInit {
   showPassword = false;
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -36,8 +36,83 @@ export class LoginComponent {
   });
   loading = false;
   error: string | null = null;
+  googleReady = false;
 
-  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService, public lang: LanguageService) {}
+  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService, public lang: LanguageService, private ngZone: NgZone) {}
+
+  ngOnInit() {
+    this.initGoogleSignIn();
+  }
+
+  ngAfterViewInit() {
+    if (this.googleReady) {
+      this.renderGoogleButton();
+    }
+  }
+
+  private initGoogleSignIn() {
+    if ((window as any).google && (window as any).google.accounts) {
+      (window as any).google.accounts.id.initialize({
+        client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+        callback: this.handleGoogleSignIn.bind(this),
+      });
+      this.googleReady = true;
+      // Render button immediately after initialization
+      setTimeout(() => this.renderGoogleButton(), 0);
+      return;
+    }
+
+    // If Google not loaded, load the script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if ((window as any).google && (window as any).google.accounts) {
+        (window as any).google.accounts.id.initialize({
+          client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+          callback: this.handleGoogleSignIn.bind(this),
+        });
+        this.googleReady = true;
+        setTimeout(() => this.renderGoogleButton(), 0);
+      }
+    };
+    document.head.appendChild(script);
+  }
+
+  private renderGoogleButton() {
+    const buttonDiv = document.getElementById('google-signin-button');
+    if (buttonDiv && (window as any).google && (window as any).google.accounts) {
+      try {
+        (window as any).google.accounts.id.renderButton(
+          buttonDiv,
+          { theme: 'outline', size: 'large', text: 'signin_with' }
+        );
+      } catch (e) {
+        console.error('Error rendering Google button:', e);
+      }
+    }
+  }
+
+  handleGoogleSignIn(response: any) {
+    const token = response.credential;
+    if (token) {
+      this.error = null;
+      this.loading = true;
+      this.ngZone.run(() => {
+        this.auth.signinGoogle(token).subscribe({
+          next: () => {
+            this.loading = false;
+            this.router.navigate(['/home']);
+          },
+          error: (e) => {
+            this.loading = false;
+            this.error = e?.error?.message || 'Error al iniciar sesión con Google';
+          },
+        });
+      });
+    }
+  }
 
   toggleShowPassword() {
     this.showPassword = !this.showPassword;

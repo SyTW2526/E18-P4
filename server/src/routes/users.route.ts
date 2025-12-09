@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { collections } from "../database";
 import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
 export const userRouter = express.Router();
 userRouter.use(express.json());
@@ -248,6 +249,77 @@ userRouter.post("/signin", async (req: express.Request, res: express.Response) =
     } catch (err) {
         console.error(err);
         return res.status(500).send(err instanceof Error ? err.message : 'Unknown error');
+    }
+});
+
+// POST /signin-google - authenticate with Google token
+userRouter.post("/signin-google", async (req: express.Request, res: express.Response) => {
+    try {
+        const { token } = req.body;
+        if (!token) return res.status(400).send("'token' is required");
+
+        const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+        if (!GOOGLE_CLIENT_ID) return res.status(500).send("GOOGLE_CLIENT_ID is not configured");
+
+        const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        if (!payload) return res.status(401).send("Invalid token");
+
+        const { sub: googleId, email, name, picture } = payload;
+
+        // Find or create user
+        let user = await collections?.users?.findOne({ email: String(email).toLowerCase() });
+        
+        if (!user) {
+            // Auto-create user on first Google login
+            const newUser = {
+                nombre: name || email?.split('@')[0] || 'Usuario',
+                email: String(email).toLowerCase(),
+                password_hash: '', // No password for OAuth users
+                foto_perfil: picture || '',
+                google_id: googleId,
+                fecha_registro: new Date(),
+                amigos: [],
+                peticiones_amistad: [],
+                preferencia_tema: 'light',
+            };
+            const result = await collections?.users?.insertOne(newUser as any);
+            if (!result) return res.status(500).send("Failed to create user");
+            user = await collections?.users?.findOne({ _id: result.insertedId });
+        } else {
+            // Update google_id if not present
+            if (!(user as any).google_id) {
+                await collections?.users?.updateOne(
+                    { _id: (user as any)._id },
+                    { $set: { google_id: googleId } }
+                );
+            }
+        }
+
+        if (!user) return res.status(500).send("Failed to retrieve user");
+
+        // Generate JWT
+        const JWT_SECRET = process.env.JWT_SECRET;
+        if (!JWT_SECRET) return res.status(500).send("JWT_SECRET is not configured");
+
+        const jwtToken = jwt.sign(
+            { userId: (user as any)._id.toString(), email: (user as any).email },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        const safe = { ...user } as any;
+        delete safe.password_hash;
+
+        return res.status(200).json({ user: safe, token: jwtToken });
+    } catch (err: any) {
+        console.error('Google signin error:', err);
+        return res.status(401).send(err.message || 'Invalid token');
     }
 });
 

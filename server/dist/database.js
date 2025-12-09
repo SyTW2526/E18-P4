@@ -49,7 +49,7 @@ const mongodb = __importStar(require("mongodb"));
 exports.collections = {};
 function connectToDatabase(uri) {
     return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e;
         const client = new mongodb.MongoClient(uri);
         yield client.connect();
         // keep reference to client so tests and shutdown logic can close it
@@ -68,6 +68,8 @@ function connectToDatabase(uri) {
         exports.collections.participaciones = participacionesCollection;
         const notificationsCollection = db.collection("notifications");
         exports.collections.notifications = notificationsCollection;
+        const groupInvitationsCollection = db.collection("group_invitations");
+        exports.collections.groupInvitations = groupInvitationsCollection;
         try {
             yield ((_a = exports.collections.userGroups) === null || _a === void 0 ? void 0 : _a.createIndex({ id_usuario: 1, id_grupo: 1 }, { unique: true, background: true }));
         }
@@ -85,6 +87,13 @@ function connectToDatabase(uri) {
         }
         catch (err) {
             console.warn("Could not create index on participaciones.id_gasto", err);
+        }
+        try {
+            yield ((_d = exports.collections.groupInvitations) === null || _d === void 0 ? void 0 : _d.createIndex({ id_invitado: 1, estado: 1 }, { background: true }));
+            yield ((_e = exports.collections.groupInvitations) === null || _e === void 0 ? void 0 : _e.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true }));
+        }
+        catch (err) {
+            console.warn("Could not create index on group_invitations", err);
         }
     });
 }
@@ -108,7 +117,7 @@ function applySchemaValidation(db) {
             $jsonSchema: {
                 bsonType: "object",
                 required: ["nombre", "email", "password_hash", "fecha_registro", "preferencia_tema"],
-                additionalProperties: false,
+                additionalProperties: true,
                 properties: {
                     _id: {},
                     id_usuario: {
@@ -131,14 +140,18 @@ function applySchemaValidation(db) {
                         bsonType: ["string", "null"],
                         description: "Optional URL to profile picture",
                     },
+                    google_id: {
+                        bsonType: "string",
+                        description: "Optional Google OAuth ID for Google Sign-In",
+                    },
                     fecha_registro: {
                         bsonType: "date",
                         description: "'fecha_registro' is required and is a date",
                     },
                     preferencia_tema: {
                         bsonType: "string",
-                        description: "'preferencia_tema' is required and is either 'claro' or 'oscuro'",
-                        enum: ["claro", "oscuro"],
+                        description: "'preferencia_tema' is required and is either 'light', 'dark', 'claro' or 'oscuro'",
+                        enum: ["light", "dark", "claro", "oscuro"],
                     },
                     amigos: {
                         bsonType: "array",
@@ -323,6 +336,50 @@ function applySchemaValidation(db) {
         }).catch((error) => __awaiter(this, void 0, void 0, function* () {
             if (error.codeName === "NamespaceNotFound") {
                 yield db.createCollection("participaciones", { validator: participacionesJsonSchema });
+            }
+        }));
+        // Schema validation for group_invitations
+        const groupInvitationsJsonSchema = {
+            $jsonSchema: {
+                bsonType: "object",
+                required: ["id_grupo", "id_invitado", "id_invitador", "estado", "fecha_invitacion"],
+                additionalProperties: false,
+                properties: {
+                    _id: {},
+                    id_grupo: {
+                        bsonType: "string",
+                        description: "Reference to group id",
+                    },
+                    id_invitado: {
+                        bsonType: "string",
+                        description: "Reference to invited user id",
+                    },
+                    id_invitador: {
+                        bsonType: "string",
+                        description: "Reference to inviter user id",
+                    },
+                    estado: {
+                        bsonType: "string",
+                        enum: ["pendiente", "aceptada", "rechazada"],
+                        description: "Invitation status",
+                    },
+                    fecha_invitacion: {
+                        bsonType: "date",
+                        description: "Date when invitation was sent",
+                    },
+                    fecha_respuesta: {
+                        bsonType: "date",
+                        description: "Date when invitation was responded (optional)",
+                    },
+                },
+            },
+        };
+        yield db.command({
+            collMod: "group_invitations",
+            validator: groupInvitationsJsonSchema,
+        }).catch((error) => __awaiter(this, void 0, void 0, function* () {
+            if (error.codeName === "NamespaceNotFound") {
+                yield db.createCollection("group_invitations", { validator: groupInvitationsJsonSchema });
             }
         }));
     });
