@@ -62,7 +62,27 @@ import { Router } from '@angular/router';
       <!-- Amigos dropdown -->
       <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">{{ lang.t('friends') }}</button>
       <!-- Notificaciones -->
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/notifications">{{ lang.t('notifications') }}</button>
+      <button
+        *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
+        mat-icon-button
+        routerLink="/notifications"
+        aria-label="Notificaciones"
+        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          style="width:28px;height:28px;display:block"
+        >
+          <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 01-3.46 0" />
+        </svg>
+      </button>
       <!-- Invitaciones a grupos -->
       <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/group-invitations">{{ lang.t('groupInvitations') }}</button>
       <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
