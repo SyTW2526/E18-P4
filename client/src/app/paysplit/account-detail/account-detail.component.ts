@@ -418,7 +418,13 @@ export class AccountDetailComponent implements OnInit {
 
   deleteGroup() {
     if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
-    this.auth.deleteSharedAccount(this.accountId).subscribe({
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) {
+      alert('No autenticado');
+      return;
+    }
+    this.auth.deleteSharedAccount(this.accountId, String(myId)).subscribe({
       next: () => {
         // navigate back to home after successful deletion
         this.router.navigate(['/home']);

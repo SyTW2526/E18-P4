@@ -5,6 +5,7 @@ import { UserGroup } from "./user-group";
 import { Gasto } from "./gastos";
 import { Participacion } from "./participacion";
 import { Notification } from "./notifications";
+import { GroupInvitation } from "./group-invitation";
 
 
 export const collections: {
@@ -14,6 +15,7 @@ export const collections: {
   userGroups?: mongodb.Collection<UserGroup>;
   participaciones?: mongodb.Collection<Participacion>;
   notifications?: mongodb.Collection<Notification>;
+  groupInvitations?: mongodb.Collection<GroupInvitation>;
 } = {};
 
 export async function connectToDatabase(uri: string) {
@@ -37,6 +39,8 @@ export async function connectToDatabase(uri: string) {
   collections.participaciones = participacionesCollection;
   const notificationsCollection = db.collection<Notification>("notifications");
   collections.notifications = notificationsCollection;
+  const groupInvitationsCollection = db.collection<GroupInvitation>("group_invitations");
+  collections.groupInvitations = groupInvitationsCollection;
 
 
     try {
@@ -55,6 +59,13 @@ export async function connectToDatabase(uri: string) {
         await collections.participaciones?.createIndex({ id_gasto: 1 }, { background: true });
     } catch (err) {
         console.warn("Could not create index on participaciones.id_gasto", err);
+    }
+
+    try {
+        await collections.groupInvitations?.createIndex({ id_invitado: 1, estado: 1 }, { background: true });
+        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true });
+    } catch (err) {
+        console.warn("Could not create index on group_invitations", err);
     }
 }
 
@@ -246,7 +257,7 @@ async function applySchemaValidation(db: mongodb.Db) {
                 },
                 rol: {
                     bsonType: "string",
-                    enum: ["admin", "miembro"],
+                    enum: ["owner", "admin", "miembro"],
                     description: "Role of the user in the group",
                 },
                 fecha_union: {
@@ -300,6 +311,52 @@ async function applySchemaValidation(db: mongodb.Db) {
     }).catch(async (error: mongodb.MongoServerError) => {
         if (error.codeName === "NamespaceNotFound") {
             await db.createCollection("participaciones", { validator: participacionesJsonSchema });
+        }
+    });
+
+    // Schema validation for group_invitations
+    const groupInvitationsJsonSchema = {
+        $jsonSchema: {
+            bsonType: "object",
+            required: ["id_grupo", "id_invitado", "id_invitador", "estado", "fecha_invitacion"],
+            additionalProperties: false,
+            properties: {
+                _id: {},
+                id_grupo: {
+                    bsonType: "string",
+                    description: "Reference to group id",
+                },
+                id_invitado: {
+                    bsonType: "string",
+                    description: "Reference to invited user id",
+                },
+                id_invitador: {
+                    bsonType: "string",
+                    description: "Reference to inviter user id",
+                },
+                estado: {
+                    bsonType: "string",
+                    enum: ["pendiente", "aceptada", "rechazada"],
+                    description: "Invitation status",
+                },
+                fecha_invitacion: {
+                    bsonType: "date",
+                    description: "Date when invitation was sent",
+                },
+                fecha_respuesta: {
+                    bsonType: "date",
+                    description: "Date when invitation was responded (optional)",
+                },
+            },
+        },
+    };
+
+    await db.command({
+        collMod: "group_invitations",
+        validator: groupInvitationsJsonSchema,
+    }).catch(async (error: mongodb.MongoServerError) => {
+        if (error.codeName === "NamespaceNotFound") {
+            await db.createCollection("group_invitations", { validator: groupInvitationsJsonSchema });
         }
     });
 }

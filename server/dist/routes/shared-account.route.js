@@ -157,3 +157,15 @@ exports.sharedAccountsRouter.get("/:id/balances", (req, res) => __awaiter(void 0
         res.status(500).json({ message: "Error al calcular balances.", error: error instanceof Error ? error.message : error });
     }
 }));
+// Obtener balance detallado (quién debe a quién)
+exports.sharedAccountsRouter.get("/:id/balances-detailed", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const id = req.params.id;
+        const detailedBalances = yield (0, balances_1.computeDetailedBalances)(id);
+        res.status(200).json(detailedBalances);
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error al calcular balances detallados.", error: error instanceof Error ? error.message : error });
+    }
+}));

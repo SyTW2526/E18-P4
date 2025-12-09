@@ -35,17 +35,19 @@ userGroupRouter.get("/shared-accounts/:id", async (req: express.Request, res: ex
 userGroupRouter.get("/shared-accounts/:id/members", async (req: express.Request, res: express.Response) => {
   try {
     const id = req.params.id;
-    // buscar en user_groups por id_grupo
     const rows = await collections.userGroups!.find({ id_grupo: String(id) }).toArray();
     const userIds = rows.map(r => String((r as any).id_usuario));
-    // traer usuarios
+    const rolesByUser: Record<string, string> = {};
+    rows.forEach(r => { rolesByUser[String((r as any).id_usuario)] = (r as any).rol; });
+
     const users = await collections.users!.find({ $or: userIds.map(u => ({ _id: new ObjectId(u) })) }).toArray().catch(() => []);
-    // fallback: if users array empty, try to return minimal objects from ids
     if (!users || users.length === 0) {
-      const minimal = userIds.map(u => ({ _id: u }));
+      const minimal = userIds.map(u => ({ _id: u, rol: rolesByUser[u] || 'miembro' }));
       return res.status(200).send(minimal);
     }
-    res.status(200).send(users);
+
+    const enriched = users.map(u => ({ ...u, rol: rolesByUser[String(u._id)] || 'miembro' }));
+    res.status(200).send(enriched);
   } catch (error) {
     console.error('members fetch error', error);
     res.status(500).send({ message: 'Error al obtener miembros del grupo', error });
@@ -130,7 +132,7 @@ userGroupRouter.post("/shared-accounts", async (req: express.Request, res: expre
           const membershipDoc: any = {
             id_usuario: String(cuenta.creador_id),
             id_grupo: String(result.insertedId),
-            rol: 'admin',
+            rol: 'owner',
             fecha_union: new Date(),
           };
           const mres = await collections.userGroups!.insertOne(membershipDoc);
@@ -196,6 +198,77 @@ userGroupRouter.post("/user-groups", async (req: express.Request, res: express.R
   }
 });
 
+// Actualizar rol de un miembro (solo owner)
+userGroupRouter.put('/user-groups/:groupId/role', async (req: express.Request, res: express.Response) => {
+  try {
+    const groupId = req.params.groupId;
+    const { requesterId, targetUserId, role } = req.body || {};
+
+    if (!requesterId || !targetUserId || !role) {
+      return res.status(400).send({ message: 'requesterId, targetUserId y role son requeridos' });
+    }
+
+    if (!['admin', 'miembro'].includes(role as any)) {
+      return res.status(400).send({ message: 'role debe ser admin o miembro' });
+    }
+
+    const requester = await collections.userGroups!.findOne({ id_usuario: String(requesterId), id_grupo: String(groupId) }) as any;
+    if (!requester || requester.rol !== 'owner') {
+      return res.status(403).send({ message: 'Solo el owner puede cambiar roles' });
+    }
+
+    const target = await collections.userGroups!.findOne({ id_usuario: String(targetUserId), id_grupo: String(groupId) }) as any;
+    if (!target) {
+      return res.status(404).send({ message: 'Miembro no encontrado en el grupo' });
+    }
+
+    if (target.rol === 'owner') {
+      return res.status(400).send({ message: 'No se puede modificar el rol del owner' });
+    }
+
+    await collections.userGroups!.updateOne({ _id: target._id }, { $set: { rol: role as 'admin' | 'miembro' } });
+    return res.status(200).send({ message: 'Rol actualizado' });
+  } catch (error) {
+    console.error('update role error', error);
+    return res.status(500).send({ message: 'Error al actualizar el rol', error });
+  }
+});
+
+// Expulsar miembro (owner o admin). Admin solo puede expulsar miembros.
+userGroupRouter.delete('/user-groups', async (req: express.Request, res: express.Response) => {
+  try {
+    const { requesterId, targetUserId, groupId } = req.body || {};
+
+    if (!requesterId || !targetUserId || !groupId) {
+      return res.status(400).send({ message: 'requesterId, targetUserId y groupId son requeridos' });
+    }
+
+    const requester = await collections.userGroups!.findOne({ id_usuario: String(requesterId), id_grupo: String(groupId) });
+    if (!requester || (requester.rol !== 'owner' && requester.rol !== 'admin')) {
+      return res.status(403).send({ message: 'No autorizado para expulsar miembros' });
+    }
+
+    const target = await collections.userGroups!.findOne({ id_usuario: String(targetUserId), id_grupo: String(groupId) });
+    if (!target) {
+      return res.status(404).send({ message: 'Miembro no encontrado en el grupo' });
+    }
+
+    if (target.rol === 'owner') {
+      return res.status(400).send({ message: 'No se puede expulsar al owner' });
+    }
+
+    if (requester.rol === 'admin' && target.rol !== 'miembro') {
+      return res.status(403).send({ message: 'Los admins solo pueden expulsar miembros' });
+    }
+
+    await collections.userGroups!.deleteOne({ _id: target._id });
+    return res.status(200).send({ message: 'Miembro expulsado' });
+  } catch (error) {
+    console.error('remove member error', error);
+    return res.status(500).send({ message: 'Error al expulsar al miembro', error });
+  }
+});
+
 // Actualizar cuenta/grupo compartido
 userGroupRouter.put("/shared-accounts/:id", async (req: express.Request, res: express.Response) => {
   try {
@@ -225,14 +298,28 @@ userGroupRouter.put("/shared-accounts/:id", async (req: express.Request, res: ex
   }
 });
 
-// Eliminar cuenta/grupo compartido
+// Eliminar cuenta/grupo compartido (solo owner)
 userGroupRouter.delete("/shared-accounts/:id", async (req: express.Request, res: express.Response) => {
   try {
     const id = req.params.id;
+    const { requesterId } = req.body || {};
+
+    if (!requesterId) {
+      return res.status(400).send({ message: 'requesterId es requerido' });
+    }
+
+    // Check if requester is owner of the group
+    const requester = await collections.userGroups!.findOne({ id_usuario: String(requesterId), id_grupo: String(id) }) as any;
+    if (!requester || requester.rol !== 'owner') {
+      return res.status(403).send({ message: 'Solo el owner puede eliminar el grupo' });
+    }
+
     const query = { _id: new ObjectId(id) };
     const result = await collections?.sharedAccounts!.deleteOne(query);
     
     if (result && result.deletedCount) {
+      // Also delete all user_groups relations for this group
+      await collections.userGroups!.deleteMany({ id_grupo: String(id) }).catch(err => console.error('Failed to clean up user_groups', err));
       res.status(202).send({ message: "Cuenta compartida eliminada." });
     } else {
       res.status(404).send({ message: "Cuenta compartida no encontrada." });

@@ -79,17 +79,17 @@ exports.userGroupRouter.get("/shared-accounts/:id", (req, res) => __awaiter(void
 exports.userGroupRouter.get("/shared-accounts/:id/members", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const id = req.params.id;
-        // buscar en user_groups por id_grupo
         const rows = yield database_1.collections.userGroups.find({ id_grupo: String(id) }).toArray();
         const userIds = rows.map(r => String(r.id_usuario));
-        // traer usuarios
+        const rolesByUser = {};
+        rows.forEach(r => { rolesByUser[String(r.id_usuario)] = r.rol; });
         const users = yield database_1.collections.users.find({ $or: userIds.map(u => ({ _id: new mongodb_1.ObjectId(u) })) }).toArray().catch(() => []);
-        // fallback: if users array empty, try to return minimal objects from ids
         if (!users || users.length === 0) {
-            const minimal = userIds.map(u => ({ _id: u }));
+            const minimal = userIds.map(u => ({ _id: u, rol: rolesByUser[u] || 'miembro' }));
             return res.status(200).send(minimal);
         }
-        res.status(200).send(users);
+        const enriched = users.map(u => (Object.assign(Object.assign({}, u), { rol: rolesByUser[String(u._id)] || 'miembro' })));
+        res.status(200).send(enriched);
     }
     catch (error) {
         console.error('members fetch error', error);
@@ -137,6 +137,18 @@ exports.userGroupRouter.get("/shared-accounts/:id/balances", (req, res) => __awa
         res.status(500).send({ message: 'Error al calcular balances', error: error instanceof Error ? error.message : error });
     }
 }));
+// Obtener balances detallados (quién debe a quién)
+exports.userGroupRouter.get("/shared-accounts/:id/balances-detailed", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const id = req.params.id;
+        const detailedBalances = yield (0, balances_1.computeDetailedBalances)(id);
+        res.status(200).json(detailedBalances);
+    }
+    catch (error) {
+        console.error('detailed balances fetch error', error);
+        res.status(500).send({ message: 'Error al calcular balances detallados', error: error instanceof Error ? error.message : error });
+    }
+}));
 // Crear una nueva cuenta/grupo compartido
 exports.userGroupRouter.post("/shared-accounts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -162,7 +174,7 @@ exports.userGroupRouter.post("/shared-accounts", (req, res) => __awaiter(void 0,
                     const membershipDoc = {
                         id_usuario: String(cuenta.creador_id),
                         id_grupo: String(result.insertedId),
-                        rol: 'admin',
+                        rol: 'owner',
                         fecha_union: new Date(),
                     };
                     const mres = yield database_1.collections.userGroups.insertOne(membershipDoc);
@@ -226,6 +238,65 @@ exports.userGroupRouter.post("/user-groups", (req, res) => __awaiter(void 0, voi
         }
         console.error('user-groups POST error', error);
         res.status(500).send({ message: 'Error al unir al usuario al grupo', error });
+    }
+}));
+// Actualizar rol de un miembro (solo owner)
+exports.userGroupRouter.put('/user-groups/:groupId/role', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const groupId = req.params.groupId;
+        const { requesterId, targetUserId, role } = req.body || {};
+        if (!requesterId || !targetUserId || !role) {
+            return res.status(400).send({ message: 'requesterId, targetUserId y role son requeridos' });
+        }
+        if (!['admin', 'miembro'].includes(role)) {
+            return res.status(400).send({ message: 'role debe ser admin o miembro' });
+        }
+        const requester = yield database_1.collections.userGroups.findOne({ id_usuario: String(requesterId), id_grupo: String(groupId) });
+        if (!requester || requester.rol !== 'owner') {
+            return res.status(403).send({ message: 'Solo el owner puede cambiar roles' });
+        }
+        const target = yield database_1.collections.userGroups.findOne({ id_usuario: String(targetUserId), id_grupo: String(groupId) });
+        if (!target) {
+            return res.status(404).send({ message: 'Miembro no encontrado en el grupo' });
+        }
+        if (target.rol === 'owner') {
+            return res.status(400).send({ message: 'No se puede modificar el rol del owner' });
+        }
+        yield database_1.collections.userGroups.updateOne({ _id: target._id }, { $set: { rol: role } });
+        return res.status(200).send({ message: 'Rol actualizado' });
+    }
+    catch (error) {
+        console.error('update role error', error);
+        return res.status(500).send({ message: 'Error al actualizar el rol', error });
+    }
+}));
+// Expulsar miembro (owner o admin). Admin solo puede expulsar miembros.
+exports.userGroupRouter.delete('/user-groups', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { requesterId, targetUserId, groupId } = req.body || {};
+        if (!requesterId || !targetUserId || !groupId) {
+            return res.status(400).send({ message: 'requesterId, targetUserId y groupId son requeridos' });
+        }
+        const requester = yield database_1.collections.userGroups.findOne({ id_usuario: String(requesterId), id_grupo: String(groupId) });
+        if (!requester || (requester.rol !== 'owner' && requester.rol !== 'admin')) {
+            return res.status(403).send({ message: 'No autorizado para expulsar miembros' });
+        }
+        const target = yield database_1.collections.userGroups.findOne({ id_usuario: String(targetUserId), id_grupo: String(groupId) });
+        if (!target) {
+            return res.status(404).send({ message: 'Miembro no encontrado en el grupo' });
+        }
+        if (target.rol === 'owner') {
+            return res.status(400).send({ message: 'No se puede expulsar al owner' });
+        }
+        if (requester.rol === 'admin' && target.rol !== 'miembro') {
+            return res.status(403).send({ message: 'Los admins solo pueden expulsar miembros' });
+        }
+        yield database_1.collections.userGroups.deleteOne({ _id: target._id });
+        return res.status(200).send({ message: 'Miembro expulsado' });
+    }
+    catch (error) {
+        console.error('remove member error', error);
+        return res.status(500).send({ message: 'Error al expulsar al miembro', error });
     }
 }));
 // Actualizar cuenta/grupo compartido

@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.computeGroupBalances = computeGroupBalances;
+exports.computeDetailedBalances = computeDetailedBalances;
 const database_1 = require("./database");
 /**
  * Calcula los balances de los usuarios en un grupo.
@@ -79,5 +80,88 @@ function computeGroupBalances(groupId) {
             return { userId: u, paid, share, balance: Math.round((paid - share) * 100) / 100 };
         });
         return result;
+    });
+}
+/**
+ * Calcula el balance detallado: quién debe dinero a quién.
+ * Devuelve para cada usuario:
+ * - owes: lista de usuarios a los que le debe dinero y cantidad
+ * - owesMoney: lista de usuarios que le deben dinero a él y cantidad
+ */
+function computeDetailedBalances(groupId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const balances = yield computeGroupBalances(groupId);
+        // Obtener información de usuarios
+        const userMap = {};
+        if (database_1.collections.users) {
+            const users = yield database_1.collections.users.find({}).toArray();
+            for (const u of users) {
+                userMap[String(u._id || u.id)] = {
+                    email: u.email,
+                    name: u.nombre || u.name
+                };
+            }
+        }
+        // Crear un mapa de balances para cálculos de deudas
+        const balanceMap = {};
+        for (const b of balances) {
+            balanceMap[b.userId] = b.balance;
+        }
+        // Calcular quien debe a quién
+        const detailed = balances.map((b) => {
+            var _a, _b;
+            return ({
+                userId: b.userId,
+                userEmail: (_a = userMap[b.userId]) === null || _a === void 0 ? void 0 : _a.email,
+                userName: (_b = userMap[b.userId]) === null || _b === void 0 ? void 0 : _b.name,
+                paid: b.paid,
+                share: b.share,
+                balance: b.balance,
+                owes: [],
+                owesMoney: [],
+            });
+        });
+        // Algoritmo simple: si usuario A tiene balance positivo y B negativo, A es acreedor y B deudor
+        // Distribuir los montos entre deudores y acreedores
+        for (let i = 0; i < detailed.length; i++) {
+            if (detailed[i].balance < 0) {
+                // Este usuario debe dinero
+                let debtRemaining = Math.abs(detailed[i].balance);
+                for (let j = 0; j < detailed.length; j++) {
+                    if (i !== j && detailed[j].balance > 0 && debtRemaining > 0) {
+                        // detailed[j] es acreedor, detailed[i] le debe
+                        const amount = Math.min(debtRemaining, detailed[j].balance);
+                        detailed[i].owes.push({
+                            userId: detailed[j].userId,
+                            userEmail: detailed[j].userEmail,
+                            userName: detailed[j].userName,
+                            amount: Math.round(amount * 100) / 100,
+                        });
+                        debtRemaining -= amount;
+                    }
+                }
+            }
+        }
+        // Para acreedores: quién les debe dinero
+        for (let i = 0; i < detailed.length; i++) {
+            if (detailed[i].balance > 0) {
+                // Este usuario es acreedor
+                for (let j = 0; j < detailed.length; j++) {
+                    if (i !== j && detailed[j].balance < 0) {
+                        // detailed[j] tiene deuda, buscar si tiene deuda con detailed[i]
+                        const owesEntry = detailed[j].owes.find(o => o.userId === detailed[i].userId);
+                        if (owesEntry) {
+                            detailed[i].owesMoney.push({
+                                userId: detailed[j].userId,
+                                userEmail: detailed[j].userEmail,
+                                userName: detailed[j].userName,
+                                amount: owesEntry.amount,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        return detailed;
     });
 }

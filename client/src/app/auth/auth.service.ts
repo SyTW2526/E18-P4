@@ -97,8 +97,8 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
   }
 
-  deleteSharedAccount(id: string) {
-    return this.http.delete<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
+  deleteSharedAccount(id: string, requesterId: string) {
+    return this.http.request<any>('delete', `${this.baseUrl}/user-group/shared-accounts/${id}`, { body: { requesterId } });
   }
 
   getMembersForGroup(id: string) {
@@ -121,6 +121,31 @@ export class AuthService {
   // User-group relations (join a group)
   createUserGroup(payload: { id_usuario: string; id_grupo: string; rol?: string }) {
     return this.http.post<any>(`${this.baseUrl}/user-group/user-groups`, payload);
+  }
+
+  updateUserGroupRole(groupId: string, requesterId: string, targetUserId: string, role: 'admin' | 'miembro') {
+    return this.http.put<any>(`${this.baseUrl}/user-group/user-groups/${groupId}/role`, { requesterId, targetUserId, role });
+  }
+
+  removeUserFromGroup(groupId: string, requesterId: string, targetUserId: string) {
+    return this.http.request<any>('delete', `${this.baseUrl}/user-group/user-groups`, { body: { requesterId, targetUserId, groupId } });
+  }
+
+  // Group invitations
+  sendGroupInvitation(id_grupo: string, id_invitado: string, id_invitador: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations`, { id_grupo, id_invitado, id_invitador });
+  }
+
+  getGroupInvitationsForUser(userId: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/group-invitations/user/${userId}`);
+  }
+
+  acceptGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/accept`, { userId });
+  }
+
+  rejectGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/reject`, { userId });
   }
 
   getUserById(id: string) {

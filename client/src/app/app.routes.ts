@@ -11,12 +11,14 @@ export const routes: Routes = [
 
   // Ruta principal de la app (accedida tras autenticarse)
   { path: 'home', loadComponent: () => import('./paysplit/home/home.component').then(m => m.HomeComponent), title: 'Inicio', canActivate: [AuthGuard] },
-  { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
+  // Place more specific group routes before the base detail route to avoid premature matching
   { path: 'group/:id/settings', loadComponent: () => import('./paysplit/group-settings/group-settings.component').then(m => m.GroupSettingsComponent), title: 'Configuración del grupo', canActivate: [AuthGuard] },
   { path: 'group/:id/create-gasto', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Crear Gasto', canActivate: [AuthGuard] },
   { path: 'group/:id/gasto/:gastoId', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Editar Gasto', canActivate: [AuthGuard] },
   { path: 'group/:id/balance', loadComponent: () => import('./paysplit/balance/balance.component').then(m => m.BalanceComponent), title: 'Balances', canActivate: [AuthGuard] },
+  { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
   { path: 'notifications', loadComponent: () => import('./notifications/notifications.component').then(m => m.NotificationsComponent), title: 'Notificaciones', canActivate: [AuthGuard] },
+  { path: 'group-invitations', loadComponent: () => import('./group-invitations/group-invitations.component').then(m => m.GroupInvitationsComponent), title: 'Invitaciones a grupos', canActivate: [AuthGuard] },
   { path: 'settings', loadComponent: () => import('./settings/user-settings.component').then(m => m.UserSettingsComponent), title: 'Configuración', canActivate: [AuthGuard] },
 
   // User profile route (friend links navigate here)

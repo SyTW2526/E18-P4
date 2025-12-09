@@ -78,11 +78,20 @@ import { MatInputModule } from '@angular/material/input';
                     {{ (m.nombre || m.email || 'U').charAt(0).toUpperCase() }}
                   </div>
                   <div style="flex:1; min-width:0">
-                    <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.nombre || m.username || 'Usuario' }}</div>
+                    <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                      <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.nombre || m.username || 'Usuario' }}</div>
+                      <span style="padding:2px 8px; border-radius:12px; background:rgba(255,255,255,0.08); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px">{{ m.rol || 'miembro' }}</span>
+                    </div>
                     <div style="font-size:0.85rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ m.email }}</div>
+                  </div>
+                  <div style="display:flex; gap:6px; align-items:center" *ngIf="canRemove(m) || canPromote(m) || canDemote(m)">
+                    <button mat-icon-button color="primary" *ngIf="canPromote(m)" (click)="promoteToAdmin(m)" [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')" [title]="'Hacer admin'"><mat-icon>arrow_circle_up</mat-icon></button>
+                    <button mat-icon-button color="accent" *ngIf="canDemote(m)" (click)="demoteToMember(m)" [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')" [title]="'Quitar admin'"><mat-icon>arrow_circle_down</mat-icon></button>
+                    <button mat-icon-button color="warn" *ngIf="canRemove(m)" (click)="removeMember(m)" [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')" [title]="'Expulsar'"><mat-icon>delete</mat-icon></button>
                   </div>
                 </div>
               </div>
+              <div *ngIf="actionError" style="color:#d9534f; margin-top:8px; font-size:0.9rem">{{ actionError }}</div>
             </div>
           </mat-card>
         </div>
@@ -107,9 +116,10 @@ import { MatInputModule } from '@angular/material/input';
             </div>
           </div>
           <div *ngIf="addFriendError" style="color:#d9534f; margin-bottom:12px; font-size:0.9rem">{{ addFriendError }}</div>
+          <div *ngIf="addFriendSuccess" style="color:var(--primary-color); margin-bottom:12px; font-weight:600">{{ lang.t('invitationSent') || 'Invitación enviada' }}</div>
           <div style="display:flex; gap:8px; justify-content:flex-end">
             <button mat-button (click)="closeAddFriendModal()" [disabled]="addingFriend">{{ lang.t('cancel') }}</button>
-            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? lang.t('loading') + '...' : lang.t('addFriend') }}</button>
+            <button mat-flat-button color="primary" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? lang.t('loading') + '...' : (lang.t('sendInvitation') || 'Enviar invitación') }}</button>
           </div>
         </div>
       </div>
@@ -121,6 +131,7 @@ export class GroupSettingsComponent implements OnInit {
   account: any = null;
   originalAccount: any = null;
   miembros: any[] = [];
+  myRole: 'owner' | 'admin' | 'miembro' = 'miembro';
   loading = false;
   saving = false;
   error: string | null = null;
@@ -133,6 +144,10 @@ export class GroupSettingsComponent implements OnInit {
   loadingFriends = false;
   addingFriend = false;
   addFriendError: string | null = null;
+  addFriendSuccess = false;
+
+  actionLoading: string | null = null;
+  actionError: string | null = null;
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
@@ -161,27 +176,12 @@ export class GroupSettingsComponent implements OnInit {
   loadMembers() {
     this.auth.getMembersForGroup(this.accountId).subscribe({
       next: (members: any[]) => {
-        const observables = (members || []).map((m: any) => {
-          if (typeof m === 'object' && (m._id || m.id || m.email)) return of(m);
-          return this.auth.getUserById(String(m));
-        });
-
-        if (observables.length === 0) {
-          this.miembros = [];
-          this.loading = false;
-          return;
-        }
-
-        forkJoin(observables).subscribe({
-          next: (resolved: any[]) => {
-            this.miembros = resolved.filter(Boolean);
-            this.loading = false;
-          },
-          error: () => {
-            this.miembros = [];
-            this.loading = false;
-          },
-        });
+        this.miembros = (members || []).map((m: any) => ({ ...m, _id: m._id || m.id }));
+        const me = this.auth.getUser();
+        const myId = me?._id || me?.id;
+        const mine = this.miembros.find(m => String(m._id) === String(myId));
+        this.myRole = (mine?.rol as any) || 'miembro';
+        this.loading = false;
       },
       error: () => {
         this.miembros = [];
@@ -245,6 +245,7 @@ export class GroupSettingsComponent implements OnInit {
     this.showAddFriendModal = false;
     this.selectedFriendToAdd = null;
     this.addFriendError = null;
+    this.addFriendSuccess = false;
     this.availableFriends = [];
   }
 
@@ -287,22 +288,94 @@ export class GroupSettingsComponent implements OnInit {
     this.addingFriend = true;
     this.addFriendError = null;
 
-    const payload = {
-      id_usuario: this.selectedFriendToAdd,
-      id_grupo: this.accountId,
-      rol: 'miembro',
-    };
+    const myId = this.myId();
+    if (!myId) {
+      this.addingFriend = false;
+      this.addFriendError = 'No autenticado';
+      return;
+    }
 
-    this.auth.createUserGroup(payload).subscribe({
+    this.auth.sendGroupInvitation(this.accountId, this.selectedFriendToAdd, myId).subscribe({
       next: () => {
         this.addingFriend = false;
         this.closeAddFriendModal();
-        this.loadMembers();
+        this.addFriendSuccess = true;
+        setTimeout(() => { this.addFriendSuccess = false; }, 2000);
       },
       error: (err: any) => {
         this.addingFriend = false;
-        this.addFriendError = err?.error?.message || 'No se pudo añadir el amigo al grupo';
+        this.addFriendError = err?.error?.message || 'No se pudo enviar la invitación';
       },
+    });
+  }
+
+  private myId(): string | null {
+    const me = this.auth.getUser();
+    return me?._id || me?.id || null;
+  }
+
+  isOwner() { return this.myRole === 'owner'; }
+  isAdmin() { return this.myRole === 'owner' || this.myRole === 'admin'; }
+
+  canPromote(member: any) {
+    if (!member) return false;
+    return this.isOwner() && member.rol !== 'owner' && member.rol !== 'admin';
+  }
+
+  canDemote(member: any) {
+    if (!member) return false;
+    return this.isOwner() && member.rol === 'admin';
+  }
+
+  canRemove(member: any) {
+    if (!member) return false;
+    const myId = this.myId();
+    const targetId = member._id || member.id;
+    if (myId && String(myId) === String(targetId)) return false;
+    if (member.rol === 'owner') return false;
+    if (this.isOwner()) return true;
+    if (this.myRole === 'admin') {
+      return member.rol === 'miembro';
+    }
+    return false;
+  }
+
+  promoteToAdmin(member: any) {
+    if (!this.canPromote(member)) return;
+    const myId = this.myId();
+    const targetId = member._id || member.id;
+    if (!myId || !targetId) return;
+    this.actionError = null;
+    this.actionLoading = String(targetId) + ':promote';
+    this.auth.updateUserGroupRole(this.accountId, String(myId), String(targetId), 'admin').subscribe({
+      next: () => { this.actionLoading = null; this.loadMembers(); },
+      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo actualizar el rol'; }
+    });
+  }
+
+  demoteToMember(member: any) {
+    if (!this.canDemote(member)) return;
+    const myId = this.myId();
+    const targetId = member._id || member.id;
+    if (!myId || !targetId) return;
+    this.actionError = null;
+    this.actionLoading = String(targetId) + ':demote';
+    this.auth.updateUserGroupRole(this.accountId, String(myId), String(targetId), 'miembro').subscribe({
+      next: () => { this.actionLoading = null; this.loadMembers(); },
+      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo actualizar el rol'; }
+    });
+  }
+
+  removeMember(member: any) {
+    if (!this.canRemove(member)) return;
+    const myId = this.myId();
+    const targetId = member._id || member.id;
+    if (!myId || !targetId) return;
+    this.actionError = null;
+    this.actionLoading = String(targetId) + ':remove';
+    this.auth.removeUserFromGroup(this.accountId, String(myId), String(targetId)).subscribe({
+      next: () => { this.actionLoading = null; this.loadMembers(); },
+      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo expulsar al miembro'; }
     });
   }
 }

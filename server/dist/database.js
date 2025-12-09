@@ -66,6 +66,8 @@ function connectToDatabase(uri) {
         exports.collections.userGroups = userGroupsCollection;
         const participacionesCollection = db.collection("participaciones");
         exports.collections.participaciones = participacionesCollection;
+        const notificationsCollection = db.collection("notifications");
+        exports.collections.notifications = notificationsCollection;
         try {
             yield ((_a = exports.collections.userGroups) === null || _a === void 0 ? void 0 : _a.createIndex({ id_usuario: 1, id_grupo: 1 }, { unique: true, background: true }));
         }
@@ -270,7 +272,7 @@ function applySchemaValidation(db) {
                     },
                     rol: {
                         bsonType: "string",
-                        enum: ["admin", "miembro"],
+                        enum: ["owner", "admin", "miembro"],
                         description: "Role of the user in the group",
                     },
                     fecha_union: {
