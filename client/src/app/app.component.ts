@@ -62,9 +62,9 @@ import { Router } from '@angular/router';
       <!-- Amigos dropdown -->
       <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">{{ lang.t('friends') }}</button>
       <!-- Notificaciones -->
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/notifications">{{ lang.t('notifications') || 'Notificaciones' }}</button>
+      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/notifications">{{ lang.t('notifications') }}</button>
       <!-- Invitaciones a grupos -->
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/group-invitations">{{ lang.t('groupInvitations') || 'Invitaciones' }}</button>
+      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/group-invitations">{{ lang.t('groupInvitations') }}</button>
       <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
         <ng-container *ngIf="peticiones && peticiones.length">
           <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">{{ lang.t('requests') }} ({{ peticiones.length }})</button>
@@ -87,7 +87,7 @@ import { Router } from '@angular/router';
                   </div>
                 </div>
               </ng-container>
-              <div *ngIf="!peticiones || peticiones.length === 0">No hay solicitudes</div>
+              <div *ngIf="!peticiones || peticiones.length === 0">{{ lang.t('noRequests') }}</div>
             </div>
           </ng-template>
         </ng-container>
