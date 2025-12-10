@@ -46,6 +46,10 @@ import { MatInputModule } from '@angular/material/input';
                     <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('groupName') }}</label>
                     <input type="text" [(ngModel)]="account.nombre" name="nombre" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box" />
                   </div>
+                  <div style="margin-bottom:12px">
+                    <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('id') || 'ID' }}</label>
+                    <div style="font-size:0.85rem; word-break:break-all; font-family:monospace; color:var(--text-main)">{{ account._id || account.id }}</div>
+                  </div>
                 </div>
               </div>
               <div style="margin-bottom:12px">

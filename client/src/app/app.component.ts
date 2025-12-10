@@ -99,6 +99,10 @@ import { Router } from '@angular/router';
         </ng-template>
       </button>
       <mat-menu #profileMenu="matMenu" class="profile-menu" yPosition="below" xPosition="before" [overlapTrigger]="false" [hasBackdrop]="true" backdropClass="cdk-overlay-transparent-backdrop">
+        <div mat-menu-item disabled style="opacity:1;cursor:default;font-weight:600;color:var(--text-main);pointer-events:none">
+          {{ authService.getUser()?.nombre || authService.getUser()?.email }}
+        </div>
+        <mat-divider></mat-divider>
         <button mat-menu-item routerLink="/friends">
           <mat-icon>people</mat-icon>
           <span>{{ lang.t('friends') }}</span>

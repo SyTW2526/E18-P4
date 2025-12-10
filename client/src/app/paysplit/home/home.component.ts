@@ -67,13 +67,11 @@ import { MatListModule } from '@angular/material/list';
       </ng-container>
 
       <div *ngIf="auth.isLoggedIn()" style="margin-top:1rem">
-        <p style="margin:0 auto 1rem;max-width:900px">{{ lang.t('connectedAs') }} <strong>{{ auth.getUser()?.nombre || auth.getUser()?.email }}</strong></p>
-
         <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto">
           <!-- Left sidebar with debt info -->
           <div style="flex:0 0 auto;padding:1.5rem;background:var(--secondary-bg);border-radius:8px;height:fit-content;min-width:180px">
-            <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
-            <div style="font-size:2.5rem;font-weight:bold;color:#d32f2f;margin-bottom:0.5rem">{{ totalDebt.toFixed(2) }} €</div>
+            <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ totalDebt < 0 ? lang.t('youOwe') : lang.t('youWillReceive') }}</h3>
+            <div [style.color]="totalDebt < 0 ? '#d32f2f' : '#4caf50'" style="font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ Math.abs(totalDebt).toFixed(2) }} €</div>
           </div>
 
           <!-- Right content area with groups -->
@@ -106,9 +104,12 @@ import { MatListModule } from '@angular/material/list';
           <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
             <mat-card *ngFor="let g of sharedAccounts" class="group-card" tabindex="0" (click)="openGroup(g)" (keydown.enter)="openGroup(g)">
               <mat-card-title>{{ g.nombre }}</mat-card-title>
-              <mat-card-subtitle *ngIf="g.moneda">{{ lang.t('currency') }}: {{ g.moneda }}</mat-card-subtitle>
               <mat-card-content>
                 <p *ngIf="g.descripcion">{{ g.descripcion }}</p>
+                <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--divider-color);">
+                  <p style="margin:0;font-size:0.9rem;color:var(--text-muted);">{{ (groupBalances[g._id || g.id] || 0) < 0 ? lang.t('youOwe') : lang.t('youWillReceive') }}:</p>
+                  <p [style.color]="(groupBalances[g._id || g.id] || 0) < 0 ? '#d32f2f' : '#4caf50'" style="margin:0.25rem 0 0 0;font-size:1.3rem;font-weight:bold;">{{ Math.abs(groupBalances[g._id || g.id] || 0).toFixed(2) }} {{ getCurrencySymbol(g.moneda || 'EUR') }}</p>
+                </div>
               </mat-card-content>
             </mat-card>
           </div>
@@ -121,7 +122,9 @@ import { MatListModule } from '@angular/material/list';
   `,
 })
 export class HomeComponent {
+  Math = Math;
   sharedAccounts: any[] = [];
+  groupBalances: { [groupId: string]: number } = {};
   loadingGroups = false;
   groupsError: string | null = null;
   totalDebt = 0;
@@ -256,9 +259,11 @@ export class HomeComponent {
         next: (balances: any[]) => {
           // Find the balance for the current user
           const userBalance = balances.find((b: any) => String(b.userId) === String(userId));
-          if (userBalance && userBalance.balance < 0) {
-            // Negative balance means the user owes money
-            debtSum += Math.abs(userBalance.balance);
+          if (userBalance) {
+            const balance = userBalance.balance;
+            this.groupBalances[groupId] = balance;
+            // Add all balances (negative = owes, positive = owed to) to net total
+            debtSum += balance;
           }
           completedGroups++;
           if (completedGroups === this.sharedAccounts.length) {
@@ -432,5 +437,49 @@ export class HomeComponent {
   logout() {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  getCurrencySymbol(code: string): string {
+    const symbols: { [key: string]: string } = {
+      'EUR': '€',
+      'USD': '$',
+      'GBP': '£',
+      'JPY': '¥',
+      'CHF': 'CHF',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'NZD': 'NZ$',
+      'CNY': '¥',
+      'INR': '₹',
+      'BRL': 'R$',
+      'MXN': '$',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'RON': 'lei',
+      'BGN': 'лв',
+      'HRK': 'kn',
+      'RUB': '₽',
+      'TRY': '₺',
+      'ZAR': 'R',
+      'SGD': 'S$',
+      'HKD': 'HK$',
+      'THB': '฿',
+      'MYR': 'RM',
+      'PHP': '₱',
+      'IDR': 'Rp',
+      'VND': '₫',
+      'KRW': '₩',
+      'TWD': 'NT$',
+      'AED': 'د.إ',
+      'SAR': '﷼',
+      'KWD': 'د.ك',
+      'QAR': 'ر.ق',
+      'ILS': '₪'
+    };
+    return symbols[code] || code;
   }
 }
