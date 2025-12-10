@@ -209,31 +209,64 @@ Color del header en sí*/
   z-index: 1200;
 }
 
-/* Ensure Material overlay (menus, dialogs, tooltips) appears above the fixed toolbar */
-.cdk-overlay-container .cdk-overlay-pane {
+
+/* Angular CDK overlay - restore default positioning for all overlays */
+/* Use animation to force position:absolute and override inline styles */
+@keyframes force-absolute {
+  from, to {
+    position: absolute !important;
+  }
+}
+
+.cdk-overlay-container {
   z-index: 1300 !important;
 }
 
-/* Ensure the overlay container is positioned relative to the viewport
-   so CDK overlays (menus, tooltips, dialogs) are placed correctly.
-   Some transforms/containers can break overlay positioning — forcing
-   the container to be fixed and full-viewport prevents that. */
-.cdk-overlay-container {
+/* Backdrop must be clickable and positioned to cover viewport */
+.cdk-overlay-backdrop {
+  z-index: 1299 !important;
   position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  cursor: pointer !important;
 }
-.cdk-overlay-container .cdk-overlay-pane {
-  position: absolute !important;
+
+.cdk-overlay-pane {
   pointer-events: auto !important;
+  position: absolute !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  animation: force-absolute 0.001s infinite !important;
+  z-index: 1300 !important;
+}
+
+/* Override the bounding box flex alignment that pushes menu to bottom */
+.cdk-overlay-connected-position-bounding-box {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  z-index: 1300 !important;
+}
+
+/* Hide submenu arrow from profile menu items */
+.profile-menu .mat-mdc-menu-item-submenu-trigger .mat-mdc-menu-submenu-icon {
+  display: none !important;
+}
+
+/* Force profile menu to appear below button, not at bottom of bounding box */
+.cdk-overlay-pane .mat-mdc-menu-panel.ng-star-inserted:has(.mat-mdc-menu-item button[routerlink="/settings"]) {
+  position: relative !important;
+  top: 0 !important;
+}
+
+.cdk-overlay-connected-position-bounding-box:has(.mat-mdc-menu-panel .mat-mdc-menu-item button[routerlink="/settings"]) {
+  height: auto !important;
+  align-items: flex-start !important;
 }
 
 /* Amigos / Mat-menu styling ------------------------------------------------- */
 /* Style the menu panel itself (both legacy and MDC variants) */
-.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
-.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel,
 .cdk-overlay-pane .mat-menu-panel,
 .cdk-overlay-pane .mat-mdc-menu-panel {
   background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;

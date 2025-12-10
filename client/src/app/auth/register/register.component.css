@@ -65,6 +65,13 @@ mat-card-title {
   align-items: center !important;
 }
 
+/* Make inputs taller like login */
+::ng-deep .mat-mdc-form-field-infix {
+  padding: 20px 0 !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
 /* Icon button suffix sizing */
 ::ng-deep .mat-mdc-form-field-icon-suffix {
   margin-right: -8px !important;

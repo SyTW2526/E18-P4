@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { CommonModule } from '@angular/common';
-import { ElementRef, ViewChild } from '@angular/core';
+import { ElementRef } from '@angular/core';
 import { AuthService } from './auth/auth.service';
 import { ThemeService } from './core/theme.service';
 import { LanguageService } from './core/language.service';
@@ -9,7 +10,7 @@ import { FooterComponent } from './shared/footer/footer.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -59,8 +60,6 @@ import { Router } from '@angular/router';
       <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language" style="font-size:24px">{{ lang.current === 'es' ? '🇪🇸' : '🇬🇧' }}</button>
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/login">{{ lang.t('login') }}</button>
       <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/register">{{ lang.t('register') }}</button>
-      <!-- Amigos dropdown -->
-      <button #friendsBtn *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button [matMenuTriggerFor]="friendsMenu" #friendsTrigger="matMenuTrigger" (menuOpened)="onFriendsMenuOpened()">{{ lang.t('friends') }}</button>
       <!-- Notificaciones -->
       <button
         *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
@@ -83,74 +82,36 @@ import { Router } from '@angular/router';
           <path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
       </button>
-      <!-- Invitaciones a grupos -->
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/group-invitations">{{ lang.t('groupInvitations') }}</button>
-      <mat-menu #friendsMenu="matMenu" yPosition="below" xPosition="before" [overlapTrigger]="false">
-        <ng-container *ngIf="peticiones && peticiones.length">
-          <button mat-menu-item #requestsOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleRequests();">{{ lang.t('requests') }} ({{ peticiones.length }})</button>
-
-          <ng-template
-            cdk-connected-overlay
-            [cdkConnectedOverlayOrigin]="requestsOrigin"
-            [cdkConnectedOverlayPositions]="overlayPositions"
-            [cdkConnectedOverlayOpen]="requestsOpen"
-            [cdkConnectedOverlayHasBackdrop]="true"
-            (backdropClick)="closeRequests()"
-          >
-            <div class="requests-panel" style="min-width:220px; padding:8px; background:var(--secondary-bg); color:var(--text-main); border-radius:8px;">
-              <ng-container *ngFor="let p of peticiones">
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 4px;">
-                  <div style="flex:1; cursor:pointer;" (click)="openFriend(p)">{{ p?.nombre || p?.username || p?.email || p }}</div>
-                  <div style="display:flex; gap:4px;">
-                    <button mat-icon-button color="primary" (click)="acceptRequest(p)" [disabled]="p.processing"><mat-icon>check</mat-icon></button>
-                    <button mat-icon-button (click)="rejectRequest(p)" [disabled]="p.processing"><mat-icon>close</mat-icon></button>
-                  </div>
-                </div>
-              </ng-container>
-              <div *ngIf="!peticiones || peticiones.length === 0">{{ lang.t('noRequests') }}</div>
-            </div>
-          </ng-template>
+      <!-- Perfil dropdown -->
+      <button
+        *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
+        mat-icon-button
+        [matMenuTriggerFor]="profileMenu"
+        #profileMenuTrigger="matMenuTrigger"
+        aria-label="Perfil"
+        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;overflow:hidden"
+      >
+        <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
+          <img [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
         </ng-container>
-
-        <button mat-menu-item *ngFor="let f of friends" (click)="openFriend(f)">{{ f?.nombre || f?.name || f?.email || f }}</button>
-        <button mat-menu-item disabled *ngIf="!friends || friends.length === 0">{{ lang.t('noMembers') }}</button>
-
-        <!-- Añadir amigo: connected overlay anchored to this menu item -->
-        <button mat-menu-item #addFriendOrigin="cdkOverlayOrigin" cdkOverlayOrigin (click)="$event.stopPropagation(); toggleAddFriend();">{{ lang.t('addFriend') }}</button>
-
-        <ng-template
-          cdk-connected-overlay
-          [cdkConnectedOverlayOrigin]="addFriendOrigin"
-          [cdkConnectedOverlayPositions]="overlayPositions"
-          [cdkConnectedOverlayOpen]="addFriendOpen"
-          [cdkConnectedOverlayHasBackdrop]="true"
-          (backdropClick)="closeAddFriend()"
-        >
-          <div class="add-friend-panel" style="min-width:260px; padding:12px; background:var(--secondary-bg); color:var(--text-main); border-radius:8px;">
-            <ng-container *ngIf="!addFriendSuccess; else addSuccess">
-              <div style="display:flex; flex-direction:column; gap:8px;">
-                <label style="font-weight:600;">{{ lang.t('name') }}</label>
-                <input placeholder="username" [(ngModel)]="addFriendUsername" style="width:100%; padding:8px; background:transparent; color:var(--text-main); border:1px solid rgba(255,255,255,0.06); border-radius:4px;" />
-                <div *ngIf="addFriendError" style="color:#ff4444; font-weight:600">{{ addFriendError }}</div>
-                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px">
-                  <button mat-button (click)="closeAddFriend()" [disabled]="addFriendLoading">{{ lang.t('cancel') }}</button>
-                  <button mat-flat-button color="primary" (click)="onAddFriend()" [disabled]="addFriendLoading || !addFriendUsername || !addFriendUsername.trim()">{{ addFriendLoading ? lang.t('loading') : lang.t('add') }}</button>
-                </div>
-              </div>
-            </ng-container>
-            <ng-template #addSuccess>
-              <div style="display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px">
-                <mat-icon style="font-size:28px; color:var(--primary-color)">check_circle</mat-icon>
-                <div style="font-weight:700">{{ lang.t('friendRequestSent') }}</div>
-              </div>
-            </ng-template>
-          </div>
+        <ng-template #defaultUserIcon>
+          <mat-icon style="font-size:28px">account_circle</mat-icon>
         </ng-template>
-      </mat-menu>
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-button routerLink="/settings">{{ lang.t('settings') }}</button>
-      <button *ngIf="authService.isLoggedIn() && showAuthenticatedControls" mat-icon-button (click)="logout()">
-        <mat-icon>logout</mat-icon>
       </button>
+      <mat-menu #profileMenu="matMenu" class="profile-menu" yPosition="below" xPosition="before" [overlapTrigger]="false" [hasBackdrop]="true" backdropClass="cdk-overlay-transparent-backdrop">
+        <button mat-menu-item routerLink="/friends">
+          <mat-icon>people</mat-icon>
+          <span>{{ lang.t('friends') }}</span>
+        </button>
+        <button mat-menu-item routerLink="/settings">
+          <mat-icon>settings</mat-icon>
+          <span>{{ lang.t('settings') }}</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>{{ lang.t('logout') || 'Salir' }}</span>
+        </button>
+      </mat-menu>
     </mat-toolbar>
     <main>
       <router-outlet></router-outlet>
@@ -158,7 +119,7 @@ import { Router } from '@angular/router';
     <app-footer></app-footer>
   `,
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
   title = 'bill-splitter-client'; // Título actualizado
   showAuthenticatedControls = true;
   friends: any[] = [];
@@ -169,14 +130,21 @@ export class AppComponent implements OnInit {
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
   ];
-  @ViewChild('friendsBtn', { read: ElementRef }) friendsBtn?: ElementRef;
+  @ViewChild('profileMenuTrigger') profileMenuTrigger?: MatMenuTrigger;
   // add-friend overlay state
   addFriendOpen = false;
   addFriendUsername = '';
   addFriendLoading = false;
   addFriendError = '';
   addFriendSuccess = false;
-  constructor(public authService: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService, private snackBar: MatSnackBar) {}
+  constructor(
+    public authService: AuthService, 
+    private router: Router, 
+    private theme: ThemeService, 
+    public lang: LanguageService, 
+    private snackBar: MatSnackBar,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'
@@ -205,6 +173,10 @@ export class AppComponent implements OnInit {
     this.loadPeticiones();
   }
 
+  ngAfterViewInit(): void {
+    this.startOverlayGuard();
+  }
+
   
 
   private updateHeaderVisibility() {
@@ -218,8 +190,162 @@ export class AppComponent implements OnInit {
     this.router.navigate(['/login']);
   }
 
+  navigateToFriends() {
+    this.profileMenuTrigger?.closeMenu();
+    setTimeout(() => this.router.navigate(['/friends']), 100);
+  }
+
   toggleLang() {
     this.lang.toggle();
+  }
+
+  // Keep overlays sane: strip position: static from panes, keep them absolute
+  // and ensure bounding boxes use flex-start vertically. Runs globally via MutationObserver.
+  startOverlayGuard() {
+    // Only run in browser, not during SSR
+    if (!isPlatformBrowser(this.platformId)) return;
+    
+    const container = document.querySelector('.cdk-overlay-container');
+    if (!container) {
+      setTimeout(() => this.startOverlayGuard(), 100);
+      return;
+    }
+
+    // Track which panes we've already patched to avoid duplicate work
+    const patchedPanes = new WeakSet<HTMLElement>();
+
+    const fixPane = (pane: HTMLElement) => {
+      // Always force position to absolute
+      if (pane.style.position !== 'absolute') {
+        pane.style.setProperty('position', 'absolute', 'important');
+      }
+      
+      // Check if pane has positioning coordinates - if not, it will render in flow
+      const hasCoords = pane.style.top || pane.style.left || pane.style.right || pane.style.bottom;
+      if (!hasCoords) {
+        // Find the parent bounding box to understand the positioning context
+        const boundingBox = pane.closest('.cdk-overlay-connected-position-bounding-box') as HTMLElement;
+        if (boundingBox) {
+          // Profile menu uses xPosition="before", so it should be right-aligned
+          // Position at top of bounding box (Angular Material should handle correct top offset)
+          pane.style.setProperty('top', '0', 'important');
+          pane.style.setProperty('right', '0', 'important');
+          pane.style.removeProperty('left');
+          pane.style.removeProperty('bottom');
+        } else {
+          // Fallback: top-left
+          pane.style.setProperty('top', '0', 'important');
+          pane.style.setProperty('left', '0', 'important');
+        }
+      }
+      
+      // If already patched, we're done
+      if (patchedPanes.has(pane)) {
+        return;
+      }
+      
+      // Intercept setAttribute to catch style attribute changes
+      const originalSetAttribute = pane.setAttribute.bind(pane);
+      pane.setAttribute = function(name: string, value: string) {
+        if (name === 'style' && /position:\s*static/i.test(value)) {
+          value = value.replace(/position:\s*static;?/gi, '') + '; position: absolute !important;';
+        }
+        return originalSetAttribute(name, value);
+      };
+      
+      // Intercept direct style.position setter
+      const styleDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style');
+      if (styleDesc && styleDesc.get) {
+        const originalStyle = styleDesc.get.call(pane);
+        const positionDesc = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'position');
+        
+        if (positionDesc && positionDesc.set) {
+          const originalPositionSetter = positionDesc.set;
+          
+          Object.defineProperty(originalStyle, 'position', {
+            get: function() {
+              return this.getPropertyValue('position') || 'absolute';
+            },
+            set: function(value: string) {
+              if (value === 'static') {
+                console.log('🚫 Blocked attempt to set position:static');
+                this.setProperty('position', 'absolute', 'important');
+              } else {
+                originalPositionSetter.call(this, value);
+              }
+            },
+            configurable: true,
+            enumerable: true
+          });
+        }
+      }
+      
+      // Force it right now
+      pane.style.setProperty('position', 'absolute', 'important');
+      
+      patchedPanes.add(pane);
+    };
+
+    const fixBox = (box: HTMLElement) => {
+      // Ensure bounding box has proper positioning
+      if (!box.style.position || box.style.position === 'static') {
+        box.style.setProperty('position', 'absolute', 'important');
+      }
+      
+      // Force flex alignment with !important
+      box.style.setProperty('align-items', 'flex-start', 'important');
+      box.style.setProperty('justify-content', 'flex-start', 'important');
+      
+      // IMPORTANT: Reset height and width to auto so backdrop clicks work
+      // Don't let the bounding box cover the entire viewport
+      box.style.setProperty('height', 'auto', 'important');
+      box.style.setProperty('width', 'auto', 'important');
+    };
+
+    const scan = (node: Node) => {
+      if (!(node instanceof HTMLElement)) return;
+      if (node.classList.contains('cdk-overlay-pane')) {
+        fixPane(node);
+      }
+      if (node.classList.contains('cdk-overlay-connected-position-bounding-box')) {
+        fixBox(node);
+      }
+    };
+
+    const deepScan = () => {
+      container.querySelectorAll('.cdk-overlay-pane').forEach(pane => fixPane(pane as HTMLElement));
+      container.querySelectorAll('.cdk-overlay-connected-position-bounding-box').forEach(box => fixBox(box as HTMLElement));
+    };
+
+    // Initial pass
+    deepScan();
+
+    const obs = new MutationObserver((mutations) => {
+      mutations.forEach(m => {
+        // Check added nodes
+        m.addedNodes.forEach(scan);
+        
+        // Check if style attribute changed on overlay elements
+        if (m.type === 'attributes' && m.attributeName === 'style' && m.target instanceof HTMLElement) {
+          if (m.target.classList.contains('cdk-overlay-pane')) {
+            fixPane(m.target);
+          }
+          if (m.target.classList.contains('cdk-overlay-connected-position-bounding-box')) {
+            fixBox(m.target);
+          }
+        }
+      });
+    });
+    
+    obs.observe(container, { 
+      childList: true, 
+      subtree: true, 
+      attributes: true, 
+      attributeFilter: ['style']
+    });
+
+    // Run periodic checks to catch any missed changes
+    setInterval(deepScan, 250);
   }
 
   toggleRequests() {
@@ -425,33 +551,4 @@ export class AppComponent implements OnInit {
       this.router.navigate([`/users/${id}`]);
     }
   }
-
-  onFriendsMenuOpened() {
-    try {
-      const btnEl = this.friendsBtn?.nativeElement as HTMLElement | undefined;
-      if (!btnEl) return;
-      const rect = btnEl.getBoundingClientRect();
-      // find the last overlay pane (the menu that just opened)
-      const panes = document.querySelectorAll('.cdk-overlay-pane');
-      if (!panes || panes.length === 0) return;
-      const pane = panes[panes.length - 1] as HTMLElement;
-      // Defer adjustment slightly so any positioning/animation finishes
-      setTimeout(() => {
-        try {
-          // place the pane directly under the trigger (override any inline styles)
-          pane.style.setProperty('transform', 'none', 'important');
-          pane.style.setProperty('left', `${Math.max(0, rect.left + window.scrollX)}px`, 'important');
-          pane.style.setProperty('top', `${rect.bottom + window.scrollY}px`, 'important');
-          pane.style.setProperty('right', 'auto', 'important');
-        } catch (e) {
-          console.error('Failed to apply styles to overlay pane', e);
-        }
-      }, 0);
-    } catch (e) {
-      // silent fallback
-      console.error('Failed to reposition friends menu', e);
-    }
-  }
-
-  
 }

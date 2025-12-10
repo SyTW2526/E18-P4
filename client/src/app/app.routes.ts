@@ -18,7 +18,12 @@ export const routes: Routes = [
   { path: 'group/:id/balance', loadComponent: () => import('./paysplit/balance/balance.component').then(m => m.BalanceComponent), title: 'Balances', canActivate: [AuthGuard] },
   { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
   { path: 'notifications', loadComponent: () => import('./notifications/notifications.component').then(m => m.NotificationsComponent), title: 'Notificaciones', canActivate: [AuthGuard] },
-  { path: 'group-invitations', loadComponent: () => import('./group-invitations/group-invitations.component').then(m => m.GroupInvitationsComponent), title: 'Invitaciones a grupos', canActivate: [AuthGuard] },
+  { 
+    path: 'friends', 
+    loadComponent: () => import('./paysplit/friends/friends.component').then(m => m.FriendsComponent), 
+    title: 'Amigos', 
+    canActivate: [AuthGuard] 
+  },
   { path: 'settings', loadComponent: () => import('./settings/user-settings.component').then(m => m.UserSettingsComponent), title: 'Configuración', canActivate: [AuthGuard] },
 
   // User profile route (friend links navigate here)

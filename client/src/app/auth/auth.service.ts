@@ -200,14 +200,18 @@ export class AuthService {
       else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
     }
 
+    const token = this.getToken();
+    const options: any = {};
+    if (token) {
+      options.headers = { Authorization: `Bearer ${token}` };
+    }
+
     // After updating, update localStorage with the updated data
-    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend).pipe(
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend, options).pipe(
       tap((updatedUser) => {
         try {
           if (typeof window !== 'undefined' && window?.localStorage) {
-            // Update auth_user in localStorage with the server-format response
             const currentUser = this.getUser() || {};
-            // Ensure we use the server response's preferencia_tema (claro/oscuro format)
             const merged = { ...currentUser, ...updatedUser, preferencia_tema: payloadToSend.preferencia_tema };
             window.localStorage.setItem('auth_user', JSON.stringify(merged));
           }

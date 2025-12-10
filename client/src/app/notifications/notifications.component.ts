@@ -8,7 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
-import { interval, Subscription } from 'rxjs';
+import { forkJoin, interval, Subscription } from 'rxjs';
 import { switchMap, startWith } from 'rxjs/operators';
 
 @Component({
@@ -84,6 +84,20 @@ import { switchMap, startWith } from 'rxjs/operators';
               <div *ngIf="notif.tipo === 'solicitud_pago' && notif.respondida" 
                    style="margin-top:0.5rem;color:#22c55e;font-size:0.85rem">
                 ✓ Respondida
+              </div>
+
+              <div *ngIf="notif.tipo === 'grupo_invitacion' && !notif.respondida" style="display:flex;gap:0.5rem;margin-top:0.75rem">
+                <button mat-raised-button color="primary" 
+                        (click)="acceptInvitation(notif)"
+                        [disabled]="processing === notif._id">
+                  <mat-icon>check</mat-icon>
+                  {{ lang.t('accept') || 'Aceptar' }}
+                </button>
+                <button mat-button (click)="rejectInvitation(notif)"
+                        [disabled]="processing === notif._id">
+                  <mat-icon>close</mat-icon>
+                  {{ lang.t('reject') || 'Rechazar' }}
+                </button>
               </div>
             </div>
             
@@ -164,18 +178,38 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       return;
     }
     
-    this.notificationService.getNotifications(user._id)
-      .subscribe({
-        next: (notifs) => {
-          this.notifications = notifs;
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Error loading notifications:', err);
-          this.error = 'Error al cargar notificaciones';
-          this.loading = false;
-        }
-      });
+    forkJoin({
+      notifications: this.notificationService.getNotifications(user._id),
+      invitations: this.authService.getGroupInvitationsForUser(user._id)
+    }).subscribe({
+      next: ({ notifications, invitations }) => {
+        const mappedInvites: Notification[] = (invitations || []).map((inv: any) => ({
+          _id: inv._id,
+          tipo: 'grupo_invitacion',
+          de_usuario: inv.id_invitador || inv.invitador?._id || '',
+          para_usuario: user._id,
+          id_grupo: inv.id_grupo || inv.grupo?._id || '',
+          mensaje: inv.mensaje || `Invitación al grupo ${inv.grupo?.nombre || ''}`.trim(),
+          leida: false,
+          respondida: !!inv.respondida,
+          fecha: inv.fecha_invitacion ? new Date(inv.fecha_invitacion) : new Date(),
+          de_usuario_nombre: inv.invitador?.nombre || inv.invitador?.email,
+          grupo_nombre: inv.grupo?.nombre,
+        }));
+
+        this.notifications = [...mappedInvites, ...notifications].sort((a, b) => {
+          const da = new Date(a.fecha).getTime();
+          const db = new Date(b.fecha).getTime();
+          return db - da;
+        });
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading notifications or invitations:', err);
+        this.error = 'Error al cargar notificaciones';
+        this.loading = false;
+      }
+    });
   }
 
   getIcon(tipo: string): string {
@@ -291,6 +325,48 @@ export class NotificationsComponent implements OnInit, OnDestroy {
           this.processing = null;
         }
       });
+  }
+
+  acceptInvitation(notif: Notification) {
+    if (!notif._id) return;
+    const user = this.authService.getUser();
+    const userId = user?._id || user?.id;
+    if (!userId) return;
+
+    this.processing = notif._id;
+    this.authService.acceptGroupInvitation(notif._id, String(userId)).subscribe({
+      next: () => {
+        notif.respondida = true;
+        this.loadNotifications();
+        this.processing = null;
+      },
+      error: (err) => {
+        console.error('Error accepting invitation:', err);
+        this.error = 'Error al aceptar invitación';
+        this.processing = null;
+      },
+    });
+  }
+
+  rejectInvitation(notif: Notification) {
+    if (!notif._id) return;
+    const user = this.authService.getUser();
+    const userId = user?._id || user?.id;
+    if (!userId) return;
+
+    this.processing = notif._id;
+    this.authService.rejectGroupInvitation(notif._id, String(userId)).subscribe({
+      next: () => {
+        // Remove the invitation from the list
+        this.notifications = this.notifications.filter(n => n._id !== notif._id);
+        this.processing = null;
+      },
+      error: (err) => {
+        console.error('Error rejecting invitation:', err);
+        this.error = 'Error al rechazar invitación';
+        this.processing = null;
+      },
+    });
   }
 
   markAsRead(notif: Notification) {
