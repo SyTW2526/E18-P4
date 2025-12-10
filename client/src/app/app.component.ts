@@ -89,13 +89,13 @@ import { Router } from '@angular/router';
         [matMenuTriggerFor]="profileMenu"
         #profileMenuTrigger="matMenuTrigger"
         aria-label="Perfil"
-        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;overflow:hidden"
+        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
       >
         <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
           <img [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
         </ng-container>
         <ng-template #defaultUserIcon>
-          <mat-icon style="font-size:28px">account_circle</mat-icon>
+          <mat-icon>account_circle</mat-icon>
         </ng-template>
       </button>
       <mat-menu #profileMenu="matMenu" class="profile-menu" yPosition="below" xPosition="before" [overlapTrigger]="false" [hasBackdrop]="true" backdropClass="cdk-overlay-transparent-backdrop">

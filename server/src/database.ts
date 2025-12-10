@@ -177,6 +177,10 @@ async function applySchemaValidation(db: mongodb.Db) {
                     bsonType: "date",
                     description: "'fecha_creacion' is required and is a date",
                 },
+                foto_grupo: {
+                    bsonType: ["string", "null"],
+                    description: "Optional base64 encoded group image",
+                },
             },
         },
     };

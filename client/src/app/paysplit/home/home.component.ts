@@ -103,9 +103,21 @@ import { MatListModule } from '@angular/material/list';
 
           <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
             <mat-card *ngFor="let g of sharedAccounts" class="group-card" tabindex="0" (click)="openGroup(g)" (keydown.enter)="openGroup(g)">
-              <mat-card-title>{{ g.nombre }}</mat-card-title>
+              <div style="display:flex; align-items:center; gap:12px; padding:4px 4px 0 4px">
+                <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; background:var(--secondary-bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid var(--divider-color)">
+                  <ng-container *ngIf="g.foto_grupo; else groupInitial">
+                    <img [src]="g.foto_grupo" alt="" style="width:100%; height:100%; object-fit:cover" />
+                  </ng-container>
+                  <ng-template #groupInitial>
+                    <span style="font-weight:700; font-size:1.2rem; color:var(--text-main)">{{ getGroupInitial(g) }}</span>
+                  </ng-template>
+                </div>
+                <div style="flex:1; min-width:0; text-align:left">
+                  <div style="font-weight:700; font-size:1.05rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ g.nombre }}</div>
+                  <div *ngIf="g.descripcion" style="margin-top:0.25rem; color:var(--text-muted); font-size:0.9rem; max-height:2.6em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ g.descripcion }}</div>
+                </div>
+              </div>
               <mat-card-content>
-                <p *ngIf="g.descripcion">{{ g.descripcion }}</p>
                 <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--divider-color);">
                   <p style="margin:0;font-size:0.9rem;color:var(--text-muted);">{{ (groupBalances[g._id || g.id] || 0) < 0 ? lang.t('youOwe') : lang.t('youWillReceive') }}:</p>
                   <p [style.color]="(groupBalances[g._id || g.id] || 0) < 0 ? '#d32f2f' : '#4caf50'" style="margin:0.25rem 0 0 0;font-size:1.3rem;font-weight:bold;">{{ Math.abs(groupBalances[g._id || g.id] || 0).toFixed(2) }} {{ getCurrencySymbol(g.moneda || 'EUR') }}</p>
@@ -437,6 +449,10 @@ export class HomeComponent {
   logout() {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  getGroupInitial(group: any): string {
+    return (group?.nombre || 'G').charAt(0).toUpperCase();
   }
 
   getCurrencySymbol(code: string): string {

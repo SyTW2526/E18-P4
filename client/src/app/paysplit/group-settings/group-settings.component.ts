@@ -38,8 +38,17 @@ import { MatInputModule } from '@angular/material/input';
             <div style="padding:24px">
               <h3 style="margin-top:0; margin-bottom:1rem">{{ lang.t('groupProfile') }}</h3>
               <div style="display:flex; align-items:flex-start; gap:24px; margin-bottom:1.5rem">
-                <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:40px; font-weight:700; flex-shrink:0">
-                  {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
+                <div style="position:relative; min-width:140px; flex-shrink:0">
+                  <div *ngIf="groupImageSrc || account.foto_grupo" style="width:112px; height:112px; border-radius:50%; overflow:hidden; background:var(--secondary-bg); box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2px solid #444">
+                    <img [src]="groupImageSrc || account.foto_grupo" style="width:100%; height:100%; object-fit:cover" />
+                  </div>
+                  <div *ngIf="!groupImageSrc && !account.foto_grupo" style="width:112px; height:112px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:40px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2px solid #444">
+                    {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
+                  </div>
+                  <input type="file" #groupFileInput accept="image/*" style="display:none" (change)="onGroupImageSelected($event)" />
+                  <button mat-stroked-button color="primary" (click)="groupFileInput.click()" style="position:absolute; bottom:0; right:6px; width:40px; height:40px; min-width:40px; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center">
+                    <mat-icon style="margin:0">photo_camera</mat-icon>
+                  </button>
                 </div>
                 <div style="flex:1; min-width:0">
                   <div style="margin-bottom:12px">
@@ -141,6 +150,9 @@ export class GroupSettingsComponent implements OnInit {
   error: string | null = null;
   saveMessage: string | null = null;
 
+  // Group avatar state
+  groupImageSrc: string | null = null;
+
   // Add friend modal state
   showAddFriendModal = false;
   availableFriends: any[] = [];
@@ -168,6 +180,7 @@ export class GroupSettingsComponent implements OnInit {
       next: (acc: any) => {
         this.account = { ...acc };
         this.originalAccount = { ...acc };
+        this.groupImageSrc = acc.foto_grupo || null;
         this.loadMembers();
       },
       error: (err: any) => {
@@ -199,33 +212,35 @@ export class GroupSettingsComponent implements OnInit {
     this.saveMessage = null;
     this.error = null;
 
-    const payload = {
+    const payload: any = {
       nombre: this.account.nombre,
       descripcion: this.account.descripcion,
     };
+    
+    if (this.account.foto_grupo) {
+      payload.foto_grupo = this.account.foto_grupo;
+    }
 
     this.auth.updateSharedAccount(this.accountId, payload).subscribe({
       next: (res: any) => {
+        console.log('Save success, response:', res);
         this.saving = false;
         this.saveMessage = this.lang.t('changesSaved');
         this.originalAccount = { ...this.account };
+        this.groupImageSrc = this.account.foto_grupo || null;
         setTimeout(() => {
           this.saveMessage = null;
         }, 3000);
       },
       error: (err: any) => {
         this.saving = false;
-        console.error('Save error:', err);
-        // Check if it's actually a successful response with error status
-        if (err.status >= 200 && err.status < 300) {
-          this.saveMessage = this.lang.t('changesSaved');
-          this.originalAccount = { ...this.account };
-          setTimeout(() => {
-            this.saveMessage = null;
-          }, 3000);
-        } else {
-          this.error = err?.error?.message || this.lang.t('errorSaving');
-        }
+        console.error('Full error object:', err);
+        console.error('Error status:', err.status);
+        console.error('Error statusText:', err.statusText);
+        console.error('Error error:', err.error);
+        console.error('Error message:', err.message);
+        const msg = err.error?.message || err.message || err.statusText;
+        this.error = `${this.lang.t('errorSaving')}: ${msg}`;
       },
     });
   }
@@ -381,5 +396,47 @@ export class GroupSettingsComponent implements OnInit {
       next: () => { this.actionLoading = null; this.loadMembers(); },
       error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo expulsar al miembro'; }
     });
+  }
+
+  onGroupImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const img = new Image();
+      img.onload = () => {
+        const resized = this.downscaleImage(img, 256);
+        this.groupImageSrc = resized;
+        this.account.foto_grupo = resized;
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private downscaleImage(img: HTMLImageElement, maxSize: number): string {
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+
+    if (width > height) {
+      if (width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      }
+    } else {
+      if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.85);
   }
 }

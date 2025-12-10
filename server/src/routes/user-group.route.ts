@@ -287,14 +287,18 @@ userGroupRouter.put("/shared-accounts/:id", async (req: express.Request, res: ex
     const query = { _id: new ObjectId(id) };
     const result = await collections?.sharedAccounts!.updateOne(query, { $set: cuenta });
 
-    if (result?.acknowledged) {
-      res.status(201).send(`Created a new shared account: ID ${result.upsertedId}.`);
-    } else {
-      res.status(500).send("Failed to create a new shared account.");
+    if (result && result.matchedCount) {
+      return res.status(200).json({ id, message: 'Cuenta compartida actualizada.' });
     }
+    if (!result?.matchedCount) {
+      return res.status(404).json({ message: `No se encontro la cuenta compartida: ID ${id}` });
+    }
+    return res.status(304).json({ message: `Sin cambios para la cuenta: ID ${id}` });
   } catch (error) {
-    console.error(error);
-    res.status(400).send(error instanceof Error ? error.message : "Unknown error");
+    console.error('Shared account update error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const details: any = (error as any)?.errInfo || (error as any)?.errorResponse || error;
+    res.status(400).json({ message, details });
   }
 });
 
