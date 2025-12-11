@@ -119,6 +119,10 @@ async function applySchemaValidation(db: mongodb.Db) {
                     description: "'preferencia_tema' is required and is either 'claro' or 'oscuro'",
                     enum: ["claro", "oscuro"],
                 },
+                moneda_preferida: {
+                    bsonType: ["string", "null"],
+                    description: "Optional preferred currency code (EUR, USD, GBP)",
+                },
                 amigos: {
                     bsonType: "array",
                     description: "Optional list of friend user ids (ObjectId or string)",

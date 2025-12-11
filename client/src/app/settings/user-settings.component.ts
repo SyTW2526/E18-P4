@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -26,164 +27,26 @@ import { MatIconModule } from '@angular/material/icon';
     MatSelectModule,
     MatIconModule,
   ],
-  template: `
-    <section style="transform:translateY(2rem)">
-      <mat-card style="width: 600px; min-height: 320px; display: flex; flex-direction: row; align-items: flex-start; padding: 2rem 1.5rem; gap: 2rem;">
-        <div class="avatar-col">
-          <div class="avatar-box">
-            <img *ngIf="profileImgSrc"
-                 [src]="profileImgSrc"
-                 alt="avatar"
-                 (error)="onProfileImgError()"
-                 style="width: 112px; height: 112px; min-width: 112px; min-height: 112px; max-width: 112px; max-height: 112px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.12); background: #222; border: 2px solid #444; display: block; margin-bottom: 0.5rem;" />
-            <div *ngIf="!profileImgSrc" class="avatar-fallback">{{ fallbackInitials }}</div>
-            <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
-            <button mat-stroked-button color="primary" class="avatar-action" type="button" (click)="triggerFileInput(fileInput)">
-              <mat-icon>photo_camera</mat-icon>
-            </button>
-          </div>
-        </div>
-        <div class="settings-col" style="flex:1;">
-          <mat-card-title>{{ lang.t('userSettings') }}</mat-card-title>
-          <mat-card-content style="width: 100%;">
-            <form [formGroup]="form" (ngSubmit)="onSubmit()">
-              <div class="form-group">
-                <label>{{ lang.t('nombre') }}</label>
-                <mat-form-field appearance="fill" class="full-width">
-                  <input matInput formControlName="nombre" />
-                </mat-form-field>
-              </div>
-
-              <div class="form-group">
-                <label>{{ lang.t('email') }}</label>
-                <mat-form-field appearance="fill" class="full-width">
-                  <input matInput formControlName="email" />
-                </mat-form-field>
-              </div>
-
-              <div class="form-group">
-                <label>{{ lang.t('theme') }}</label>
-                <mat-form-field appearance="fill" class="full-width" (click)="$event.stopPropagation(); themeOpen ? themeSelect.close() : themeSelect.open()">
-                  <mat-select #themeSelect formControlName="preferencia_tema" (openedChange)="themeOpen=$event">
-                    <mat-option value="light">{{ lang.t('light') }}</mat-option>
-                    <mat-option value="dark">{{ lang.t('dark') }}</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-
-              <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
-                <button mat-button type="button" (click)="cancel()">{{ lang.t('cancel') }}</button>
-                <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">{{ lang.t('save') }}</button>
-              </div>
-              <div style="display:flex;gap:8px;justify-content:flex-start;margin-top:1rem;">
-                <button mat-stroked-button style="color:#d32f2f;border-color:#d32f2f" type="button" (click)="confirmDelete()">{{ lang.t('deleteAccount') }}</button>
-              </div>
-            </form>
-          </mat-card-content>
-        </div>
-      </mat-card>
-    </section>
-  `,
-  styles: [
-    `
-      .full-width { width: 100%; }
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-      }
-      .form-group label {
-        color: var(--text-muted, #a1a1aa);
-        font-size: 0.875rem;
-        font-weight: 500;
-      }
-      ::ng-deep .mat-mdc-form-field-label {
-        display: none !important;
-      }
-      .avatar-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        min-width: 140px;
-        max-width: 160px;
-      }
-      .avatar-box {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        margin-bottom: 1.5rem;
-        position: relative;
-        z-index: 1;
-        background: transparent !important;
-        border: none !important;
-        min-height: 140px;
-        min-width: 140px;
-        border-radius: 12px;
-      }
-      .avatar-action {
-        position: absolute;
-        bottom: 6px;
-        right: 6px;
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        padding: 0;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .avatar-action mat-icon {
-        margin: 0;
-      }
-      .avatar-fallback {
-        width: 112px;
-        height: 112px;
-        min-width: 112px;
-        min-height: 112px;
-        max-width: 112px;
-        max-height: 112px;
-        border-radius: 50%;
-        background: linear-gradient(145deg, #2d2d2d, #1a1a1a);
-        border: 2px solid #444;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 32px;
-        color: #f5f5f5;
-        letter-spacing: 1px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-        margin-bottom: 0.5rem;
-      }
-      /* Hide any pseudo-elements that may be causing the triangle */
-      ::ng-deep .avatar-box::before,
-      ::ng-deep .avatar-box::after,
-      ::ng-deep .avatar-col::before,
-      ::ng-deep .avatar-col::after {
-        display: none !important;
-        content: none !important;
-        background: none !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-    `,
-  ],
+  templateUrl: './user-settings.component.html',
+  styleUrls: ['./user-settings.component.css'],
 })
 export class UserSettingsComponent implements OnInit {
   profileImgSrc: string | null = null;
   fallbackInitials = '?';
+  selectedTheme: 'light' | 'dark' = 'light';
   form = this.fb.group({
     nombre: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
     preferencia_tema: ['light'],
+    moneda_preferida: ['EUR'],
   });
 
   userId: string | null = null;
-  themeOpen = false;
+
+  currencyOptions = [
+    { code: 'EUR', label: 'Euro', symbol: '€' },
+    { code: 'USD', label: 'US Dollar', symbol: '$' },
+    { code: 'GBP', label: 'British Pound', symbol: '£' },
+  ];
 
   constructor(private fb: FormBuilder, public auth: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
@@ -193,10 +56,11 @@ export class UserSettingsComponent implements OnInit {
       this.userId = u._id;
       // Use local storage data directly to avoid 401 error
       const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
+      this.selectedTheme = ut;
       this.form.patchValue({
         nombre: u.nombre ?? u.name ?? '',
-        email: u.email ?? '',
         preferencia_tema: ut,
+        moneda_preferida: u.moneda_preferida || 'EUR',
       });
       const img = u.photo || u.avatar || u.picture || u.foto_perfil;
       this.profileImgSrc = (typeof img === 'string' && img.trim().length > 0) ? img : null;
@@ -205,13 +69,14 @@ export class UserSettingsComponent implements OnInit {
       this.profileImgSrc = null;
       this.fallbackInitials = '?';
     }
+  }
 
-    // apply theme when user changes selection in the form
-    this.form.get('preferencia_tema')?.valueChanges.subscribe((v) => {
-      if (v === 'dark' || v === 'light') {
-        try { this.theme.applyTheme(v); } catch(e) { /* noop */ }
-      }
-    });
+  onThemeChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as 'light' | 'dark';
+    this.form.patchValue({ preferencia_tema: value });
+    if (value === 'dark' || value === 'light') {
+      try { this.theme.applyTheme(value); } catch(e) { /* noop */ }
+    }
   }
 
   onProfileImgError() {

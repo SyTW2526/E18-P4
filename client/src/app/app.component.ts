@@ -10,8 +10,6 @@ import { FooterComponent } from './shared/footer/footer.component';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button'; // Para botones de login/logout
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { MatDividerModule } from '@angular/material/divider';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
@@ -29,15 +27,11 @@ import { Router } from '@angular/router';
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
-    MatMenuModule,
-    MatDividerModule,
     OverlayModule,
     MatSnackBarModule,
     FormsModule,
     HttpClientModule,
     FooterComponent,
-    // dialog component (standalone)
-    // add-friend dialog is lazy-loaded dynamically
   ],
   styles: [
     `
@@ -49,10 +43,58 @@ import { Router } from '@angular/router';
       .spacer {
         flex: 1 1 auto;
       }
+      .profile-dropdown-container {
+        position: relative;
+      }
+      .profile-menu-dropdown {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--secondary-bg);
+        border: 1px solid var(--divider-color);
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        min-width: 200px;
+        z-index: 1000;
+        margin-top: 8px;
+      }
+      .menu-header {
+        padding: 12px 16px;
+        font-weight: 600;
+        color: var(--text-main);
+        border-bottom: 1px solid var(--divider-color);
+        font-size: 0.9rem;
+        word-break: break-word;
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        color: var(--text-main) !important;
+        cursor: pointer;
+        font-size: 0.95rem;
+        text-align: left;
+      }
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .menu-item mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--text-main) !important;
+      }
+      .menu-item span {
+        color: var(--text-main) !important;
+      }
     `,
   ],
-    template: `
-      <mat-toolbar color="primary">
+  template: `
+    <mat-toolbar color="primary">
       <a [routerLink]="showAuthenticatedControls ? '/home' : '/'" style="display:flex; align-items:center; text-decoration:none">
         <img src="assets/images/logo-claro.jpg" alt="PaySplit" style="height:40px;" />
       </a>
@@ -83,39 +125,38 @@ import { Router } from '@angular/router';
         </svg>
       </button>
       <!-- Perfil dropdown -->
-      <button
-        *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
-        mat-icon-button
-        [matMenuTriggerFor]="profileMenu"
-        #profileMenuTrigger="matMenuTrigger"
-        aria-label="Perfil"
-        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
-      >
-        <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
-          <img [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
-        </ng-container>
-        <ng-template #defaultUserIcon>
-          <mat-icon>account_circle</mat-icon>
-        </ng-template>
-      </button>
-      <mat-menu #profileMenu="matMenu" class="profile-menu" yPosition="below" xPosition="before" [overlapTrigger]="false" [hasBackdrop]="true" backdropClass="cdk-overlay-transparent-backdrop">
-        <div mat-menu-item disabled style="opacity:1;cursor:default;font-weight:600;color:var(--text-main);pointer-events:none">
-          {{ authService.getUser()?.nombre || authService.getUser()?.email }}
+      <div class="profile-dropdown-container" *ngIf="authService.isLoggedIn() && showAuthenticatedControls">
+        <button
+          mat-icon-button
+          (click)="toggleProfileMenu()"
+          aria-label="Perfil"
+          style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
+        >
+          <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
+            <img [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+          </ng-container>
+          <ng-template #defaultUserIcon>
+            <mat-icon>account_circle</mat-icon>
+          </ng-template>
+        </button>
+        <div class="profile-menu-dropdown" *ngIf="profileMenuOpen">
+          <div class="menu-header">
+            {{ authService.getUser()?.nombre || authService.getUser()?.email }}
+          </div>
+          <button class="menu-item" routerLink="/friends" (click)="closeProfileMenu()">
+            <mat-icon>people</mat-icon>
+            <span>{{ lang.t('friends') }}</span>
+          </button>
+          <button class="menu-item" routerLink="/settings" (click)="closeProfileMenu()">
+            <mat-icon>settings</mat-icon>
+            <span>{{ lang.t('settings') }}</span>
+          </button>
+          <button class="menu-item" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>{{ lang.t('logout') || 'Salir' }}</span>
+          </button>
         </div>
-        <mat-divider></mat-divider>
-        <button mat-menu-item routerLink="/friends">
-          <mat-icon>people</mat-icon>
-          <span>{{ lang.t('friends') }}</span>
-        </button>
-        <button mat-menu-item routerLink="/settings">
-          <mat-icon>settings</mat-icon>
-          <span>{{ lang.t('settings') }}</span>
-        </button>
-        <button mat-menu-item (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          <span>{{ lang.t('logout') || 'Salir' }}</span>
-        </button>
-      </mat-menu>
+      </div>
     </mat-toolbar>
     <main>
       <router-outlet></router-outlet>
@@ -124,18 +165,17 @@ import { Router } from '@angular/router';
   `,
 })
 export class AppComponent implements OnInit, AfterViewInit {
-  title = 'bill-splitter-client'; // Título actualizado
+  title = 'bill-splitter-client';
   showAuthenticatedControls = true;
   friends: any[] = [];
   peticiones: any[] = [];
   requestsOpen = false;
+  profileMenuOpen = false;
   overlayPositions: any[] = [
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
     { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top' },
     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
   ];
-  @ViewChild('profileMenuTrigger') profileMenuTrigger?: MatMenuTrigger;
-  // add-friend overlay state
   addFriendOpen = false;
   addFriendUsername = '';
   addFriendLoading = false;
@@ -194,8 +234,16 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.router.navigate(['/login']);
   }
 
+  toggleProfileMenu() {
+    this.profileMenuOpen = !this.profileMenuOpen;
+  }
+
+  closeProfileMenu() {
+    this.profileMenuOpen = false;
+  }
+
   navigateToFriends() {
-    this.profileMenuTrigger?.closeMenu();
+    this.closeProfileMenu();
     setTimeout(() => this.router.navigate(['/friends']), 100);
   }
 
