@@ -68,10 +68,18 @@ import { MatListModule } from '@angular/material/list';
 
       <div *ngIf="auth.isLoggedIn()" style="margin-top:1rem">
         <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto">
-          <!-- Left sidebar with debt info -->
-          <div style="flex:0 0 auto;padding:1.5rem;background:var(--secondary-bg);border-radius:8px;height:fit-content;min-width:180px">
-            <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ totalDebt < 0 ? lang.t('youOwe') : lang.t('youWillReceive') }}</h3>
-            <div [style.color]="totalDebt < 0 ? '#d32f2f' : '#4caf50'" style="font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ Math.abs(totalDebt).toFixed(2) }} €</div>
+          <!-- Left sidebar with owed and owed-to info -->
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:1rem;height:fit-content;min-width:180px">
+            <!-- You owe card -->
+            <div style="padding:1.5rem;background:var(--secondary-bg);border-radius:8px">
+              <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
+              <div style="color:#d32f2f;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwed().toFixed(2) }} €</div>
+            </div>
+            <!-- You are owed card -->
+            <div style="padding:1.5rem;background:var(--secondary-bg);border-radius:8px">
+              <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youAreOwed') }}</h3>
+              <div style="color:#4caf50;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwedTo().toFixed(2) }} €</div>
+            </div>
           </div>
 
           <!-- Right content area with groups -->
@@ -101,7 +109,7 @@ import { MatListModule } from '@angular/material/list';
           <div *ngIf="loadingGroups" style="margin-top:1rem">{{ lang.t('loadingGroups') }}</div>
           <div *ngIf="groupsError" style="color:#b00020;margin-top:1rem">{{ groupsError }}</div>
 
-          <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
+          <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem;margin-top:1rem">
             <mat-card *ngFor="let g of sharedAccounts" class="group-card" tabindex="0" (click)="openGroup(g)" (keydown.enter)="openGroup(g)">
               <div style="display:flex; align-items:center; gap:12px; padding:4px 4px 0 4px">
                 <div style="width:56px; height:56px; border-radius:50%; overflow:hidden; background:var(--secondary-bg); display:flex; align-items:center; justify-content:center; flex-shrink:0; border:1px solid var(--divider-color)">
@@ -119,7 +127,7 @@ import { MatListModule } from '@angular/material/list';
               </div>
               <mat-card-content>
                 <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--divider-color);">
-                  <p style="margin:0;font-size:0.9rem;color:var(--text-muted);">{{ (groupBalances[g._id || g.id] || 0) < 0 ? lang.t('youOwe') : lang.t('youWillReceive') }}:</p>
+                  <p style="margin:0;font-size:0.9rem;color:var(--text-muted);">{{ (groupBalances[g._id || g.id] || 0) < 0 ? lang.t('youOwe') : lang.t('youAreOwed') }}:</p>
                   <p [style.color]="(groupBalances[g._id || g.id] || 0) < 0 ? '#d32f2f' : '#4caf50'" style="margin:0.25rem 0 0 0;font-size:1.3rem;font-weight:bold;">{{ Math.abs(groupBalances[g._id || g.id] || 0).toFixed(2) }} {{ getCurrencySymbol(g.moneda || 'EUR') }}</p>
                 </div>
               </mat-card-content>
@@ -140,6 +148,22 @@ export class HomeComponent {
   loadingGroups = false;
   groupsError: string | null = null;
   totalDebt = 0;
+
+  getAmountOwed(): number {
+    let sum = 0;
+    Object.values(this.groupBalances).forEach(balance => {
+      if (balance < 0) sum += Math.abs(balance);
+    });
+    return sum;
+  }
+
+  getAmountOwedTo(): number {
+    let sum = 0;
+    Object.values(this.groupBalances).forEach(balance => {
+      if (balance > 0) sum += balance;
+    });
+    return sum;
+  }
   signupModel = { nombre: '', email: '', password: '' };
   signinModel = { email: '', password: '' };
   showSignupPassword = false;

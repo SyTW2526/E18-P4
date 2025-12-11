@@ -65,6 +65,12 @@ import { MatInputModule } from '@angular/material/input';
                 <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('description') }}</label>
                 <textarea [(ngModel)]="account.descripcion" name="descripcion" rows="3" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; font-family:inherit; resize:vertical; box-sizing:border-box"></textarea>
               </div>
+              <div style="margin-bottom:12px">
+                <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('currency') || 'Moneda' }}</label>
+                            <select [(ngModel)]="account.moneda" name="moneda" style="width:240px; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box">
+                              <option *ngFor="let c of currencyOptions" [value]="c.code">{{ c.symbol }} - {{ c.label }}</option>
+                </select>
+              </div>
               <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px">
                 <button mat-stroked-button (click)="cancelChanges()">{{ lang.t('cancel') }}</button>
                 <button mat-flat-button color="primary" (click)="saveChanges()" [disabled]="saving">{{ saving ? lang.t('saving') + '...' : lang.t('saveChanges') }}</button>
@@ -153,6 +159,12 @@ export class GroupSettingsComponent implements OnInit {
   // Group avatar state
   groupImageSrc: string | null = null;
 
+  currencyOptions = [
+    { code: 'EUR', label: 'Euro', symbol: '€' },
+    { code: 'USD', label: 'US Dollar', symbol: '$' },
+    { code: 'GBP', label: 'British Pound', symbol: '£' },
+  ];
+
   // Add friend modal state
   showAddFriendModal = false;
   availableFriends: any[] = [];
@@ -181,6 +193,7 @@ export class GroupSettingsComponent implements OnInit {
         this.account = { ...acc };
         this.originalAccount = { ...acc };
         this.groupImageSrc = acc.foto_grupo || null;
+        if (!this.account.moneda) this.account.moneda = 'EUR';
         this.loadMembers();
       },
       error: (err: any) => {
@@ -215,6 +228,7 @@ export class GroupSettingsComponent implements OnInit {
     const payload: any = {
       nombre: this.account.nombre,
       descripcion: this.account.descripcion,
+      moneda: this.account.moneda || 'EUR',
     };
     
     if (this.account.foto_grupo) {
@@ -247,8 +261,10 @@ export class GroupSettingsComponent implements OnInit {
 
   cancelChanges() {
     this.account = { ...this.originalAccount };
+    if (!this.account.moneda) this.account.moneda = 'EUR';
     this.saveMessage = null;
     this.error = null;
+    this.groupImageSrc = this.account.foto_grupo || null;
   }
 
   goBack() {
