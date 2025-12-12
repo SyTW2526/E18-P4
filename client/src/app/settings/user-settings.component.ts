@@ -105,10 +105,15 @@ export class UserSettingsComponent implements OnInit {
             this.theme.applyTheme(t);
           } catch(e) {}
         }
-        // persist updated avatar locally
+        // persist updated avatar, theme and currency locally
         try {
           const current = this.auth.getUser() || {};
-          const updated = { ...current, foto_perfil: payload.foto_perfil, preferencia_tema: t === 'dark' ? 'oscuro' : t === 'light' ? 'claro' : current.preferencia_tema };
+          const updated = { 
+            ...current, 
+            foto_perfil: payload.foto_perfil, 
+            preferencia_tema: t === 'dark' ? 'oscuro' : t === 'light' ? 'claro' : current.preferencia_tema,
+            moneda_preferida: payload.moneda_preferida || current.moneda_preferida
+          };
           if (typeof window !== 'undefined' && window?.localStorage) {
             window.localStorage.setItem('auth_user', JSON.stringify(updated));
           }

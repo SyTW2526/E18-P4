@@ -210,13 +210,7 @@ Color del header en sí*/
 }
 
 
-/* Angular CDK overlay - restore default positioning for all overlays */
-/* Use animation to force position:absolute and override inline styles */
-@keyframes force-absolute {
-  from, to {
-    position: absolute !important;
-  }
-}
+/* Angular CDK overlay: let Angular manage positioning by default */
 
 .cdk-overlay-container {
   z-index: 1300 !important;
@@ -235,18 +229,54 @@ Color del header en sí*/
 
 .cdk-overlay-pane {
   pointer-events: auto !important;
-  position: absolute !important;
-  visibility: visible !important;
+  /* Use framework-provided positioning; avoid forcing absolute/animation */
+}
+
+/* Ensure Material Datepicker panel renders and matches dark theme */
+.cdk-overlay-pane .mat-datepicker-content,
+.cdk-overlay-pane .mat-mdc-datepicker-content {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.65), 0 6px 12px rgba(0,0,0,0.45) !important;
+  z-index: 1301 !important;
   opacity: 1 !important;
-  animation: force-absolute 0.001s infinite !important;
-  z-index: 1300 !important;
+  visibility: visible !important;
+}
+
+.mat-calendar {
+  color: var(--text-main) !important;
+}
+.mat-calendar-body-cell-content,
+.mat-mdc-calendar-body-cell-content {
+  color: var(--text-main) !important;
+}
+.mat-calendar-body-selected,
+.mat-mdc-calendar-body-selected {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+.mat-calendar-body-cell:hover .mat-calendar-body-cell-content,
+.mat-mdc-calendar-body-cell:hover .mat-mdc-calendar-body-cell-content {
+  background: var(--primary-hover) !important;
+  color: var(--text-contrast) !important;
 }
 
 /* Override the bounding box flex alignment that pushes menu to bottom */
-.cdk-overlay-connected-position-bounding-box {
-  align-items: flex-start !important;
-  justify-content: flex-start !important;
-  z-index: 1300 !important;
+/* Avoid forcing global alignment; allow strategy to place overlays */
+
+/* Do NOT force overlay positioning for Datepicker; restore defaults */
+.cdk-overlay-pane:has(.mat-datepicker-content),
+.cdk-overlay-pane:has(.mat-mdc-datepicker-content) {
+  position: fixed !important; /* let CDK manage exact placement */
+  animation: none !important;
+  transform: none !important;
+  z-index: 1301 !important;
+}
+.cdk-overlay-connected-position-bounding-box:has(.mat-datepicker-content),
+.cdk-overlay-connected-position-bounding-box:has(.mat-mdc-datepicker-content) {
+  align-items: center !important; /* center near trigger */
+  justify-content: center !important;
 }
 
 /* Hide submenu arrow from profile menu items */
@@ -503,6 +533,24 @@ Color del header por la derecha*/
 
 .group-card:focus {
   outline: 2px solid color-mix(in srgb, var(--primary-hover) 40%, transparent);
+}
+
+/* Danger button (delete) styling with subtle hover */
+.danger-btn {
+  background: #d32f2f !important;
+  color: #fff !important;
+  transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.danger-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(211,47,47,0.35);
+}
+.danger-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
 /* Round all Material card variants and clip overflow (ripples/content) */

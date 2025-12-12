@@ -1,5 +1,6 @@
 .full-width {
   width: 100%;
+  margin-bottom: 0 !important;
 }
 
 .form-group {
@@ -7,6 +8,10 @@
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.form-group:first-of-type {
+  margin-bottom: 0.8rem;
 }
 
 .form-group label {

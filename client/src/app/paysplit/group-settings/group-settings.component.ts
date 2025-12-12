@@ -113,6 +113,12 @@ import { MatInputModule } from '@angular/material/input';
               <div *ngIf="actionError" style="color:#d9534f; margin-top:8px; font-size:0.9rem">{{ actionError }}</div>
             </div>
           </mat-card>
+
+          <mat-card style="margin-top:16px; padding:0">
+            <div style="padding:24px; display:flex; justify-content:flex-start">
+              <button mat-raised-button class="danger-btn" (click)="deleteGroup()">{{ lang.t('deleteGroup') }}</button>
+            </div>
+          </mat-card>
         </div>
       </div>
 
@@ -182,6 +188,25 @@ export class GroupSettingsComponent implements OnInit {
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
     this.loadAccountDetails();
+  }
+
+  deleteGroup() {
+    if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) {
+      alert('No autenticado');
+      return;
+    }
+    this.auth.deleteSharedAccount(this.accountId, String(myId)).subscribe({
+      next: () => {
+        this.router.navigate(['/home']);
+      },
+      error: (err: any) => {
+        alert('No se pudo eliminar el grupo: ' + (err?.error?.message || err?.message || 'Error'));
+        console.error('deleteGroup error', err);
+      },
+    });
   }
 
   loadAccountDetails() {

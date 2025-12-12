@@ -153,7 +153,7 @@ import { Router } from '@angular/router';
           </button>
           <button class="menu-item" (click)="logout()">
             <mat-icon>logout</mat-icon>
-            <span>{{ lang.t('logout') || 'Salir' }}</span>
+            <span>{{ lang.t('logout') }}</span>
           </button>
         </div>
       </div>

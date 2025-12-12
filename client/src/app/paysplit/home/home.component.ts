@@ -73,12 +73,12 @@ import { MatListModule } from '@angular/material/list';
             <!-- You owe card -->
             <div style="padding:1.5rem;background:var(--secondary-bg);border-radius:8px">
               <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
-              <div style="color:#d32f2f;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwed().toFixed(2) }} €</div>
+              <div style="color:#d32f2f;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwed().toFixed(2) }} {{ getCurrencySymbol(getUserPreferredCurrency()) }}</div>
             </div>
             <!-- You are owed card -->
             <div style="padding:1.5rem;background:var(--secondary-bg);border-radius:8px">
               <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youAreOwed') }}</h3>
-              <div style="color:#4caf50;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwedTo().toFixed(2) }} €</div>
+              <div style="color:#4caf50;font-size:2.5rem;font-weight:bold;margin-bottom:0.5rem">{{ getAmountOwedTo().toFixed(2) }} {{ getCurrencySymbol(getUserPreferredCurrency()) }}</div>
             </div>
           </div>
 
@@ -163,6 +163,11 @@ export class HomeComponent {
       if (balance > 0) sum += balance;
     });
     return sum;
+  }
+
+  getUserPreferredCurrency(): string {
+    const user = this.auth.getUser();
+    return user?.moneda_preferida || 'EUR';
   }
   signupModel = { nombre: '', email: '', password: '' };
   signinModel = { email: '', password: '' };

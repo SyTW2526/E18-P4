@@ -23,6 +23,19 @@ GastosRouter.post("/", async (req: express.Request, res: express.Response) => {
     gasto.fecha = new Date(gasto.fecha);
 
     const result = await collections.gastos!.insertOne(gasto);
+
+    // Si se envían participaciones, guardarlas asociando el id del gasto insertado
+    if (result?.insertedId && Array.isArray(gasto.participacion) && gasto.participacion.length) {
+      const participaciones = gasto.participacion.map((p: any) => ({
+        id_usuario: p.id_usuario,
+        id_gasto: String(result.insertedId),
+        monto_asignado: Number(p.monto_asignado ?? p.monto ?? 0),
+      }));
+      if (participaciones.length) {
+        await collections.participaciones!.insertMany(participaciones);
+      }
+    }
+
     result
       ? res.status(201).send({ message: "Gasto agregado.", id: result.insertedId })
       : res.status(500).send({ message: "Error al agregar el gasto." });

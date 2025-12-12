@@ -49,6 +49,12 @@ import { MatDividerModule } from '@angular/material/divider';
               <mat-option value="GBP">£</mat-option>
             </mat-select>
           </mat-form-field>
+          <mat-form-field style="width:200px">
+            <mat-label>{{ lang.t('date') }}</mat-label>
+            <input matInput [matDatepicker]="picker" [(ngModel)]="fecha" name="fecha" />
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
         </div>
 
         <mat-form-field class="full-width" style="margin-top:0.5rem">
@@ -59,7 +65,8 @@ import { MatDividerModule } from '@angular/material/divider';
         </mat-form-field>
 
         <div style="margin-top:1rem">
-          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">{{ lang.t('divide') }}</mat-checkbox>
+              <button mat-raised-button type="button" (click)="recalcSplit()" class="auto-divide-btn"
+                style="background: var(--primary-color); color: var(--text-contrast)">{{ lang.t('divide') }}</button>
 
           <mat-divider style="margin:0.5rem 0"></mat-divider>
 
@@ -88,6 +95,20 @@ import { MatDividerModule } from '@angular/material/divider';
       flex: 1;
       min-width: 150px;
     }
+    .auto-divide-btn {
+      transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .auto-divide-btn:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px var(--primary-shadow);
+    }
+    .auto-divide-btn:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
   `],
 })
 export class CreateGastoComponent implements OnInit {
@@ -95,10 +116,10 @@ export class CreateGastoComponent implements OnInit {
   descripcion = '';
   monto = '';
   moneda = 'EUR';
+  fecha: any = new Date();
   pagador: string | null = null;
   miembros: any[] = [];
   participaciones: Array<{ user: any; selected: boolean; monto_asignado: number }> = [];
-  dividir = true;
   creating = false;
   editMode = false;
   gastoId: string | null = null;
@@ -129,9 +150,8 @@ export class CreateGastoComponent implements OnInit {
           this.monto = g.monto || null;
           this.moneda = g.moneda || 'EUR';
           this.pagador = g.id_pagador || this.pagador;
-          this.dividir = true;
           // date parsing
-          try { if (g.fecha) this.pagador = this.pagador || null } catch(e) {}
+          try { this.fecha = g.fecha ? new Date(g.fecha) : this.fecha; } catch(e) {}
           // wait for members to be ready, then load participaciones for this gasto
           if (this.membersReady) {
             this.membersReady.then(() => {
@@ -239,8 +259,7 @@ export class CreateGastoComponent implements OnInit {
   }
 
   onToggleParticipant(index: number) {
-    // if dividir mode is on, recalc split across selected
-    if (this.dividir) this.recalcSplit();
+    // Manual toggling does not auto-recalculate; use the button to re-divide.
   }
 
   onAmountChange(index: number) {
@@ -248,7 +267,6 @@ export class CreateGastoComponent implements OnInit {
   }
 
   recalcSplit() {
-    if (!this.dividir) return;
     const total = Number(this.monto) || 0;
     const selected = this.participaciones.filter((p) => p.selected);
     const n = selected.length || 1;
@@ -278,7 +296,7 @@ export class CreateGastoComponent implements OnInit {
       descripcion: this.descripcion,
       monto: Number(this.monto),
       id_pagador: String(this.pagador),
-      fecha: new Date(),
+      fecha: this.fecha ? new Date(this.fecha) : new Date(),
       categoria: '',
     };
 
