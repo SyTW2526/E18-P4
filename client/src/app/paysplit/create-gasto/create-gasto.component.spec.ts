@@ -6,6 +6,7 @@ import { CreateGastoComponent } from './create-gasto.component';
 import { AuthService } from '../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
+import { NotificationService } from '../../core/notification.service';
 
 class MockAuthService {
   getUser() { return { _id: 'u1', nombre: 'Me' }; }
@@ -14,6 +15,10 @@ class MockAuthService {
   createGasto(payload: any) { return of({ id: 'g1' }); }
   createParticipacion(body: any) { return of({}); }
   updateGasto(id: string, payload: any) { return of({}); }
+}
+
+class MockNotificationService {
+  createNotification() { return of({}); }
 }
 
 describe('CreateGastoComponent', () => {
@@ -32,6 +37,7 @@ describe('CreateGastoComponent', () => {
       imports: [CreateGastoComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
+        { provide: NotificationService, useClass: MockNotificationService },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (k: string) => (k === 'id' ? 'g1' : null) } } } },
       ],
     }).compileComponents();

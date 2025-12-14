@@ -4,6 +4,22 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { connectToDatabase, collections, closeDatabase } from '../database';
 import { userRouter } from '../routes/users.route';
 
+// Mock Google OAuth client to avoid external calls during tests
+jest.mock('google-auth-library', () => {
+  const verifyIdToken = jest.fn().mockResolvedValue({
+    getPayload: () => ({
+      sub: 'google123',
+      email: 'google@example.com',
+      name: 'Google User',
+      picture: 'pic-url'
+    })
+  });
+
+  return {
+    OAuth2Client: jest.fn().mockImplementation(() => ({ verifyIdToken }))
+  };
+});
+
 let mongod: MongoMemoryServer | null = null;
 let app: express.Express;
 
@@ -46,5 +62,30 @@ describe('users routes', () => {
     const res = await request(app).post('/users/signup').send(payload).expect(201);
     expect(res.body).toHaveProperty('user');
     expect(res.body).toHaveProperty('token');
+  });
+
+  describe('POST /users/signin-google', () => {
+    test('returns 400 when token is missing', async () => {
+      const res = await request(app).post('/users/signin-google').send({}).expect(400);
+      expect(res.text).toMatch(/token/i);
+    });
+
+    test('creates or logs in user with Google payload', async () => {
+      process.env.GOOGLE_CLIENT_ID = 'test-client-id';
+      process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
+
+      const res = await request(app)
+        .post('/users/signin-google')
+        .send({ token: 'fake-valid-token' })
+        .expect(200);
+
+      expect(res.body).toHaveProperty('user.email', 'google@example.com');
+      expect(res.body).toHaveProperty('user.google_id', 'google123');
+      expect(res.body).toHaveProperty('token');
+
+      const saved = await collections.users!.findOne({ email: 'google@example.com' });
+      expect(saved).toBeTruthy();
+      expect((saved as any).google_id).toBe('google123');
+    });
   });
 });
