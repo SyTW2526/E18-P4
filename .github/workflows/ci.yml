@@ -6,14 +6,13 @@ on:
 
 jobs:
   tests:
-    name: Run tests (server + client)
+    name: Run Unit/Integration Tests
     runs-on: ubuntu-latest
     services:
       mongodb:
         image: mongo:6.0
         ports:
           - 27017:27017
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,84 +21,38 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm' # Shortcut for caching ~/.npm based on package-lock.json
 
-      - name: Cache e2e dependencies
-        uses: actions/cache@v4
-        with:
-          path: e2e/node_modules
-          key: e2e-node-modules-${{ runner.os }}-${{ hashFiles('e2e/package-lock.json') }}
-
-      
-
-      - name: Export Puppeteer chrome path (if available)
-        shell: bash
-        run: |
-          if [ -d client ]; then
-            CHROME_BIN=$(find client/node_modules/puppeteer -type f -name chrome -print -quit 2>/dev/null || true)
-            if [ -n "$CHROME_BIN" ]; then
-              echo "CHROME_BIN=$CHROME_BIN" >> $GITHUB_ENV
-            fi
-          fi
-
-      - name: Set DB env vars
-        env:
-          ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
-        run: |
-          if [ -n "$ATLAS_SECRET" ]; then
-            echo "MONGO_TEST_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-            echo "ATLAS_URI=$ATLAS_SECRET" >> $GITHUB_ENV
-          else
-            echo "MONGO_TEST_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-            echo "ATLAS_URI=mongodb://localhost:27017" >> $GITHUB_ENV
-          fi
-        shell: bash
-
-      - name: Cache server dependencies
-        uses: actions/cache@v4
-        with:
-          path: server/node_modules
-          key: server-node-modules-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
-
-      - name: Cache client dependencies
-        uses: actions/cache@v4
-        with:
-          path: client/node_modules
-          key: client-node-modules-${{ runner.os }}-${{ hashFiles('client/package-lock.json') }}
-
-      - name: Install client & server dependencies
+      - name: Install dependencies
         run: |
           cd server && npm ci
           cd ../client && npm ci
-      
-
-      - name: Show DB in use
-        run: echo "Using MONGO_TEST_URI=${MONGO_TEST_URI}"
 
       - name: Run server tests
         working-directory: server
-        run: |
-          npm test
+        env:
+          MONGO_TEST_URI: mongodb://localhost:27017
+          ATLAS_URI: ${{ secrets.ATLAS_URI || 'mongodb://localhost:27017' }}
+        run: npm test
 
       - name: Run client tests (headless)
         working-directory: client
-        run: |
-          npm run test:ci
-
-      - name: Upload client coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: client-coverage
-          path: client/coverage || client/coverage/client
+        run: npm run test:ci
 
   e2e:
-    name: E2E tests (Selenium)
-    runs-on: ubuntu-latest
-    env:
-      E2E_BROWSER: chrome   # Chrome recomendado para CI
-      E2E_HEADLESS: 'true'  # force headless in CI
-      ATLAS_SECRET: ${{ secrets.ATLAS_URI }}
+    name: E2E Tests (Selenium)
     needs: tests
+    runs-on: ubuntu-latest
+    # Define Mongo here to avoid manual 'docker run' commands
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+    env:
+      E2E_BROWSER: chrome
+      E2E_HEADLESS: 'true'
+      ATLAS_URI: ${{ secrets.ATLAS_URI || 'mongodb://localhost:27017' }}
 
     steps:
       - name: Checkout repository
@@ -109,185 +62,59 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: Install server, client and e2e deps
+      - name: Install All Dependencies
+        # Installing everything at root or individually. 
+        # Assuming typical structure: server, client, e2e folders
         run: |
-          cd server && npm ci
-          cd ../client && npm ci
-          cd ../e2e && npm ci
+          npm ci --prefix server
+          npm ci --prefix client
+          npm ci --prefix e2e
 
-      - name: Add e2e node bin to PATH
-        shell: bash
-        run: |
-          echo "PATH=./e2e/node_modules/.bin:$PATH" >> $GITHUB_ENV
-
-      - name: Install Chrome
+      # Standard Action to ensure Chrome is present. 
+      # We DON'T need to manually install ChromeDriver if using Selenium 4.6+
+      - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
 
-      - name: Setup ChromeDriver (auto-match version, robust)
-        shell: bash
+      - name: Start Server (Background)
         run: |
-          set -euo pipefail
-          CHROME_BIN=$(which google-chrome || which google-chrome-stable || true)
-          echo "Using chrome: $CHROME_BIN"
-          if [ -z "$CHROME_BIN" ]; then
-            echo "No chrome binary found in PATH; aborting chromedriver install." >&2
-            exit 1
-          fi
-          CHROME_VER=$($CHROME_BIN --version | awk '{print $NF}') || true
-          echo "Version: $CHROME_VER"
+          cd server
+          # Start server in background using '&'
+          # Ensure your start script listens on port 5200
+          npm start &
+          
+          # Wait for port 5200 to be ready
+          npx wait-on tcp:5200 --timeout 60000
 
-          MAJOR=$(echo "$CHROME_VER" | cut -d. -f1)
-          echo "Chrome major: $MAJOR"
-
-          # Try the classic LATEST_RELEASE_<MAJOR> lookup first
-          CD_VER=""
-          echo "Trying chromedriver.storage.googleapis.com LATEST_RELEASE_$MAJOR"
-          if CD_VER=$(curl -fsS "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$MAJOR" 2>/dev/null); then
-            echo "Found chromedriver release: $CD_VER"
-          else
-            echo "No LATEST_RELEASE for major $MAJOR or network error. Trying Chrome For Testing metadata..."
-            # Try Chrome For Testing metadata to map milestone -> version
-            # Use python to parse JSON (available on runners)
-            if VJSON=$(curl -fsS https://googlechromelabs.github.io/chrome-for-testing/latest-versions-per-milestone.json 2>/dev/null); then
-              CD_VER=$(printf '%s' "$VJSON" | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('$MAJOR',{}).get('version',''))" ) || true
-              if [ -n "$CD_VER" ]; then
-                echo "Mapped via chrome-for-testing: $CD_VER"
-              else
-                echo "chrome-for-testing did not contain milestone $MAJOR or mapping not found. Falling back to latest chromedriver." 
-              fi
-            else
-              echo "Failed to fetch chrome-for-testing metadata; will fall back to latest chromedriver." 
-            fi
-          fi
-
-          if [ -z "$CD_VER" ]; then
-            echo "Fetching latest chromedriver release as fallback"
-            CD_VER=$(curl -fsSL https://chromedriver.storage.googleapis.com/LATEST_RELEASE)
-            echo "Fallback chromedriver version: $CD_VER"
-          fi
-
-          ARCH=linux64
-          URL="https://chromedriver.storage.googleapis.com/${CD_VER}/chromedriver_${ARCH}.zip"
-          echo "Downloading chromedriver from: $URL"
-          # retry download a few times in case of transient issues
-          if ! curl --retry 3 --retry-delay 2 -fSL -o /tmp/chromedriver.zip "$URL"; then
-            echo "Failed to download chromedriver from $URL" >&2
-            echo "Last attempted chrome/chromedriver mapping: CHROME_VER=$CHROME_VER MAJOR=$MAJOR CD_VER=$CD_VER" >&2
-            exit 22
-          fi
-          unzip -o /tmp/chromedriver.zip -d /tmp
-          sudo mv /tmp/chromedriver /usr/local/bin/chromedriver
-          sudo chmod +x /usr/local/bin/chromedriver
-
-          chromedriver --version || true
-
-          # verify major version matches installed Chrome; if mismatch, try using
-          # the chromedriver binary bundled by the e2e npm package as a fallback
-          CD_VER_INSTALLED=$(chromedriver --version 2>/dev/null | awk '{print $2}' || true)
-          CD_MAJOR=$(echo "$CD_VER_INSTALLED" | cut -d. -f1)
-          echo "Installed chromedriver major: $CD_MAJOR (full: $CD_VER_INSTALLED)"
-          if [ -n "$CD_MAJOR" ] && [ "$CD_MAJOR" != "$MAJOR" ]; then
-            echo "Chromedriver major ($CD_MAJOR) does not match Chrome major ($MAJOR). Attempting npm chromedriver fallback..."
-            # Try multiple candidate locations used by the chromedriver npm package
-            CANDIDATES=(
-              "$(pwd)/e2e/node_modules/.bin/chromedriver"
-              "$(pwd)/e2e/node_modules/chromedriver/lib/chromedriver/chromedriver"
-              "$(pwd)/e2e/node_modules/chromedriver/bin/chromedriver"
-            )
-            FOUND=""
-            for c in "${CANDIDATES[@]}"; do
-              if [ -f "$c" ]; then
-                FOUND="$c"
-                break
-              fi
-            done
-            if [ -n "$FOUND" ]; then
-              echo "Found npm chromedriver at $FOUND -- copying to /usr/local/bin/chromedriver"
-              sudo cp "$FOUND" /usr/local/bin/chromedriver
-              sudo chmod +x /usr/local/bin/chromedriver
-              echo "Replaced chromedriver with npm package binary"
-              chromedriver --version || true
-            else
-              echo "No npm chromedriver binary found in candidates; leaving installed chromedriver in place" >&2
-              echo "Candidates checked:"; printf '%s\n' "${CANDIDATES[@]}"
-            fi
-          else
-            echo "Chromedriver major matches Chrome major (or could not determine versions)."
-          fi
-
-      - name: Start server (Docker)
-        run: |
-          if [ -n "$ATLAS_SECRET" ]; then
-            echo "Using Mongo Atlas"
-            docker build -t paysplit-server:ci server
-            docker run -d --rm -p 5200:5200 -e ATLAS_URI="$ATLAS_SECRET" --name paysplit-server paysplit-server:ci
-          else
-            echo "Using local Mongo"
-            docker network create paysplit-ci-net || true
-            docker run -d --rm --network paysplit-ci-net --name ci-mongo -e MONGO_INITDB_DATABASE=test mongo:6.0
-
-            docker build -t paysplit-server:ci server
-            docker run -d --rm --network paysplit-ci-net -p 5200:5200 -e ATLAS_URI="mongodb://ci-mongo:27017" --name paysplit-server paysplit-server:ci
-          fi
-
-          e2e/node_modules/.bin/wait-on --timeout 300000 tcp:localhost:5200
-
-      - name: Build + Serve client
+      - name: Build & Serve Client
         run: |
           cd client
-          npm run build -- --configuration production --watch=false
+          npm run build -- --configuration production
+          
+          # Serve dist folder on port 4200
           DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
           npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
-          ../e2e/node_modules/.bin/wait-on --timeout 300000 http://127.0.0.1:4200/
-          # give the browser a small extra moment to fetch/initialize scripts
-          sleep 3
+          
+          # Wait for client to be ready
+          npx wait-on http://127.0.0.1:4200/ --timeout 60000
 
-      - name: Debug chrome
+      - name: Run E2E Tests
+        working-directory: e2e
         run: |
-          echo "Chrome: $(which google-chrome || which google-chrome-stable)"
-          google-chrome --version || google-chrome-stable --version
-          which chromedriver
-          chromedriver --version
+          mkdir -p test-output
+          # Modern Selenium will automatically find the Chrome binary from the step above
+          # and download the matching driver into cache.
+          npm run test:local
 
-      - name: Run E2E tests
-        shell: bash
-        run: |
-          set -o pipefail
-          cd e2e
-          mkdir -p test-output logs || true
-          # Run tests and save output; on failure collect diagnostics into test-output
-          PATH=./node_modules/.bin:$PATH npm run test:local -- --timeout 300000 2>&1 | tee test-output/mocha-output.txt || {
-            echo "E2E tests failed — collecting basic diagnostics" | tee -a test-output/diagnostics.txt
-            echo "--- chrome / chromedriver versions ---" | tee -a test-output/diagnostics.txt
-            (google-chrome --version || google-chrome-stable --version) 2>&1 | tee -a test-output/diagnostics.txt || true
-            which chromedriver 2>&1 | tee -a test-output/diagnostics.txt || true
-            chromedriver --version 2>&1 | tee -a test-output/diagnostics.txt || true
-            echo "--- process list (filtered) ---" | tee -a test-output/diagnostics.txt
-            ps aux | egrep 'chrome|chromedriver|Xvfb' 2>&1 | tee -a test-output/diagnostics.txt || true
-            echo "--- listing /tmp ---" | tee -a test-output/diagnostics.txt
-            ls -la /tmp 2>&1 | tee -a test-output/diagnostics.txt || true
-            # copy chromedriver zip if present for inspection
-            if [ -f /tmp/chromedriver.zip ]; then
-              cp /tmp/chromedriver.zip test-output/ || true
-            fi
-            # list the chromedriver npm installation (if present)
-            echo "Listing e2e/node_modules/chromedriver/" | tee -a test-output/diagnostics.txt || true
-            ls -la node_modules/chromedriver 2>&1 | tee -a test-output/diagnostics.txt || true
-            # also copy any existing e2e logs
-            if [ -d logs ]; then
-              cp -r logs test-output/ || true
-            fi
-            exit 1
-          }
-
-      - name: Upload e2e logs on failure
+      - name: Upload E2E Artifacts (Logs/Screenshots)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-logs
+          name: e2e-failure-logs
           path: |
-            e2e/test-output
-            e2e/logs
-            e2e/*.log
-            e2e/results
+             e2e/test-output
+             e2e/*.log
+             e2e/screenshots # If your tests take screenshots on failure
