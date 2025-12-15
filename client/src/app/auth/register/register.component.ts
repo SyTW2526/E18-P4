@@ -1,4 +1,5 @@
-import { Component, OnInit, AfterViewInit, NgZone } from '@angular/core';
+import { Component, OnInit, AfterViewInit, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
@@ -38,7 +39,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   error: string | null = null;
   googleReady = false;
 
-  constructor(private fb: FormBuilder, private router: Router, private auth: AuthService, public lang: LanguageService, private ngZone: NgZone) {}
+  constructor(
+    private fb: FormBuilder,
+    private router: Router,
+    private auth: AuthService,
+    public lang: LanguageService,
+    private ngZone: NgZone,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   ngOnInit() {
     this.initGoogleSignIn();
@@ -51,6 +59,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   private initGoogleSignIn() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return; // Skip Google Sign-In initialization on server
+    }
+
     if ((window as any).google && (window as any).google.accounts) {
       (window as any).google.accounts.id.initialize({
         client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
@@ -81,6 +93,10 @@ export class RegisterComponent implements OnInit, AfterViewInit {
   }
 
   private renderGoogleButton() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return; // Skip rendering on server
+    }
+
     const buttonDiv = document.getElementById('google-signin-button-register');
     if (buttonDiv && (window as any).google && (window as any).google.accounts) {
       try {

@@ -52,6 +52,15 @@ import { MatInputModule } from '@angular/material/input';
                 <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('description') }}</label>
                 <textarea [(ngModel)]="account.descripcion" name="descripcion" rows="3" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; font-family:inherit; resize:vertical; box-sizing:border-box"></textarea>
               </div>
+              <div style="margin-bottom:12px">
+                <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('groupId') || 'ID del grupo' }}</label>
+                <div style="display:flex; gap:8px; align-items:center">
+                  <input type="text" [value]="account._id || account.id" readonly style="flex:1; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-muted); font-size:0.95rem; box-sizing:border-box; cursor:text" />
+                  <button mat-icon-button (click)="copyGroupId()" [title]="lang.t('copy') || 'Copiar'">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </div>
+              </div>
               <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px">
                 <button mat-stroked-button (click)="cancelChanges()">{{ lang.t('cancel') }}</button>
                 <button mat-flat-button color="primary" (click)="saveChanges()" [disabled]="saving">{{ saving ? lang.t('saving') + '...' : lang.t('saveChanges') }}</button>
@@ -375,7 +384,20 @@ export class GroupSettingsComponent implements OnInit {
     this.actionLoading = String(targetId) + ':remove';
     this.auth.removeUserFromGroup(this.accountId, String(myId), String(targetId)).subscribe({
       next: () => { this.actionLoading = null; this.loadMembers(); },
-      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo expulsar al miembro'; }
+      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo eliminar el miembro'; }
+    });
+  }
+
+  copyGroupId() {
+    const groupId = this.account?._id || this.account?.id;
+    if (!groupId) return;
+    
+    navigator.clipboard.writeText(groupId).then(() => {
+      this.saveMessage = this.lang.t('copied') || 'ID copiado';
+      setTimeout(() => { this.saveMessage = null; }, 2000);
+    }).catch(() => {
+      this.error = 'No se pudo copiar el ID';
+      setTimeout(() => { this.error = null; }, 2000);
     });
   }
 }

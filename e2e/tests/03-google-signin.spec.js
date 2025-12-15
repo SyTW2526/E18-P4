@@ -10,26 +10,30 @@ async function waitForAppReady(driver, timeout = 30000) {
   }, timeout);
 }
 
-describe('E2E - Basic smoke tests', function () {
+describe('E2E - Google Sign-In button presence', function () {
   this.timeout(60000);
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
     driver = await createDriver();
-    await driver.get(BASE + '/');
-    await waitForAppReady(driver, 15000);
   });
 
   after(async function () {
     if (driver) await driver.quit();
   });
 
-  it('should load the home page and render app root', async function () {
-    // verify app-root is present and visible
-    const el = await driver.findElement(By.css('app-root, body'));
-    const displayed = await el.isDisplayed();
-    expect(displayed).to.be.true;
+  it('has Google Sign-In container on login', async function () {
+    await driver.get(BASE + '/login');
+    await waitForAppReady(driver, 20000);
+    const btnDiv = await driver.findElement(By.css('#google-signin-button'));
+    expect(btnDiv).to.exist;
   });
 
+  it('has Google Sign-In container on register', async function () {
+    await driver.get(BASE + '/register');
+    await waitForAppReady(driver, 20000);
+    const btnDiv = await driver.findElement(By.css('#google-signin-button-register'));
+    expect(btnDiv).to.exist;
+  });
 });
