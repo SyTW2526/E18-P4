@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, PLATFORM_ID, Inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { CommonModule } from '@angular/common';
@@ -16,6 +16,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { Router } from '@angular/router';
+import { ClickOutsideDirective } from './shared/click-outside.directive';
 
 @Component({
   selector: 'app-root',
@@ -32,6 +33,7 @@ import { Router } from '@angular/router';
     FormsModule,
     HttpClientModule,
     FooterComponent,
+    ClickOutsideDirective,
   ],
   styles: [
     `
@@ -125,7 +127,7 @@ import { Router } from '@angular/router';
         </svg>
       </button>
       <!-- Perfil dropdown -->
-      <div class="profile-dropdown-container" *ngIf="authService.isLoggedIn() && showAuthenticatedControls">
+      <div class="profile-dropdown-container" *ngIf="authService.isLoggedIn() && showAuthenticatedControls" [appClickOutsideEnabled]="profileMenuOpen" (appClickOutside)="closeProfileMenu()">
         <button
           mat-icon-button
           (click)="toggleProfileMenu()"
@@ -189,6 +191,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     private snackBar: MatSnackBar,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
+
+  
 
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'

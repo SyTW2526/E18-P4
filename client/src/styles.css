@@ -1,3 +1,49 @@
+/* Hide up/down arrows (spinners) on all number input fields */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+/* Make mat-form-fields look exactly like the custom dropdowns (currency/paid by) */
+.mat-mdc-form-field-appearance-fill .mat-mdc-text-field-wrapper {
+  border-radius: 4px !important;
+  background: var(--secondary-bg) !important;
+  border: 1px solid var(--divider-color) !important;
+  box-shadow: none !important;
+  min-height: 48px;
+  padding: 0 !important;
+  color: var(--text-main) !important;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-flex {
+  padding: 0 16px !important;
+  align-items: center;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-infix {
+  padding: 12px 0 8px 0 !important;
+  background: transparent !important;
+  font-size: 1rem !important;
+}
+
+.mat-mdc-form-field-appearance-fill.mat-mdc-form-field {
+  background: none !important;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-subscript-wrapper {
+  background: transparent !important;
+}
+/* Force hide Angular Material underline globally */
+.mdc-line-ripple {
+  display: none !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
 :root {
   /* Paleta extraída de tu imagen de referencia */
   --bg-color: #0a0a0a;       /* Fondo oscuro casi negro */

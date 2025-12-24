@@ -1,0 +1,28 @@
+/* Ensure number fields align left and remove extra width/margin */
+.custom-dropdown-container {
+	position: relative;
+	width: auto;
+	margin: 0;
+	max-width: 140px;
+}
+/* Fix number input alignment and sizing */
+.custom-dropdown-trigger[type="number"] {
+	display: block;
+	width: 100%;
+	max-width: 140px;
+	box-sizing: border-box;
+}
+
+/* Remove display:flex from all .custom-dropdown-trigger inputs */
+.custom-dropdown-trigger {
+	display: block;
+}
+
+/* Ensure the row aligns items to the left */
+.gasto-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0;
+	justify-content: flex-start;
+}
