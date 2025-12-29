@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
 /* Hide up/down arrows (spinners) on all number input fields */
 input[type=number]::-webkit-inner-spin-button,
 input[type=number]::-webkit-outer-spin-button {
@@ -6,6 +8,10 @@ input[type=number]::-webkit-outer-spin-button {
 }
 input[type=number] {
   -moz-appearance: textfield;
+}
+/* Global font application */
+html, body {
+  font-family: var(--font-family);
 }
 /* Make mat-form-fields look exactly like the custom dropdowns (currency/paid by) */
 .mat-mdc-form-field-appearance-fill .mat-mdc-text-field-wrapper {
@@ -70,7 +76,7 @@ input[type=number] {
   --panel-border-top: rgba(255, 255, 255, 0.05);
   
   /* Tipografía */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
 :root[data-theme="light"] {
@@ -239,11 +245,13 @@ button[mat-flat-button][color="primary"]:active {
   box-shadow: none !important;
 }
 
-/* Force Material toolbar to use the app primary color 
-Color del header en sí*/
+/* Force Material toolbar to customize */
 .mat-toolbar.mat-primary {
-  background-color: var(--primary-color);
-  color: var(--secondary-bg);
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  min-height: 72px !important;
+  height: 72px !important;
+  padding: 0.8rem 0 !important;
 }
 
 /* Make the app header stick to the top of the viewport */
@@ -560,7 +568,7 @@ Color del header por la derecha*/
 .mat-toolbar.mat-primary .mat-button,
 .mat-toolbar.mat-primary button,
 .mat-toolbar.mat-primary .mat-icon {
-  color: #000 !important;
+  color: var(--text-main) !important;
 }
 
 /* Make the whole card show an accent highlight on hover/focus */

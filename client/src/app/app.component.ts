@@ -45,9 +45,116 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
       .spacer {
         flex: 1 1 auto;
       }
+      
+      /* Navbar styles */
+      .navbar-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        padding: 0 2rem;
+      }
+
+      .navbar-logo {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      .navbar-logo img {
+        height: 40px;
+      }
+
+      .navbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .nav-button {
+        padding: 0.6rem 1.2rem;
+        border: 2px solid var(--primary-color);
+        background-color: transparent;
+        color: var(--primary-color);
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-button:hover {
+        background-color: var(--primary-color);
+        color: var(--text-contrast);
+      }
+
+      .nav-button-filled {
+        background-color: var(--primary-color);
+        color: var(--text-contrast);
+      }
+
+      .nav-button-filled:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+      }
+
+      .lang-button {
+        background: none;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        border-radius: 20px;
+        padding: 0.6rem 1.2rem;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+      }
+
+      .lang-button:hover {
+        background-color: var(--primary-color);
+        color: var(--text-contrast);
+      }
+
+      .authenticated-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .icon-button {
+        background: none;
+        border: none;
+        color: var(--text-main);
+        cursor: pointer;
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .icon-button:hover {
+        color: var(--primary-color);
+      }
+
       .profile-dropdown-container {
         position: relative;
       }
+
+      .profile-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        cursor: pointer;
+        border: 2px solid var(--primary-color);
+      }
+
       .profile-menu-dropdown {
         position: absolute;
         top: 100%;
@@ -60,6 +167,7 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
         z-index: 1000;
         margin-top: 8px;
       }
+
       .menu-header {
         padding: 12px 16px;
         font-weight: 600;
@@ -68,6 +176,7 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
         font-size: 0.9rem;
         word-break: break-word;
       }
+
       .menu-item {
         display: flex;
         align-items: center;
@@ -81,15 +190,18 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
         font-size: 0.95rem;
         text-align: left;
       }
+
       .menu-item:hover {
         background: rgba(255, 255, 255, 0.05);
       }
+
       .menu-item mat-icon {
         font-size: 20px;
         width: 20px;
         height: 20px;
         color: var(--text-main) !important;
       }
+
       .menu-item span {
         color: var(--text-main) !important;
       }
@@ -97,66 +209,89 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
   ],
   template: `
     <mat-toolbar color="primary">
-      <a [routerLink]="showAuthenticatedControls ? '/home' : '/'" style="display:flex; align-items:center; text-decoration:none">
-        <img src="assets/images/logo-claro.jpg" alt="PaySplit" style="height:40px;" />
-      </a>
-      <span class="spacer"></span>
-      <button mat-icon-button (click)="toggleLang()" aria-label="Toggle language" style="font-size:24px">{{ lang.current === 'es' ? '🇪🇸' : '🇬🇧' }}</button>
-      <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/login">{{ lang.t('login') }}</button>
-      <button *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls" mat-button routerLink="/register">{{ lang.t('register') }}</button>
-      <!-- Notificaciones -->
-      <button
-        *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
-        mat-icon-button
-        routerLink="/notifications"
-        aria-label="Notificaciones"
-        style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          style="width:28px;height:28px;display:block"
-        >
-          <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 01-3.46 0" />
-        </svg>
-      </button>
-      <!-- Perfil dropdown -->
-      <div class="profile-dropdown-container" *ngIf="authService.isLoggedIn() && showAuthenticatedControls" [appClickOutsideEnabled]="profileMenuOpen" (appClickOutside)="closeProfileMenu()">
-        <button
-          mat-icon-button
-          (click)="toggleProfileMenu()"
-          aria-label="Perfil"
-          style="width:48px;height:48px;display:flex;align-items:center;justify-content:center"
-        >
-          <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
-            <img [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" alt="avatar" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+      <div class="navbar-container">
+        <!-- Logo -->
+        <a [routerLink]="showAuthenticatedControls ? '/home' : '/'" class="navbar-logo">
+          <img [src]="currentLogo" alt="PlaySplit" />
+        </a>
+
+        <!-- Acciones derecha -->
+        <div class="navbar-actions">
+          <!-- Botones de autenticación (sin sesión) -->
+          <ng-container *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls">
+            <a routerLink="/login" class="nav-button">{{ lang.t('login') }}</a>
+            <a routerLink="/register" class="nav-button nav-button-filled">{{ lang.t('register') }}</a>
+            <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
+              {{ lang.current === 'es' ? 'ES' : 'EN' }}
+            </button>
           </ng-container>
-          <ng-template #defaultUserIcon>
-            <mat-icon>account_circle</mat-icon>
-          </ng-template>
-        </button>
-        <div class="profile-menu-dropdown" *ngIf="profileMenuOpen">
-          <div class="menu-header">
-            {{ authService.getUser()?.nombre || authService.getUser()?.email }}
-          </div>
-          <button class="menu-item" routerLink="/friends" (click)="closeProfileMenu()">
-            <mat-icon>people</mat-icon>
-            <span>{{ lang.t('friends') }}</span>
-          </button>
-          <button class="menu-item" routerLink="/settings" (click)="closeProfileMenu()">
-            <mat-icon>settings</mat-icon>
-            <span>{{ lang.t('settings') }}</span>
-          </button>
-          <button class="menu-item" (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            <span>{{ lang.t('logout') }}</span>
-          </button>
+
+          <!-- Acciones autenticadas -->
+          <ng-container *ngIf="authService.isLoggedIn() && showAuthenticatedControls">
+            <!-- Idioma -->
+            <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
+              {{ lang.current === 'es' ? 'ES' : 'EN' }}
+            </button>
+
+            <!-- Notificaciones -->
+            <button
+              class="icon-button"
+              routerLink="/notifications"
+              aria-label="Notificaciones"
+              title="Notificaciones"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width:24px;height:24px"
+              >
+                <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 01-3.46 0" />
+              </svg>
+            </button>
+
+            <!-- Perfil dropdown -->
+            <div class="profile-dropdown-container" [appClickOutsideEnabled]="profileMenuOpen" (appClickOutside)="closeProfileMenu()">
+              <button
+                class="icon-button"
+                (click)="toggleProfileMenu()"
+                aria-label="Perfil"
+                title="Perfil"
+              >
+                <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
+                  <img 
+                    [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" 
+                    alt="avatar" 
+                    class="profile-avatar" 
+                  />
+                </ng-container>
+                <ng-template #defaultUserIcon>
+                  <mat-icon>account_circle</mat-icon>
+                </ng-template>
+              </button>
+              <div class="profile-menu-dropdown" *ngIf="profileMenuOpen">
+                <div class="menu-header">
+                  {{ authService.getUser()?.nombre || authService.getUser()?.email }}
+                </div>
+                <button class="menu-item" routerLink="/friends" (click)="closeProfileMenu()">
+                  <mat-icon>people</mat-icon>
+                  <span>{{ lang.t('friends') }}</span>
+                </button>
+                <button class="menu-item" routerLink="/settings" (click)="closeProfileMenu()">
+                  <mat-icon>settings</mat-icon>
+                  <span>{{ lang.t('settings') }}</span>
+                </button>
+                <button class="menu-item" (click)="logout()">
+                  <mat-icon>logout</mat-icon>
+                  <span>{{ lang.t('logout') }}</span>
+                </button>
+              </div>
+            </div>
+          </ng-container>
         </div>
       </div>
     </mat-toolbar>
@@ -225,7 +360,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.startOverlayGuard();
   }
 
-  
+  get currentLogo(): string {
+    return 'assets/images/logo_paysplit_def.svg';
+  }
 
   private updateHeaderVisibility() {
     const url = this.router.url || '/';
