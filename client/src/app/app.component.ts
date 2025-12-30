@@ -64,6 +64,12 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
 
       .navbar-logo img {
         height: 40px;
+        transition: transform 0.3s ease, filter 0.3s ease;
+      }
+
+      .navbar-logo:hover img {
+        transform: scale(1.05);
+        filter: drop-shadow(0 4px 12px rgba(122, 229, 130, 0.5));
       }
 
       .navbar-actions {
@@ -99,8 +105,9 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
       }
 
       .nav-button-filled:hover {
-        background-color: var(--primary-hover);
-        border-color: var(--primary-hover);
+        background-color: #000;
+        border-color: #000;
+        color: var(--primary-color);
       }
 
       .lang-button {
@@ -108,16 +115,27 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
         border: 2px solid var(--primary-color);
         color: var(--primary-color);
         border-radius: 20px;
-        padding: 0.6rem 1.2rem;
+        padding: 0.4rem 0.9rem;
         cursor: pointer;
         font-weight: 600;
         font-size: 0.9rem;
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
 
       .lang-button:hover {
         background-color: var(--primary-color);
         color: var(--text-contrast);
+      }
+
+      .lang-flag {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        object-fit: cover;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
       }
 
       .authenticated-actions {
@@ -222,7 +240,12 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
             <a routerLink="/login" class="nav-button">{{ lang.t('login') }}</a>
             <a routerLink="/register" class="nav-button nav-button-filled">{{ lang.t('register') }}</a>
             <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
-              {{ lang.current === 'es' ? 'ES' : 'EN' }}
+              <img
+                class="lang-flag"
+                [src]="lang.current === 'es' ? 'https://hatscripts.github.io/circle-flags/flags/es.svg' : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'"
+                [alt]="lang.current === 'es' ? 'Español' : 'English'"
+              />
+              <span>{{ lang.current === 'es' ? 'ES' : 'EN' }}</span>
             </button>
           </ng-container>
 
@@ -230,7 +253,12 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
           <ng-container *ngIf="authService.isLoggedIn() && showAuthenticatedControls">
             <!-- Idioma -->
             <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
-              {{ lang.current === 'es' ? 'ES' : 'EN' }}
+              <img
+                class="lang-flag"
+                [src]="lang.current === 'es' ? 'https://hatscripts.github.io/circle-flags/flags/es.svg' : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'"
+                [alt]="lang.current === 'es' ? 'Español' : 'English'"
+              />
+              <span>{{ lang.current === 'es' ? 'ES' : 'EN' }}</span>
             </button>
 
             <!-- Notificaciones -->
