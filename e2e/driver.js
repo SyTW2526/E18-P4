@@ -1,32 +1,54 @@
 const { Builder } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
+const firefox = require('selenium-webdriver/firefox');
 
 module.exports = async function createDriver() {
   const browser = (process.env.E2E_BROWSER || 'chrome').toLowerCase();
+
+  // --- FIREFOX CONFIG ---
   if (browser === 'firefox') {
-    const firefox = require('selenium-webdriver/firefox');
     const options = new firefox.Options();
-    // headless control: prefer argument form, fallback to boolean property
-    if (process.env.E2E_HEADLESS !== 'false') {
-      try {
-        options.addArguments('-headless');
-      } catch (e) {
-        // older/newer selenium shims: set boolean if available
-        try { options.headless = true; } catch (__) {}
-      }
+    
+    // Only run headless if explicitly set to 'true' (Better for local dev)
+    if (process.env.E2E_HEADLESS === 'true') {
+      options.addArguments('-headless');
     }
-    // allow specifying a Firefox binary path
-    if (process.env.FIREFOX_BIN) options.setBinary(process.env.FIREFOX_BIN);
-    // some CI flags may be useful
-    try { options.addArguments('--no-sandbox', '--disable-dev-shm-usage'); } catch (e) {}
-    return new Builder().forBrowser('firefox').setFirefoxOptions(options).build();
+
+    if (process.env.FIREFOX_BIN) {
+      options.setBinary(process.env.FIREFOX_BIN);
+    }
+
+    return new Builder()
+      .forBrowser('firefox')
+      .setFirefoxOptions(options)
+      .build();
   }
 
-  // default: chrome
-  const chrome = require('selenium-webdriver/chrome');
+  // --- CHROME CONFIG (Default) ---
   const options = new chrome.Options();
+  
+  // Critical flags for CI/Docker stability
+  // --no-sandbox: Required for Docker (GitHub Actions)
+  // --disable-dev-shm-usage: Prevents memory crashes in containers
   const args = ['--no-sandbox', '--disable-dev-shm-usage'];
-  if (process.env.E2E_HEADLESS !== 'false') args.push('--headless=new');
+
+  // Headless logic:
+  // In CI, we set E2E_HEADLESS='true', so this runs headless.
+  // Locally, if variable is missing, it skips this and opens the window.
+  if (process.env.E2E_HEADLESS === 'true') {
+    args.push('--headless=new'); // Modern Chrome headless mode
+    args.push('--window-size=1920,1080'); // Good practice for headless rendering
+  }
+
   options.addArguments(...args);
-  if (process.env.CHROME_BIN) options.setChromeBinaryPath(process.env.CHROME_BIN);
-  return new Builder().forBrowser('chrome').setChromeOptions(options).build();
+
+  // If you ever need to point to a specific binary (optional)
+  if (process.env.CHROME_BIN) {
+    options.setChromeBinaryPath(process.env.CHROME_BIN);
+  }
+
+  return new Builder()
+    .forBrowser('chrome')
+    .setChromeOptions(options)
+    .build();
 };
