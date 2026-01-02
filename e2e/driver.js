@@ -30,7 +30,7 @@ module.exports = async function createDriver() {
   // Critical flags for CI/Docker stability
   // --no-sandbox: Required for Docker (GitHub Actions)
   // --disable-dev-shm-usage: Prevents memory crashes in containers
-  const args = ['--no-sandbox', '--disable-dev-shm-usage'];
+  const args = ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--disable-extensions'];
 
   // Headless logic:
   // In CI, we set E2E_HEADLESS='true', so this runs headless.

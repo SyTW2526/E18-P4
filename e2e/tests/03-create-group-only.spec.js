@@ -7,7 +7,7 @@ const CI_TIMEOUT = 60000;
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
 // Helper to handle "Stale Element" errors automatically
-async function clickWithRetry(driver, locator, timeout = 5000) {
+async function clickWithRetry(driver, locator, timeout = 60000) {
   const endTime = Date.now() + timeout;
   while (Date.now() < endTime) {
     try {

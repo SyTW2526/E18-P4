@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "test": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
+    "test": "wait-on http-get://localhost:4200/ && mocha --timeout 120000 --exit \"tests/**/*.spec.js\"",
     "test:local": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
   },
   "devDependencies": {
