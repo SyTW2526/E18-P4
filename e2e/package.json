@@ -1,13 +1,15 @@
 {
   "name": "e2e",
-  "version": "1.0.0",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
+    "test": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
     "test:local": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
   },
-  "dependencies": {
+  "devDependencies": {
     "chai": "^4.3.7",
     "mocha": "^10.2.0",
-    "selenium-webdriver": "^4.27.0", 
-    "wait-on": "^7.0.1"
+    "selenium-webdriver": "^4.16.0",
+    "wait-on": "^9.0.3"
   }
 }
