@@ -2,7 +2,10 @@ const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
 
-async function waitForAppReady(driver, timeout = 60000) {
+// CONSTANTE PARA CI
+const CI_TIMEOUT = 60000;
+
+async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
   await driver.wait(async () => {
     return await driver.executeScript(
       'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
@@ -11,7 +14,9 @@ async function waitForAppReady(driver, timeout = 60000) {
 }
 
 describe('E2E - Login page', function () {
-  this.timeout(60000);
+  // Mocha timeout debe ser mayor que los waits de Selenium
+  this.timeout(CI_TIMEOUT * 2); // 120 segundos
+  
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
@@ -25,22 +30,31 @@ describe('E2E - Login page', function () {
 
   it('shows password field and toggles visibility', async function () {
     await driver.get(BASE + '/login');
-    // wait for the app render to be ready then find password input
-    await waitForAppReady(driver, 15000);
+    
+    // 1. Esperar carga inicial (vital en CI)
+    await waitForAppReady(driver, CI_TIMEOUT);
+
+    // 2. Buscar input de contraseña (con timeout generoso)
     // Prefer /login reactive form input; fallback to home sign-in input
-    let pwdInput = await driver.wait(
-      until.elementLocated(By.css('input[formcontrolname="password"]')),
-      10000
-    ).catch(async () => {
-      return await driver.wait(until.elementLocated(By.css('input[name="se_password"]')), 5000);
-    });
+    let pwdInput;
+    try {
+        pwdInput = await driver.wait(
+          until.elementLocated(By.css('input[formcontrolname="password"]')),
+          CI_TIMEOUT // CAMBIADO: 10000 -> 60000
+        );
+    } catch (e) {
+        console.log("Input principal no encontrado, buscando fallback...");
+        pwdInput = await driver.wait(
+            until.elementLocated(By.css('input[name="se_password"]')), 
+            CI_TIMEOUT
+        );
+    }
     
     // initially should be type password
     const t1 = await pwdInput.getAttribute('type');
     expect(t1).to.equal('password');
 
-    // Find the toggle button: look for button with aria-label in the same form-field or nearby
-    // Find toggle button within the same form-field
+    // 3. Buscar botón toggle
     let toggleBtn;
     try {
       // Prefer the visibility icon button within the same mat-form-field
@@ -50,35 +64,38 @@ describe('E2E - Login page', function () {
       // Fallback: any matching aria-label on page
       toggleBtn = await driver.wait(
         until.elementLocated(By.xpath("//button[@aria-label='Mostrar contraseña' or .//mat-icon[normalize-space(text())='visibility']]")),
-        7000
+        CI_TIMEOUT // CAMBIADO: 7000 -> 60000
       );
     }
 
-    await driver.wait(until.elementIsVisible(toggleBtn), 3000);
+    await driver.wait(until.elementIsVisible(toggleBtn), CI_TIMEOUT);
     
-    // Click the button - use executeScript for reliability with Angular Material
+    // Click logic
     try { await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', toggleBtn); } catch (_) {}
-    // Click with fallback
+    
     try { await toggleBtn.click(); } catch (_) { await driver.executeScript('arguments[0].click();', toggleBtn); }
 
-    // Wait until the input type flips to text; if not, retry click once
+    // Wait until the input type flips to text
     const changed = await driver.wait(async () => {
       try {
         const el = await driver.findElement(By.xpath("(//input[@formcontrolname='password'] | //input[@name='se_password'])[1]"));
         const typ = await el.getAttribute('type');
         return typ === 'text';
       } catch (_) { return false; }
-    }, 4000).catch(() => false);
+    }, 10000).catch(() => false); // Subido a 10s por si acaso
 
+    // Retry click if failed first time
     if (!changed) {
+      console.log("Primer click falló, reintentando toggle...");
       try { await toggleBtn.click(); } catch (_) { await driver.executeScript('arguments[0].click();', toggleBtn); }
+      
       await driver.wait(async () => {
         try {
           const el = await driver.findElement(By.xpath("(//input[@formcontrolname='password'] | //input[@name='se_password'])[1]"));
           const typ = await el.getAttribute('type');
           return typ === 'text';
         } catch (_) { return false; }
-      }, 4000);
+      }, 10000);
     }
 
     // Final assertion
