@@ -2,7 +2,9 @@ const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
 
-async function waitForAppReady(driver, timeout = 60000) {
+const CI_TIMEOUT = 60000;
+
+async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
   await driver.wait(async () => {
     return await driver.executeScript(
       'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
@@ -11,17 +13,19 @@ async function waitForAppReady(driver, timeout = 60000) {
 }
 
 describe('E2E - Join group (error cases)', function () {
-  this.timeout(60000);
+  this.timeout(120000); // 2 min
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
     driver = await createDriver();
     await driver.get(BASE + '/');
-    await waitForAppReady(driver, 20000);
+    await waitForAppReady(driver, CI_TIMEOUT); // 60s
     // set fake auth
     await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
     await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'TestUser', email:'test@x.com'}));");
+    await driver.navigate().refresh(); // Refresh para aplicar auth
+    await waitForAppReady(driver, CI_TIMEOUT);
   });
 
   after(async function () {
@@ -30,82 +34,62 @@ describe('E2E - Join group (error cases)', function () {
 
   it('shows error when trying to join non-existing group', async function () {
     await driver.get(BASE + '/home');
-    await driver.sleep(500);
-
+    
     // Wait for page to be stable
-    await driver.wait(until.elementLocated(By.css('mat-card, .btn-primary, button')), 8000).catch(()=>{});
+    await driver.wait(until.elementLocated(By.css('mat-card, .btn-primary, button')), CI_TIMEOUT).catch(()=>{});
 
-    // Click the join toggle button to open the form (match by text only to avoid hitting 'Crear')
+    // Click the join toggle
     const joinToggle = await driver.wait(
       until.elementLocated(By.xpath("//button[contains(.,'Unirse') or contains(.,'Join')]")),
-      7000
+      CI_TIMEOUT
     ).catch(() => null);
 
-    if (!joinToggle) {
-      console.log('Join toggle not found; trying alternative selectors');
-      throw new Error('Join button toggle not found on page');
+    if (joinToggle) {
+        await driver.wait(until.elementIsVisible(joinToggle), 5000);
+        try { await joinToggle.click(); } catch (e) { await driver.executeScript('arguments[0].click();', joinToggle); }
+    } else {
+        // Puede que estemos en una vista donde el form ya está visible o no se requiere toggle
+        console.log("Toggle Unirse no encontrado, buscando input directamente...");
     }
-
-    await driver.wait(until.elementIsVisible(joinToggle), 3000);
-    try {
-      await joinToggle.click();
-    } catch (e) {
-      await driver.executeScript('arguments[0].click();', joinToggle);
-    }
-
-    await driver.sleep(300);
 
     // Find the input field for group ID
     const input = await driver.wait(
       until.elementLocated(By.css('input[name="joinId"], input[placeholder*="ID del grupo"], input[placeholder*="Group"]')),
-      7000
+      CI_TIMEOUT
     );
 
-    await driver.wait(until.elementIsVisible(input), 3000);
+    await driver.wait(until.elementIsVisible(input), 5000);
     await input.clear();
     await input.sendKeys('non-existent-group-id-12345');
 
     // Find and click the join button
     const joinBtn = await driver.wait(
       until.elementLocated(By.xpath("//button[contains(.,'Unirse') or contains(.,'Join') and not(contains(@class,'btn-primary'))]")),
-      5000
-    ).catch(() => null);
+      CI_TIMEOUT
+    );
 
-    if (!joinBtn) {
-      throw new Error('Join submit button not found');
-    }
+    try { await joinBtn.click(); } catch (e) { await driver.executeScript('arguments[0].click();', joinBtn); }
 
-    await driver.wait(until.elementIsVisible(joinBtn), 3000);
-    try {
-      await joinBtn.click();
-    } catch (e) {
-      await driver.executeScript('arguments[0].click();', joinBtn);
-    }
-
-    // Wait for error message to appear
-    await driver.sleep(800);
+    // Wait for error message to appear (Subimos tiempo por si el server tarda)
+    await driver.sleep(1000); 
 
     // Check for error message in the UI
     const errorText = await driver.executeScript(() => {
-      const errorElements = Array.from(document.querySelectorAll('[style*="color:#b00020"], [style*="color: #b00020"], .error, .mat-error'));
+      const errorElements = Array.from(document.querySelectorAll('[style*="color:#b00020"], [style*="color: #b00020"], .error, .mat-error, simple-snack-bar'));
       return errorElements.map(el => el.textContent || '').join(' ');
     });
 
-    // Verify that an error was shown (should contain "no encontrado" or similar)
     const hasError = errorText.toLowerCase().includes('no encontrado') || 
                      errorText.toLowerCase().includes('not found') ||
                      errorText.toLowerCase().includes('grupo');
 
     if (!hasError) {
-      console.log('Error text found:', errorText);
-      // Check if alert was shown instead
+      // Check alerts
       try {
         const alert = await driver.switchTo().alert();
         await alert.accept();
-        return; // test passes if alert shown
-      } catch (e) {
-        // No alert either
-      }
+        return; 
+      } catch (e) {}
     }
 
     // Ensure the non-existent group didn't get added

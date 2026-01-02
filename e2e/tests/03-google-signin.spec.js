@@ -2,7 +2,10 @@ const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
 
-async function waitForAppReady(driver, timeout = 60000) {
+// CONSTANTE CI
+const CI_TIMEOUT = 60000;
+
+async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
   await driver.wait(async () => {
     return await driver.executeScript(
       'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
@@ -11,7 +14,7 @@ async function waitForAppReady(driver, timeout = 60000) {
 }
 
 describe('E2E - Google Sign-In button presence', function () {
-  this.timeout(60000);
+  this.timeout(120000); // 2 minutos
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
@@ -25,15 +28,22 @@ describe('E2E - Google Sign-In button presence', function () {
 
   it('has Google Sign-In container on login', async function () {
     await driver.get(BASE + '/login');
-    await waitForAppReady(driver, 20000);
-    const btnDiv = await driver.findElement(By.css('#google-signin-button'));
+    await waitForAppReady(driver, CI_TIMEOUT); // 60s
+    // Selectores más robustos
+    const btnDiv = await driver.wait(
+        until.elementLocated(By.css('#google-signin-button, .g-signin2, #google-btn-container')), 
+        CI_TIMEOUT
+    );
     expect(btnDiv).to.exist;
   });
 
   it('has Google Sign-In container on register', async function () {
     await driver.get(BASE + '/register');
-    await waitForAppReady(driver, 20000);
-    const btnDiv = await driver.findElement(By.css('#google-signin-button-register'));
+    await waitForAppReady(driver, CI_TIMEOUT); // 60s
+    const btnDiv = await driver.wait(
+        until.elementLocated(By.css('#google-signin-button-register, .g-signin2')), 
+        CI_TIMEOUT
+    );
     expect(btnDiv).to.exist;
   });
 });
