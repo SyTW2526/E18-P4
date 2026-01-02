@@ -51,6 +51,11 @@ module.exports = async function createDriver() {
     options.setChromeBinaryPath(process.env.CHROME_BIN);
   }
 
+  // --- NUEVO: HABILITAR LOGS DE CONSOLA ---
+  const logPrefs = new logging.Preferences();
+  logPrefs.setLevel(logging.Type.BROWSER, logging.Level.ALL);
+  options.setLoggingPrefs(logPrefs);
+
   return new Builder()
     .forBrowser('chrome')
     .setChromeOptions(options)
