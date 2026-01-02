@@ -11,7 +11,6 @@ async function waitForAppReady(driver, timeout = 60000) {
 }
 
 describe('E2E - Basic smoke tests', function () {
-  // CRÍTICO: 180s para que no muera en CI lento
   this.timeout(180000); 
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
@@ -21,17 +20,33 @@ describe('E2E - Basic smoke tests', function () {
     await driver.get(BASE + '/');
     await waitForAppReady(driver, 60000);
   });
-  
-  // Añadimos esto para depurar si falla
+
+  // --- NEW DEBUGGING BLOCK ---
   afterEach(async function () {
     if (this.currentTest.state === 'failed' && driver) {
-        console.log("!!! FALLO EN BASIC TEST - LOGS !!!");
+        console.log("!!! TEST FAILED - BROWSER DIAGNOSTICS !!!");
+        
+        // 1. Current URL
+        const url = await driver.getCurrentUrl();
+        console.log(`Current URL: ${url}`);
+
+        // 2. Browser Console Logs (JS Errors)
         try {
             const logs = await driver.manage().logs().get('browser');
-            logs.forEach(log => console.log(`[BROWSER] ${log.level.name}: ${log.message}`));
-        } catch(e) { console.log("No se pudieron leer logs"); }
+            if (logs.length > 0) {
+                console.log("--- CONSOLE LOGS START ---");
+                logs.forEach(log => console.log(`[${log.level.name}] ${log.message}`));
+                console.log("--- CONSOLE LOGS END ---");
+            }
+        } catch(e) { console.log("Could not read browser logs"); }
+
+        // 3. Page Source (To see if it's blank or showing 404)
+        const source = await driver.getPageSource();
+        console.log("--- PAGE SOURCE SNIPPET ---");
+        console.log(source.substring(0, 1000)); 
     }
   });
+  // ---------------------------
 
   after(async function () {
     if (driver) await driver.quit();
