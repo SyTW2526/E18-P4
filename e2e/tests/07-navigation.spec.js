@@ -40,17 +40,23 @@ describe('E2E - Navigation and Account', function () {
     try {
         groupCard = await driver.wait(until.elementLocated(By.css('mat-card')), 5000);
     } catch(e) {
-        // Crear grupo rápido si no hay
-        await driver.get(BASE + '/groups/create'); // O la lógica de crear
-        // Para simplificar este test, asumimos que create-group ya corrió antes.
-        // Si no, este test fallará por falta de datos en DB limpia.
-        // Lo mejor es navegar a home y buscar cualquier tarjeta.
         console.log("No hay grupos. Test saltado o requiere seeds.");
         return; 
     }
-    
-    // Click en el primer grupo
-    await groupCard.click();
+
+    // Click en el primer grupo con reintento por si el elemento se vuelve stale
+    for (let i = 0; i < 2; i++) {
+      try {
+        await driver.wait(until.elementIsVisible(groupCard), 2000);
+        await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', groupCard);
+        try { await groupCard.click(); } catch (_) { await driver.executeScript('arguments[0].click();', groupCard); }
+        break;
+      } catch (err) {
+        if (i === 1) throw err;
+        // re-localize if stale
+        groupCard = await driver.wait(until.elementLocated(By.css('mat-card')), 3000);
+      }
+    }
 
     // wait for header h2
     await driver.wait(until.elementLocated(By.css('h2, mat-card-title')), CI_TIMEOUT);

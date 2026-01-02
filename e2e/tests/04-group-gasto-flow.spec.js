@@ -178,32 +178,21 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
 
     // --- 5. DELETE GROUP ---
     console.log('Step 5: Deleting Group');
-    
-    // Navegar a settings si es necesario, o buscar botón de borrar en la página del grupo
-    // Asumimos que hay un botón de Settings o Borrar directo
-    // Si tienes un botón "Settings" primero, añádelo aquí.
-    // Buscamos directamente "Eliminar Grupo" o un icono de basura en la zona de peligro
-    
-    // NOTA: Si tu botón está en la página de configuración, primero hay que ir allí.
-    // Verificamos si estamos en /group/:id
-    const currentUrl = await driver.getCurrentUrl();
-    if (!currentUrl.includes('/settings')) {
-        // Intentar ir a settings
-        try {
-            const settingsBtn = await driver.findElement(By.xpath("//button[.//mat-icon[contains(.,'settings')]]"));
-            await settingsBtn.click();
-            await driver.wait(until.urlContains('/settings'), 5000);
-        } catch(e) {
-            // Si no hay botón settings, quizá el borrar está directo o en un menú
-            console.log("No se encontró botón settings, buscando borrar directo...");
-        }
+    // Volver al detalle del grupo (no settings) y usar el botón rojo de eliminar
+    let currentUrl = await driver.getCurrentUrl();
+    let groupId = null;
+    const m = currentUrl.match(/group\/([^\/]+)/);
+    if (m && m[1]) groupId = m[1];
+    if (groupId) {
+      await driver.get(`${BASE}/group/${groupId}`);
+      await driver.wait(until.urlContains(`/group/${groupId}`), 10000);
     }
 
     const deleteGroupBtn = await driver.wait(
-        until.elementLocated(By.xpath("//button[contains(.,'Eliminar') or contains(.,'Delete') or .//mat-icon[contains(.,'delete_forever')]]")),
-        10000
+      until.elementLocated(By.xpath("//button[contains(.,'Eliminar') or contains(.,'Delete') or .//mat-icon[normalize-space(text())='delete'] or .//mat-icon[contains(.,'delete_forever')]]")),
+      20000
     );
-    await clickWithRetry(driver, deleteGroupBtn);
+    try { await deleteGroupBtn.click(); } catch (_) { await driver.executeScript('arguments[0].click();', deleteGroupBtn); }
 
     await handleConfirmation(driver);
 
