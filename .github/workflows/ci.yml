@@ -99,11 +99,17 @@ jobs:
           
           # CAMBIO AQUÍ: Añadimos --proxy para redirigir llamadas API al backend (puerto 5200)
           # También añadimos --cors por si acaso
-          # Serve dist folder on port 4200
-          DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
+          # Buscar dinámicamente la carpeta que contiene el index.html
+          # Esto funciona para Angular viejo (dist/app) y nuevo (dist/app/browser)
+          DIST_DIR=$(dirname $(find dist -name index.html | head -n 1))
           
-          # CAMBIO AQUÍ: Añadimos --proxy ...
+          echo "Sirviendo aplicación desde: $DIST_DIR"
+          
+          # Arrancamos el servidor apuntando a esa carpeta exacta
           npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 --proxy http://localhost:5200 --cors &
+          
+          # Wait for client to be ready
+          npx wait-on http://127.0.0.1:4200/ --timeout 60000
 
       - name: Run E2E Tests
         working-directory: e2e
