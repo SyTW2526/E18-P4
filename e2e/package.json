@@ -1,17 +1,13 @@
 {
   "name": "e2e",
-  "version": "0.0.0",
-  "private": true,
+  "version": "1.0.0",
   "scripts": {
-    "test": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\"",
-    "test:local": "CHROME_BIN=$(node -e \"console.log(require('../client/node_modules/puppeteer').executablePath())\") PATH=./node_modules/.bin:$PATH wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
+    "test:local": "wait-on http-get://localhost:4200/ && mocha --timeout 60000 --exit \"tests/**/*.spec.js\""
   },
-  "devDependencies": {
+  "dependencies": {
     "chai": "^4.3.7",
-    "chromedriver": "^142.0.0",
-    "geckodriver": "^4.0.0",
     "mocha": "^10.2.0",
-    "selenium-webdriver": "^4.39.0",
-    "wait-on": "^9.0.3"
+    "selenium-webdriver": "^4.27.0", 
+    "wait-on": "^7.0.1"
   }
 }
