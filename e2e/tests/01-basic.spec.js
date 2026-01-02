@@ -17,36 +17,37 @@ describe('E2E - Basic smoke tests', function () {
 
   before(async function () {
     driver = await createDriver();
+    console.log(`Navegando a: ${BASE}/`);
     await driver.get(BASE + '/');
     await waitForAppReady(driver, 60000);
   });
 
-  // --- NEW DEBUGGING BLOCK ---
+  // --- BLOQUE DE DIAGNÓSTICO ---
   afterEach(async function () {
     if (this.currentTest.state === 'failed' && driver) {
-        console.log("!!! TEST FAILED - BROWSER DIAGNOSTICS !!!");
+        console.log("!!! EL TEST FALLÓ - DIAGNÓSTICO DEL NAVEGADOR !!!");
         
-        // 1. Current URL
+        // 1. Ver URL actual
         const url = await driver.getCurrentUrl();
-        console.log(`Current URL: ${url}`);
+        console.log(`URL final: ${url}`);
 
-        // 2. Browser Console Logs (JS Errors)
+        // 2. Ver errores de consola (JS Errors)
         try {
             const logs = await driver.manage().logs().get('browser');
             if (logs.length > 0) {
-                console.log("--- CONSOLE LOGS START ---");
+                console.log("--- LOGS DE CONSOLA (ERRORES JS) ---");
                 logs.forEach(log => console.log(`[${log.level.name}] ${log.message}`));
-                console.log("--- CONSOLE LOGS END ---");
+                console.log("------------------------------------");
             }
-        } catch(e) { console.log("Could not read browser logs"); }
+        } catch(e) { console.log("No se pudieron leer logs del navegador."); }
 
-        // 3. Page Source (To see if it's blank or showing 404)
+        // 3. Ver código fuente (para ver si está en blanco o muestra error 404)
         const source = await driver.getPageSource();
-        console.log("--- PAGE SOURCE SNIPPET ---");
-        console.log(source.substring(0, 1000)); 
+        console.log("--- HTML DE LA PÁGINA (RESUMEN) ---");
+        console.log(source.substring(0, 1000) + "..."); 
     }
   });
-  // ---------------------------
+  // -----------------------------
 
   after(async function () {
     if (driver) await driver.quit();
