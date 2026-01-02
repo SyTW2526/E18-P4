@@ -101,12 +101,7 @@ jobs:
           # Also add --cors just in case
           # Dynamically locate the folder that contains index.html
           # This works for both older Angular (dist/app) and newer Angular (dist/app/browser)
-          DIST_DIR=$(dirname "$(find dist -name index.html | head -n 1)")
-          
-          echo "Serving application from: $DIST_DIR"
-            echo "Error: No se encontró ningún index.html dentro de 'dist'." >&2
-            exit 1
-          fi
+          DIST_DIR=$(dirname $(find dist -name index.html | head -n 1))
           
           echo "Sirviendo aplicación desde: $DIST_DIR"
           
