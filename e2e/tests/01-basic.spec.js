@@ -16,38 +16,43 @@ describe('E2E - Basic smoke tests', function () {
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 
   before(async function () {
-    driver = await createDriver();
-    console.log(`Navegando a: ${BASE}/`);
-    await driver.get(BASE + '/');
-    await waitForAppReady(driver, 60000);
-  });
-
-  // --- BLOQUE DE DIAGNÓSTICO ---
-  afterEach(async function () {
-    if (this.currentTest.state === 'failed' && driver) {
-        console.log("!!! EL TEST FALLÓ - DIAGNÓSTICO DEL NAVEGADOR !!!");
+    try {
+        driver = await createDriver();
+        console.log(`Navegando a: ${BASE}/`);
+        await driver.get(BASE + '/');
         
-        // 1. Ver URL actual
-        const url = await driver.getCurrentUrl();
-        console.log(`URL final: ${url}`);
+        // Intentamos esperar a que cargue
+        await waitForAppReady(driver, 60000);
+        
+    } catch (e) {
+        console.log("!!! ERROR CRÍTICO EN CARGA INICIAL (BEFORE HOOK) !!!");
+        
+        if (driver) {
+            // 1. URL Actual (¿Nos redirigió a login? ¿Se quedó en 4200?)
+            const url = await driver.getCurrentUrl();
+            console.log(`URL en el momento del fallo: ${url}`);
 
-        // 2. Ver errores de consola (JS Errors)
-        try {
-            const logs = await driver.manage().logs().get('browser');
-            if (logs.length > 0) {
-                console.log("--- LOGS DE CONSOLA (ERRORES JS) ---");
+            // 2. Logs del Navegador (Aquí veremos si Angular crasheó)
+            try {
+                const logs = await driver.manage().logs().get('browser');
+                console.log("--- BROWSER CONSOLE LOGS ---");
                 logs.forEach(log => console.log(`[${log.level.name}] ${log.message}`));
-                console.log("------------------------------------");
+                console.log("----------------------------");
+            } catch (logErr) {
+                console.log("No se pudieron leer los logs del navegador.");
             }
-        } catch(e) { console.log("No se pudieron leer logs del navegador."); }
 
-        // 3. Ver código fuente (para ver si está en blanco o muestra error 404)
-        const source = await driver.getPageSource();
-        console.log("--- HTML DE LA PÁGINA (RESUMEN) ---");
-        console.log(source.substring(0, 1000) + "..."); 
+            // 3. Código fuente (¿Está vacío el body?)
+            const source = await driver.getPageSource();
+            console.log("--- HTML SNIPPET ---");
+            console.log(source.substring(0, 1000));
+            console.log("--------------------");
+        }
+        
+        // Relanzamos el error para que el test falle oficialmente
+        throw e;
     }
   });
-  // -----------------------------
 
   after(async function () {
     if (driver) await driver.quit();
