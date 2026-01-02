@@ -96,7 +96,8 @@ jobs:
           
           # Serve dist folder on port 4200
           DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
-          npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 &
+          # Redirige los fallos (API calls) al backend en el puerto 5200
+          npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 --proxy http://localhost:5200 &
           
           # Wait for client to be ready
           npx wait-on http://127.0.0.1:4200/ --timeout 60000
