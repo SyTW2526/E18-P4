@@ -95,13 +95,18 @@ jobs:
           npm run build -- --configuration production
           
           # Serve dist folder on port 4200
-          DIST_DIR=$(find dist -maxdepth 1 -mindepth 1 -type d | head -n 1)
+
           
-          # CAMBIO AQUÍ: Añadimos --proxy para redirigir llamadas API al backend (puerto 5200)
-          # También añadimos --cors por si acaso
-          # Buscar dinámicamente la carpeta que contiene el index.html
-          # Esto funciona para Angular viejo (dist/app) y nuevo (dist/app/browser)
-          DIST_DIR=$(dirname $(find dist -name index.html | head -n 1))
+          # CHANGE HERE: Add --proxy to redirect API calls to the backend (port 5200)
+          # Also add --cors just in case
+          # Dynamically locate the folder that contains index.html
+          # This works for both older Angular (dist/app) and newer Angular (dist/app/browser)
+          DIST_DIR=$(dirname "$(find dist -name index.html | head -n 1)")
+          
+          echo "Serving application from: $DIST_DIR"
+            echo "Error: No se encontró ningún index.html dentro de 'dist'." >&2
+            exit 1
+          fi
           
           echo "Sirviendo aplicación desde: $DIST_DIR"
           
