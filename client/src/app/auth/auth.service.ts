@@ -154,6 +154,28 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/reject`, { userId });
   }
 
+  // Invitation links
+  createInvitationLink(id_grupo: string, id_invitador: string, usos_maximos?: number, dias_expiracion?: number) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/create`, { 
+      id_grupo, 
+      id_invitador, 
+      usos_maximos, 
+      dias_expiracion 
+    });
+  }
+
+  getGroupInvitationLinks(groupId: string, id_invitador: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/group-invitations/group/${groupId}/links?id_invitador=${id_invitador}`);
+  }
+
+  joinGroupWithLink(token: string, userId: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/${token}/join`, { userId });
+  }
+
+  revokeInvitationLink(linkId: string, id_usuario: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/${linkId}/revoke`, { id_usuario });
+  }
+
   getUserById(id: string) {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
@@ -191,6 +213,16 @@ export class AuthService {
   removeAmigo(userId: string, amigoId: string) {
     // Use HTTP request to send a DELETE with a body (some Angular versions require request() helper)
     return this.http.request('delete', `${this.baseUrl}/users/${userId}/remove-amigo`, { body: { amigoId } });
+  }
+
+  // Search users by nombre
+  searchUsers(query: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/users/search?q=${encodeURIComponent(query)}`);
+  }
+
+  // Get basic user info (for friend lists, etc)
+  getUsuarioBasico(userId: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${userId}/basic`);
   }
 
   // Helper: find a user by username (server-side lookup)

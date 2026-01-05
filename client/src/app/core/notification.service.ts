@@ -4,10 +4,10 @@ import { Observable } from 'rxjs';
 
 export interface Notification {
   _id?: string;
-  tipo: 'solicitud_pago' | 'pago_confirmado' | 'gasto_creado' | 'grupo_invitacion';
+  tipo: 'solicitud_pago' | 'pago_confirmado' | 'gasto_creado' | 'grupo_invitacion' | 'solicitud_amistad';
   de_usuario: string;
   para_usuario: string;
-  id_grupo: string;
+  id_grupo?: string; // opcional para solicitudes de amistad
   monto?: number;
   id_gasto?: string;
   mensaje?: string;

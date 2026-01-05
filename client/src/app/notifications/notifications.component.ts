@@ -99,6 +99,25 @@ import { switchMap, startWith } from 'rxjs/operators';
                   {{ lang.t('reject') || 'Rechazar' }}
                 </button>
               </div>
+
+              <div *ngIf="notif.tipo === 'solicitud_amistad' && !notif.respondida" style="display:flex;gap:0.5rem;margin-top:0.75rem">
+                <button mat-raised-button color="primary" 
+                        (click)="acceptFriendRequest(notif)"
+                        [disabled]="processing === notif._id">
+                  <mat-icon>check</mat-icon>
+                  {{ lang.t('accept') || 'Aceptar' }}
+                </button>
+                <button mat-button (click)="rejectFriendRequest(notif)"
+                        [disabled]="processing === notif._id">
+                  <mat-icon>close</mat-icon>
+                  {{ lang.t('reject') || 'Rechazar' }}
+                </button>
+              </div>
+
+              <div *ngIf="notif.tipo === 'solicitud_amistad' && notif.respondida" 
+                   style="margin-top:0.5rem;color:#22c55e;font-size:0.85rem">
+                ✓ Respondida
+              </div>
             </div>
             
             <!-- Botones de acción de notificación -->
@@ -218,6 +237,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       case 'pago_confirmado': return 'check_circle';
       case 'gasto_creado': return 'receipt';
       case 'grupo_invitacion': return 'group_add';
+      case 'solicitud_amistad': return 'person_add';
       default: return 'notifications';
     }
   }
@@ -228,6 +248,7 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       case 'pago_confirmado': return '#22c55e';
       case 'gasto_creado': return '#3b82f6';
       case 'grupo_invitacion': return '#a855f7';
+      case 'solicitud_amistad': return '#ec4899';
       default: return '#999';
     }
   }
@@ -242,6 +263,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'Nuevo gasto';
       case 'grupo_invitacion':
         return 'Invitación a grupo';
+      case 'solicitud_amistad':
+        return 'Solicitud de amistad';
       default:
         return 'Notificación';
     }
@@ -261,6 +284,8 @@ export class NotificationsComponent implements OnInit, OnDestroy {
         return 'Se ha creado un nuevo gasto en el grupo';
       case 'grupo_invitacion':
         return 'Te han invitado a unirte a un grupo';
+      case 'solicitud_amistad':
+        return 'Te ha enviado una solicitud de amistad';
       default:
         return '';
     }
@@ -364,6 +389,59 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error rejecting invitation:', err);
         this.error = 'Error al rechazar invitación';
+        this.processing = null;
+      },
+    });
+  }
+
+  acceptFriendRequest(notif: Notification) {
+    if (!notif._id) return;
+    const user = this.authService.getUser();
+    const userId = user?._id || user?.id;
+    if (!userId) return;
+
+    this.processing = notif._id;
+    // de_usuario es quien envió la solicitud
+    const senderId = String(notif.de_usuario);
+    
+    this.authService.acceptAmigo(userId, senderId).subscribe({
+      next: () => {
+        notif.respondida = true;
+        // Marcar como leída también
+        if (notif._id) {
+          this.notificationService.markAsRead(notif._id).subscribe();
+        }
+        this.loadNotifications();
+        this.processing = null;
+      },
+      error: (err) => {
+        console.error('Error accepting friend request:', err);
+        this.error = 'Error al aceptar solicitud de amistad';
+        this.processing = null;
+      },
+    });
+  }
+
+  rejectFriendRequest(notif: Notification) {
+    if (!notif._id) return;
+    const user = this.authService.getUser();
+    const userId = user?._id || user?.id;
+    if (!userId) return;
+
+    this.processing = notif._id;
+    // de_usuario es quien envió la solicitud
+    const senderId = String(notif.de_usuario);
+    
+    this.authService.rejectAmigo(userId, senderId).subscribe({
+      next: () => {
+        notif.respondida = true;
+        // Eliminar la notificación después de rechazar
+        this.notifications = this.notifications.filter(n => n._id !== notif._id);
+        this.processing = null;
+      },
+      error: (err) => {
+        console.error('Error rejecting friend request:', err);
+        this.error = 'Error al rechazar solicitud de amistad';
         this.processing = null;
       },
     });

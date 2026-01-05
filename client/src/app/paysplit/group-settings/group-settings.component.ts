@@ -123,6 +123,63 @@ import { MatInputModule } from '@angular/material/input';
             </div>
           </mat-card>
 
+          <!-- Invitation Links Section -->
+          <mat-card style="margin-top:16px; padding:0" *ngIf="myRole === 'owner' || myRole === 'admin'">
+            <div style="padding:24px">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+                <h3 style="margin:0">{{ lang.t('invitationLinks') || 'Enlaces de invitación' }}</h3>
+                <button mat-icon-button (click)="toggleCreateLinkForm()" [title]="lang.t('createLink') || 'Crear enlace'">
+                  <mat-icon>{{ showCreateLinkForm ? 'close' : 'add_link' }}</mat-icon>
+                </button>
+              </div>
+
+              <!-- Create Link Form -->
+              <div *ngIf="showCreateLinkForm" style="padding:16px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:16px">
+                <div style="margin-bottom:12px">
+                  <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('maxUses') || 'Usos máximos' }}</label>
+                  <input type="number" [(ngModel)]="newLinkMaxUses" placeholder="Ilimitado" min="1" style="width:100%; padding:8px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box" />
+                </div>
+                <div style="margin-bottom:12px">
+                  <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('expirationDays') || 'Días hasta expirar' }}</label>
+                  <input type="number" [(ngModel)]="newLinkExpirationDays" placeholder="Sin expiración" min="1" style="width:100%; padding:8px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box" />
+                </div>
+                <div style="display:flex; gap:8px; justify-content:flex-end">
+                  <button mat-button (click)="toggleCreateLinkForm()">{{ lang.t('cancel') }}</button>
+                  <button mat-flat-button color="primary" (click)="createInvitationLink()" [disabled]="creatingLink">
+                    {{ creatingLink ? lang.t('creating') + '...' : (lang.t('create') || 'Crear') }}
+                  </button>
+                </div>
+                <div *ngIf="linkError" style="color:#d9534f; margin-top:8px; font-size:0.9rem">{{ linkError }}</div>
+              </div>
+
+              <!-- Active Links List -->
+              <div *ngIf="loadingLinks" style="text-align:center; padding:16px; color:var(--text-muted)">{{ lang.t('loading') }}...</div>
+              <div *ngIf="!loadingLinks && invitationLinks.length === 0" style="color:var(--text-muted); font-size:0.9rem">{{ lang.t('noActiveLinks') || 'No hay enlaces activos' }}</div>
+              <div *ngIf="!loadingLinks && invitationLinks.length > 0" style="display:flex; flex-direction:column; gap:12px">
+                <div *ngFor="let link of invitationLinks" style="padding:12px; border-radius:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06)">
+                  <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:8px">
+                    <mat-icon style="color:var(--primary-color); font-size:20px">link</mat-icon>
+                    <div style="flex:1; min-width:0">
+                      <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:4px">
+                        {{ link.usos_actuales || 0 }} / {{ link.usos_maximos || '∞' }} usos
+                        <span *ngIf="link.expira_en"> • Expira: {{ link.expira_en | date:'dd/MM/yyyy' }}</span>
+                      </div>
+                      <div style="display:flex; gap:4px; align-items:center">
+                        <input readonly [value]="getLinkUrl(link.token)" style="flex:1; padding:6px 8px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.8rem; font-family:monospace; box-sizing:border-box" />
+                        <button mat-icon-button (click)="copyLink(link.token)" [title]="lang.t('copy') || 'Copiar'">
+                          <mat-icon style="font-size:20px">content_copy</mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn" (click)="revokeLink(link)" [title]="lang.t('revoke') || 'Revocar'" [disabled]="revokingLink === link._id">
+                          <mat-icon style="font-size:20px">delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card>
+
           <mat-card style="margin-top:16px; padding:0">
             <div style="padding:24px; display:flex; justify-content:flex-start">
               <button mat-raised-button class="danger-btn" (click)="deleteGroup()">{{ lang.t('deleteGroup') }}</button>
@@ -192,6 +249,16 @@ export class GroupSettingsComponent implements OnInit {
   actionLoading: string | null = null;
   actionError: string | null = null;
 
+  // Invitation links state
+  invitationLinks: any[] = [];
+  loadingLinks = false;
+  showCreateLinkForm = false;
+  newLinkMaxUses: number | null = null;
+  newLinkExpirationDays: number | null = null;
+  creatingLink = false;
+  linkError: string | null = null;
+  revokingLink: string | null = null;
+
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
   ngOnInit(): void {
@@ -246,6 +313,11 @@ export class GroupSettingsComponent implements OnInit {
         const mine = this.miembros.find(m => String(m._id) === String(myId));
         this.myRole = (mine?.rol as any) || 'miembro';
         this.loading = false;
+        
+        // Cargar enlaces de invitación si es admin u owner
+        if (this.myRole === 'owner' || this.myRole === 'admin') {
+          this.loadInvitationLinks();
+        }
       },
       error: () => {
         this.miembros = [];
@@ -501,5 +573,109 @@ export class GroupSettingsComponent implements OnInit {
     const ctx = canvas.getContext('2d');
     ctx?.drawImage(img, 0, 0, width, height);
     return canvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  // Invitation Links Methods
+  loadInvitationLinks() {
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) return;
+
+    this.loadingLinks = true;
+    this.auth.getGroupInvitationLinks(this.accountId, String(myId)).subscribe({
+      next: (links: any[]) => {
+        this.invitationLinks = links || [];
+        this.loadingLinks = false;
+      },
+      error: (err: any) => {
+        console.error('Error loading invitation links:', err);
+        this.invitationLinks = [];
+        this.loadingLinks = false;
+      }
+    });
+  }
+
+  toggleCreateLinkForm() {
+    this.showCreateLinkForm = !this.showCreateLinkForm;
+    if (!this.showCreateLinkForm) {
+      this.newLinkMaxUses = null;
+      this.newLinkExpirationDays = null;
+      this.linkError = null;
+    }
+  }
+
+  createInvitationLink() {
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) {
+      this.linkError = 'No autenticado';
+      return;
+    }
+
+    this.creatingLink = true;
+    this.linkError = null;
+
+    this.auth.createInvitationLink(
+      this.accountId,
+      String(myId),
+      this.newLinkMaxUses || undefined,
+      this.newLinkExpirationDays || undefined
+    ).subscribe({
+      next: (response: any) => {
+        this.creatingLink = false;
+        this.showCreateLinkForm = false;
+        this.newLinkMaxUses = null;
+        this.newLinkExpirationDays = null;
+        this.loadInvitationLinks();
+        
+        // Copiar enlace automáticamente
+        if (response.enlace) {
+          navigator.clipboard.writeText(response.enlace);
+          alert('Enlace creado y copiado al portapapeles: ' + response.enlace);
+        }
+      },
+      error: (err: any) => {
+        console.error('Error creating invitation link:', err);
+        this.linkError = err?.error?.message || 'Error al crear el enlace';
+        this.creatingLink = false;
+      }
+    });
+  }
+
+  getLinkUrl(token: string): string {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/join-group/${token}`;
+  }
+
+  copyLink(token: string) {
+    const url = this.getLinkUrl(token);
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Enlace copiado al portapapeles');
+    }).catch(err => {
+      console.error('Error copying link:', err);
+    });
+  }
+
+  revokeLink(link: any) {
+    if (!confirm('¿Revocar este enlace de invitación? Los usuarios ya no podrán unirse con este enlace.')) {
+      return;
+    }
+
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) return;
+
+    this.revokingLink = link._id;
+    this.auth.revokeInvitationLink(link._id, String(myId)).subscribe({
+      next: () => {
+        this.revokingLink = null;
+        this.loadInvitationLinks();
+      },
+      error: (err: any) => {
+        console.error('Error revoking link:', err);
+        alert('Error al revocar el enlace: ' + (err?.error?.message || 'Error desconocido'));
+        this.revokingLink = null;
+      }
+    });
   }
 }

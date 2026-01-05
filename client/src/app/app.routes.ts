@@ -9,6 +9,9 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent), title: 'Iniciar Sesión' },
   { path: 'register', loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent), title: 'Registrarse' },
 
+  // Join group by invitation link (public route)
+  { path: 'join-group/:token', loadComponent: () => import('./join-group/join-group.component').then(m => m.JoinGroupComponent), title: 'Unirse a grupo' },
+
   // Ruta principal de la app (accedida tras autenticarse)
   { path: 'home', loadComponent: () => import('./paysplit/home/home.component').then(m => m.HomeComponent), title: 'Inicio', canActivate: [AuthGuard] },
   // Place more specific group routes before the base detail route to avoid premature matching

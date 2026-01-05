@@ -95,6 +95,44 @@ userRouter.get("/:id/basic", async (req: express.Request, res: express.Response)
     }
 });
 
+// GET /users/search - search users by name or email (NO auth required)
+userRouter.get("/search", async (req: express.Request, res: express.Response) => {
+  try {
+    const query = req.query.q as string;
+    console.log('[Search Users] Query:', query);
+    
+    if (!query || query.length < 2) {
+      console.log('[Search Users] Error: Query too short or missing');
+      return res.status(400).json({ message: "Busca al menos 2 caracteres" });
+    }
+
+    console.log('[Search Users] Searching for:', query);
+    const results = await collections.users!.find({
+      $or: [
+        { nombre: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } }
+      ]
+    }).limit(10).toArray();
+
+    console.log('[Search Users] Found', results.length, 'results');
+    results.forEach((u: any) => {
+      console.log('[Search Users] Result:', u.nombre, '(' + u.email + ')');
+    });
+
+    const safe = results.map((u: any) => ({
+      _id: u._id,
+      nombre: u.nombre,
+      email: u.email,
+      foto_perfil: u.foto_perfil
+    }));
+
+    res.status(200).json(safe);
+  } catch (error) {
+    console.error('[Search Users] Error:', error);
+    res.status(500).json({ message: "Error en la búsqueda" });
+  }
+});
+
 userRouter.get("/:id", authenticate, async (req: express.Request, res: express.Response) => {
     try {
         const id = req?.params?.id;
@@ -376,8 +414,23 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
         const receiverId = req?.params?.id; // the user receiving the friend request
         const { senderId } = req.body; // the user sending the friend request
 
+        console.log(`[Friend Request] Received POST /users/${receiverId}/add-amigo with senderId:`, senderId);
+
         if (!senderId) {
+            console.log('[Friend Request] Error: senderId missing from body');
             return res.status(400).send("'senderId' is required in the request body");
+        }
+
+        // Validar que receiverId es un ObjectId válido
+        if (!ObjectId.isValid(receiverId)) {
+            console.log('[Friend Request] Error: Invalid receiverId format:', receiverId);
+            return res.status(400).json({ message: "ID de usuario inválido" });
+        }
+
+        // Validar que senderId es un ObjectId válido
+        if (!ObjectId.isValid(senderId)) {
+            console.log('[Friend Request] Error: Invalid senderId format:', senderId);
+            return res.status(400).json({ message: "ID del remitente inválido" });
         }
 
         // Check if they're already friends
@@ -386,8 +439,18 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
         const receiver = await collections?.users?.findOne({ _id: receiverObjId });
         
         if (!receiver) {
-            return res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });
+            console.log('[Friend Request] Error: Receiver not found with ID:', receiverId);
+            return res.status(404).json({ message: "El usuario que intentas agregar no existe" });
         }
+
+        // Verificar que el remitente también existe
+        const sender = await collections?.users?.findOne({ _id: senderObjId });
+        if (!sender) {
+            console.log('[Friend Request] Error: Sender not found with ID:', senderId);
+            return res.status(404).json({ message: "Tu usuario no existe en el sistema" });
+        }
+
+        console.log(`[Friend Request] Both users exist. Sender: ${sender.nombre} (${senderId}), Receiver: ${receiver.nombre} (${receiverId})`);
 
         // Check if already friends (try both ObjectId and string comparison)
         const alreadyFriends = await collections?.users?.findOne({
@@ -399,6 +462,7 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
         });
 
         if (alreadyFriends) {
+            console.log('[Friend Request] Error: Already friends');
             return res.status(400).json({ message: "Already friends with this user" });
         }
 
@@ -412,9 +476,11 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
         });
 
         if (requestExists) {
+            console.log('[Friend Request] Error: Request already exists');
             return res.status(400).json({ message: "Friend request already sent to this user" });
         }
 
+        console.log('[Friend Request] Sending friend request...');
         const query = { _id: receiverObjId };
         const update = { $addToSet: { peticiones_amistad: senderObjId as any } }; // add sender ObjectId to peticiones_amistad array
 
@@ -424,15 +490,39 @@ userRouter.post("/:id/add-amigo", async (req: express.Request, res: express.Resp
             // Check if the element was actually added (modifiedCount > 0)
             if (result.modifiedCount === 0) {
                 // Element already existed, so this is a duplicate request
+                console.log('[Friend Request] Error: Duplicate request detected');
                 return res.status(400).json({ message: "Friend request already sent to this user" });
             }
+
+            console.log('[Friend Request] Database update successful. Creating notification...');
+
+            // Crear notificación para el receptor
+            try {
+                const notification = {
+                    tipo: 'solicitud_amistad' as const,
+                    de_usuario: senderObjId,
+                    para_usuario: receiverObjId,
+                    mensaje: `${sender.nombre || sender.email || 'Un usuario'} te ha enviado una solicitud de amistad`,
+                    leida: false,
+                    fecha: new Date(),
+                };
+                
+                await collections?.notifications?.insertOne(notification as any);
+                console.log('[Friend Request] Notification created successfully');
+            } catch (notifError) {
+                console.warn('[Friend Request] Error creating friendship notification:', notifError);
+                // No fallar el endpoint si la notificación no se crea
+            }
+
+            console.log('[Friend Request] Friend request completed successfully');
             res.status(200).json({ message: `Friend request sent from ${senderId} to ${receiverId}` });
         } else {
+            console.log('[Friend Request] Error: Database update failed');
             res.status(500).json({ message: `Failed to send friend request from ${senderId} to ${receiverId}` });
         }
     } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
-        console.error(message);
+        console.error('[Friend Request] Exception:', message);
         res.status(400).send(message);
     }
 });
@@ -464,6 +554,27 @@ userRouter.post("/:id/accept-amigo", async (req: express.Request, res: express.R
         const senderResult = await collections?.users?.updateOne(senderQuery, senderUpdate, { bypassDocumentValidation: true });
 
         if (receiverResult && receiverResult.matchedCount && senderResult && senderResult.matchedCount) {
+            // Crear notificación para el remitente original (senderId) informando que su solicitud fue aceptada
+            try {
+                const receiver = await collections?.users?.findOne({ _id: receiverObjId });
+                const receiverName = receiver?.nombre || receiver?.email || 'Un usuario';
+                
+                const notification = {
+                    tipo: 'amistad_aceptada',
+                    de_usuario: String(receiverId),
+                    para_usuario: String(senderId),
+                    id_grupo: '',
+                    mensaje: `${receiverName} ha aceptado tu solicitud de amistad`,
+                    leida: false,
+                    fecha: new Date(),
+                };
+                
+                await collections?.notifications?.insertOne(notification as any);
+            } catch (notifError) {
+                console.warn('Error creating friendship acceptance notification:', notifError);
+                // No fallar el endpoint si la notificación no se crea
+            }
+
             res.status(200).json({ message: `User ${receiverId} accepted friend request from ${senderId}` });
         } else {
             res.status(404).json({ message: `Failed to find one or both users: ID ${receiverId}, ID ${senderId}` });
@@ -590,6 +701,27 @@ userRouter.post("/:id/reject-amigo", async (req: express.Request, res: express.R
         const result = await collections?.users?.updateOne(query, update, { bypassDocumentValidation: true });
 
         if (result && result.matchedCount) {
+            // Crear notificación para el remitente original (senderId) informando que su solicitud fue rechazada
+            try {
+                const receiver = await collections?.users?.findOne({ _id: new ObjectId(receiverId) });
+                const receiverName = receiver?.nombre || receiver?.email || 'Un usuario';
+                
+                const notification = {
+                    tipo: 'amistad_rechazada',
+                    de_usuario: String(receiverId),
+                    para_usuario: String(senderId),
+                    id_grupo: '',
+                    mensaje: `${receiverName} ha rechazado tu solicitud de amistad`,
+                    leida: false,
+                    fecha: new Date(),
+                };
+                
+                await collections?.notifications?.insertOne(notification as any);
+            } catch (notifError) {
+                console.warn('Error creating friendship rejection notification:', notifError);
+                // No fallar el endpoint si la notificación no se crea
+            }
+
             res.status(200).json({ message: `Friend request from ${senderId} to ${receiverId} rejected` });
         } else if (!result?.matchedCount) {
             res.status(404).json({ message: `Failed to find a user: ID ${receiverId}` });

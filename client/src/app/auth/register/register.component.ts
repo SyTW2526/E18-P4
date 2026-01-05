@@ -142,8 +142,13 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       this.auth.signup(payload as any).subscribe({
         next: () => {
           this.loading = false;
-          // after signup the user is usually logged in (token saved by service)
-          this.router.navigate(['/home']);
+          // Check for pending invitation link
+          const pendingToken = sessionStorage.getItem('pendingInviteToken');
+          if (pendingToken) {
+            this.router.navigate(['/join-group', pendingToken]);
+          } else {
+            this.router.navigate(['/home']);
+          }
         },
         error: (e) => {
           this.loading = false;

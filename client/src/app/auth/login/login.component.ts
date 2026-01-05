@@ -119,7 +119,13 @@ export class LoginComponent implements OnInit, AfterViewInit {
         this.auth.signinGoogle(token).subscribe({
           next: () => {
             this.loading = false;
-            this.router.navigate(['/home']);
+            // Check for pending invitation link
+            const pendingToken = sessionStorage.getItem('pendingInviteToken');
+            if (pendingToken) {
+              this.router.navigate(['/join-group', pendingToken]);
+            } else {
+              this.router.navigate(['/home']);
+            }
           },
           error: (e) => {
             this.loading = false;
@@ -141,8 +147,13 @@ export class LoginComponent implements OnInit, AfterViewInit {
       this.auth.signin(this.loginForm.value as any).subscribe({
         next: () => {
           this.loading = false;
-          // go to protected home after login
-          this.router.navigate(['/home']);
+          // Check for pending invitation link
+          const pendingToken = sessionStorage.getItem('pendingInviteToken');
+          if (pendingToken) {
+            this.router.navigate(['/join-group', pendingToken]);
+          } else {
+            this.router.navigate(['/home']);
+          }
         },
         error: (e) => {
           this.loading = false;
