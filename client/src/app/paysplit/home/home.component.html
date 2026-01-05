@@ -1,1 +1,108 @@
-<p>home works!</p>
+<div class="home-viewport">
+  <div class="home-shell" *ngIf="auth.isLoggedIn(); else guestView">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">$</span>
+        <span>paysplit</span>
+      </div>
+      <div class="top-actions">
+        <button class="chip-button" (click)="loadSharedAccounts()">Actualizar</button>
+        <button class="chip-button" (click)="logout()">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <section class="hero-grid">
+      <div class="hero-visual" aria-hidden="true"></div>
+
+      <div class="hero-panel">
+        <div class="user-header">
+          <div class="avatar">{{ (auth.getUser()?.nombre || 'U').charAt(0).toUpperCase() }}</div>
+          <div class="user-meta">
+            <strong>{{ auth.getUser()?.nombre || 'Usuario' }}</strong>
+            <span>Moneda preferida: {{ getUserPreferredCurrency() }}</span>
+          </div>
+        </div>
+
+        <div class="amount-cards">
+          <div class="amount-card owe">
+            <h4>Debes</h4>
+            <div class="value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwed() | number:'1.2-2' }}</div>
+          </div>
+          <div class="amount-card owed">
+            <h4>Te deben</h4>
+            <div class="value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwedTo() | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <button class="primary-btn" (click)="createGroup()">Crear grupo</button>
+          <button class="secondary-btn" (click)="joinGroup()">Unirse a un grupo</button>
+        </div>
+
+        <div class="status-pill">
+          <span>{{ sharedAccounts.length }}</span>
+          <span>grupos activos</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="groups-panel">
+      <div class="groups-header">
+        <h3>Tus grupos</h3>
+        <div class="groups-actions">
+          <button class="small-btn" (click)="createGroup()">Nuevo</button>
+          <button class="small-btn" (click)="joinGroup()">Unirse</button>
+        </div>
+      </div>
+      <p class="section-title">Revisa tus balances por grupo</p>
+
+      <div *ngIf="groupsError" class="error-message">{{ groupsError }}</div>
+
+      <div class="groups-wrapper">
+        <div class="groups-scroll">
+          <div *ngIf="loadingGroups" class="status-pill">Cargando grupos…</div>
+
+          <ng-container *ngIf="!loadingGroups && sharedAccounts.length > 0; else emptyState">
+            <div class="group-card" *ngFor="let group of sharedAccounts" (click)="openGroup(group)">
+              <div class="group-avatar">{{ getGroupInitial(group) }}</div>
+              <div class="group-info">
+                <h4>{{ group.nombre }}</h4>
+                <p>{{ group.descripcion || 'Sin descripción' }}</p>
+              </div>
+              <div class="group-balance" [ngClass]="{
+                positive: (groupBalances[group._id || group.id] || 0) > 0,
+                negative: (groupBalances[group._id || group.id] || 0) < 0
+              }">
+                <small *ngIf="(groupBalances[group._id || group.id] || 0) < 0">Debes</small>
+                <small *ngIf="(groupBalances[group._id || group.id] || 0) >= 0">Te deben</small>
+                <strong>{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ Math.abs(groupBalances[group._id || group.id] || 0) | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #emptyState>
+            <div class="empty-state">Aún no tienes grupos. Crea uno o únete a un grupo existente.</div>
+          </ng-template>
+        </div>
+        <div class="scroll-rail" aria-hidden="true"></div>
+      </div>
+    </section>
+  </div>
+
+  <ng-template #guestView>
+    <div class="home-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">$</span>
+          <span>paysplit</span>
+        </div>
+      </header>
+      <div class="hero-panel">
+        <p>Inicia sesión para ver tus grupos y balances.</p>
+        <div class="cta-row">
+          <a class="primary-btn" routerLink="/login">Iniciar sesión</a>
+          <a class="secondary-btn" routerLink="/register">Crear cuenta</a>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</div>

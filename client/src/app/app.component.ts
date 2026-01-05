@@ -37,6 +37,12 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
   ],
   styles: [
     `
+      /* Mat-toolbar semi-transparent background */
+      mat-toolbar {
+        background-color: rgba(0, 0, 0, 0.7) !important;
+        backdrop-filter: blur(10px);
+      }
+
       main {
         display: flex;
         justify-content: center;
