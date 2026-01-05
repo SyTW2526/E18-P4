@@ -123,6 +123,10 @@ async function applySchemaValidation(db: mongodb.Db) {
                     description: "'preferencia_tema' is required and is either 'light', 'dark', 'claro' or 'oscuro'",
                     enum: ["light", "dark", "claro", "oscuro"],
                 },
+                moneda_preferida: {
+                    bsonType: ["string", "null"],
+                    description: "Optional preferred currency code (EUR, USD, GBP)",
+                },
                 amigos: {
                     bsonType: "array",
                     description: "Optional list of friend user ids (ObjectId or string)",
@@ -180,6 +184,10 @@ async function applySchemaValidation(db: mongodb.Db) {
                 fecha_creacion: {
                     bsonType: "date",
                     description: "'fecha_creacion' is required and is a date",
+                },
+                foto_grupo: {
+                    bsonType: ["string", "null"],
+                    description: "Optional base64 encoded group image",
                 },
             },
         },

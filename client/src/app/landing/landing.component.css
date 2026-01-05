@@ -1,10 +1,34 @@
 /* Contenedor Principal */
 .landing-container {
-  background-color: var(--bg-color);
   min-height: 100vh;
   color: var(--text-main);
   font-family: var(--font-family);
-  overflow-x: hidden; /* Evita scroll horizontal por animaciones */
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+  padding: 0 2vw 0 0; 
+  box-sizing: border-box;
+  background: transparent;
+}
+
+/* Ilustración de fondo */
+.landing-container {
+  padding-bottom: 140px;
+}
+
+.landing-container::after {
+  content: '';
+  position: fixed;
+  right: -10%;
+  bottom: -40px;
+  width: 800px;
+  height: 800px;
+  background-image: url('/assets/images/ilustracion1.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.85;
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* --- Navbar --- */
@@ -17,14 +41,9 @@
   width: 90%;
   top: 0;
   z-index: 10;
-}
-
-/* When the landing nav has no actionable items we shouldn't block clicks
-   so let pointer events pass through. If `.nav-actions` is present we
-   enable pointer events only for that area. */
-.landing-nav {
   pointer-events: none;
 }
+
 .landing-nav .nav-actions {
   pointer-events: auto;
 }
@@ -46,19 +65,38 @@
 /* --- Hero Section --- */
 .hero {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 2% 80px 2%; /* Reduced side padding from 5% to 2% */
-  min-height: 80vh;
-  gap: 60px; /* Added gap between columns */
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 96px 0 56px 0; /* baja más el bloque */
+  min-height: 75vh;
+  gap: 38px;
+  position: relative;
+  z-index: 2;
+  max-width: 1900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 1600px) {
+  .landing-container {
+    padding: 0 2vw 0 0; /* usa más del ancho disponible a la izquierda */
+  }
+  .hero {
+    max-width: 1700px;
+    gap: 42px;
+  }
+  .hero-content {
+    max-width: 600px;
+    padding-right: 26px;
+  }
 }
 
 /* Columna Izquierda */
 .hero-content {
-  flex: 1;
-  max-width: 650px;
-  padding-left: 3%;
-  padding-right: 20px;
+  flex: 0 0 auto;
+  max-width: 1200px;
+  padding-left: 0;
+  padding-right: 22px;
 }
 
 .badge {
@@ -71,7 +109,7 @@
   color: var(--primary-color);
   margin-bottom: 24px;
   border: 1px solid var(--badge-border);
-  transform: translateY(50px); /* Moved up 10px */
+  transform: translateY(50px);
 }
 
 .dot {
@@ -83,17 +121,16 @@
   box-shadow: 0 0 10px var(--primary-color);
 }
 
-.brand-name {
-  font-size: 4.5rem;
-  line-height: 1.1;
-  font-weight: 900;
+.brand-logo {
+  width: 300px;
+  height: auto;
   margin-bottom: 20px;
-  padding-bottom: 8px;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--text-gradient-start) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+.brand-logo:hover {
+  transform: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
 .tagline {
@@ -108,6 +145,7 @@
 .text-gradient {
   background: linear-gradient(90deg, var(--text-gradient-start), var(--text-gradient-end));
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -138,33 +176,48 @@
   justify-content: center;
 }
 
-.btn-primary.sm { padding: 8px 20px; font-size: 0.9rem; }
-.btn-primary.lg { padding: 14px 32px; font-size: 1rem; }
+.btn-primary.sm {
+  padding: 8px 20px;
+  font-size: 0.9rem;
+}
+
+.btn-primary.lg {
+  padding: 14px 32px;
+  font-size: 1rem;
+}
 
 .btn-primary:hover {
-  background-color: var(--primary-hover);
+  background-color: #000;
+  color: var(--primary-color);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px var(--primary-shadow);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .btn-secondary {
   background: transparent;
-  border: 1px solid var(--muted-border-strong);
-  color: var(--text-main);
-  border-radius: 30px;
-  padding: 14px 32px;
-  font-weight: 500;
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+  border-radius: 24px;
+  padding: 12px 28px;
+  font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .btn-secondary:hover {
-  background: var(--muted-surface);
-  border-color: var(--text-main);
+  background: var(--primary-color);
+  color: var(--text-contrast);
+  border-color: var(--primary-color);
 }
 
-.arrow { margin-left: 8px; transition: transform 0.2s; }
-.btn-primary:hover .arrow { transform: translateX(4px); }
+.arrow {
+  margin-left: 8px;
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover .arrow {
+  transform: translateX(4px);
+}
 
 /* Stats */
 .stats {
@@ -175,27 +228,44 @@
   border-top: 1px solid var(--muted-border);
 }
 
-.stat-item { display: flex; flex-direction: column; }
-.stat-item strong { font-size: 1.5rem; color: var(--text-main); }
-.stat-item span { font-size: 0.85rem; color: var(--text-muted); }
-.divider { width: 1px; height: 40px; background: var(--divider-color); }
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-item strong {
+  font-size: 1.5rem;
+  color: var(--text-main);
+}
+
+.stat-item span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.divider {
+  width: 1px;
+  height: 40px;
+  background: var(--divider-color);
+}
 
 /* --- Visual / Derecha --- */
 .hero-visual {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   position: relative;
+  margin-left: 12px;
 }
 
 .feature-cards-stack {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  max-width: 500px;
+  max-width: 420px;
   width: 100%;
-  padding-right: 3%;
+  padding-right: 0;
 }
 
 .feature-card {
@@ -261,23 +331,31 @@
   margin: 0 0 8px 0;
   font-size: 1.1rem;
   font-weight: 600;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .feature-content p {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* --- Features Footer --- */
 .trust-section {
-  padding: 40px 5%;
+  padding: 0 5% 40px 5%;
   text-align: center;
   border-top: 1px solid var(--panel-border-top);
+  position: relative;
+  z-index: 2;
 }
-.trust-section p { color: var(--text-muted); font-size: 0.8rem; letter-spacing: 1.5px; margin-bottom: 30px; }
+
+.trust-section p {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  margin-bottom: 30px;
+}
 
 .features-grid {
   display: flex;
@@ -295,16 +373,64 @@
 
 /* Responsividad básica */
 @media (max-width: 900px) {
-  .hero { flex-direction: column; text-align: center; padding-top: 0px; }
-  .hero-content { padding-right: 0; margin-bottom: 60px; }
-  .brand-name { font-size: 3rem; }
-  .tagline { font-size: 1.8rem; }
-  .subtitle { margin: 0 auto 40px auto; }
-  .cta-group { justify-content: center; }
-  .stats { justify-content: center; }
-  .landing-nav .nav-actions { display: none; }
-  .feature-cards-stack { max-width: 100%; padding: 0 20px; }
-  .feature-card { padding: 20px; }
-  .feature-icon { width: 40px; height: 40px; }
-  .feature-icon i { font-size: 20px; }
+  .landing-container {
+    padding: 0 6vw; /* añade aire en móviles y evita recortes */
+  }
+
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 56px 0 48px 0;
+    gap: 28px;
+    min-height: auto;
+  }
+
+  .hero-content {
+    padding-right: 0;
+    margin-bottom: 32px;
+    max-width: 100%;
+  }
+
+  .brand-logo {
+    width: 200px;
+  }
+
+  .tagline {
+    font-size: 1.9rem;
+    line-height: 1.25;
+  }
+
+  .subtitle {
+    margin: 0 auto 28px auto;
+  }
+
+  .cta-group {
+    justify-content: center;
+  }
+
+  .stats {
+    justify-content: center;
+  }
+
+  .landing-nav .nav-actions {
+    display: none;
+  }
+
+  .feature-cards-stack {
+    max-width: 100%;
+    padding: 0 12px;
+  }
+
+  .feature-card {
+    padding: 18px;
+  }
+
+  .feature-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .feature-icon i {
+    font-size: 20px;
+  }
 }

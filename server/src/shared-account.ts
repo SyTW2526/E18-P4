@@ -9,6 +9,7 @@ import * as mongodb from "mongodb";
  *  - moneda: código ISO 4217 (ej. EUR, USD) - 3 caracteres
  *  - creador_id: id del usuario que creó el grupo (FK hacia Usuario)
  *  - fecha_creacion: fecha de creación
+ *  - foto_grupo: imagen del grupo en base64 (opcional)
  */
 export interface SharedAccount {
   id_grupo?: string | number;
@@ -17,6 +18,7 @@ export interface SharedAccount {
   moneda: string;
   creador_id: string;
   fecha_creacion: Date;
+  foto_grupo?: string;
   _id?: mongodb.ObjectId;
 }
 

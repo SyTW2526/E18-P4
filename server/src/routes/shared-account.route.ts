@@ -73,14 +73,19 @@ sharedAccountsRouter.put("/:id", async (req: express.Request, res: express.Respo
   const query = { _id: new ObjectId(id) };
   const result = await collections?.sharedAccounts!.updateOne(query, { $set: cuenta });
 
-   if (result?.acknowledged) {
-      res.status(201).send(`Created a new shared account: ID ${result.upsertedId}.`);
+   if (result && result.matchedCount) {
+      res.status(200).json({ id, message: `Updated shared account` });
+    } else if (!result?.matchedCount) {
+      res.status(404).json({ message: `Failed to find shared account: ID ${id}` });
     } else {
-      res.status(500).send("Failed to create a new shared account.");
+      res.status(304).json({ message: `Failed to update shared account: ID ${id}` });
     }
   } catch (error) {
-    console.error(error);
-    res.status(400).send(error instanceof Error ? error.message : "Unknown error");
+    console.error('Shared account update error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    // If Mongo validation error, include details
+    const details: any = (error as any)?.errInfo || (error as any)?.errorResponse || error;
+    res.status(400).json({ message, details });
   }
 });
 

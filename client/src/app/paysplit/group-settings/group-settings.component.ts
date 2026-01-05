@@ -38,19 +38,38 @@ import { MatInputModule } from '@angular/material/input';
             <div style="padding:24px">
               <h3 style="margin-top:0; margin-bottom:1rem">{{ lang.t('groupProfile') }}</h3>
               <div style="display:flex; align-items:flex-start; gap:24px; margin-bottom:1.5rem">
-                <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:40px; font-weight:700; flex-shrink:0">
-                  {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
+                <div style="position:relative; min-width:140px; flex-shrink:0">
+                  <div *ngIf="groupImageSrc || account.foto_grupo" style="width:112px; height:112px; border-radius:50%; overflow:hidden; background:var(--secondary-bg); box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2px solid #444">
+                    <img [src]="groupImageSrc || account.foto_grupo" style="width:100%; height:100%; object-fit:cover" />
+                  </div>
+                  <div *ngIf="!groupImageSrc && !account.foto_grupo" style="width:112px; height:112px; border-radius:50%; background:linear-gradient(135deg, var(--primary-color) 0%, #667eea 100%); display:flex; align-items:center; justify-content:center; color:white; font-size:40px; font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,0.12); border:2px solid #444">
+                    {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
+                  </div>
+                  <input type="file" #groupFileInput accept="image/*" style="display:none" (change)="onGroupImageSelected($event)" />
+                  <button mat-stroked-button color="primary" (click)="groupFileInput.click()" style="position:absolute; bottom:0; right:6px; width:40px; height:40px; min-width:40px; padding:0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center">
+                    <mat-icon style="margin:0">photo_camera</mat-icon>
+                  </button>
                 </div>
                 <div style="flex:1; min-width:0">
                   <div style="margin-bottom:12px">
                     <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('groupName') }}</label>
                     <input type="text" [(ngModel)]="account.nombre" name="nombre" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box" />
                   </div>
+                  <div style="margin-bottom:12px">
+                    <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('id') || 'ID' }}</label>
+                    <div style="font-size:0.85rem; word-break:break-all; font-family:monospace; color:var(--text-main)">{{ account._id || account.id }}</div>
+                  </div>
                 </div>
               </div>
               <div style="margin-bottom:12px">
                 <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('description') }}</label>
                 <textarea [(ngModel)]="account.descripcion" name="descripcion" rows="3" style="width:100%; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; font-family:inherit; resize:vertical; box-sizing:border-box"></textarea>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('currency') || 'Moneda' }}</label>
+                <select [(ngModel)]="account.moneda" name="moneda" style="width:240px; padding:10px 12px; border:1px solid rgba(255,255,255,0.2); border-radius:4px; background:var(--secondary-bg); color:var(--text-main); font-size:0.95rem; box-sizing:border-box">
+                  <option *ngFor="let c of currencyOptions" [value]="c.code">{{ c.symbol }} - {{ c.label }}</option>
+                </select>
               </div>
               <div style="margin-bottom:12px">
                 <label style="display:block; font-size:0.875rem; font-weight:500; margin-bottom:4px; color:var(--text-muted)">{{ lang.t('groupId') || 'ID del grupo' }}</label>
@@ -103,6 +122,12 @@ import { MatInputModule } from '@angular/material/input';
               <div *ngIf="actionError" style="color:#d9534f; margin-top:8px; font-size:0.9rem">{{ actionError }}</div>
             </div>
           </mat-card>
+
+          <mat-card style="margin-top:16px; padding:0">
+            <div style="padding:24px; display:flex; justify-content:flex-start">
+              <button mat-raised-button class="danger-btn" (click)="deleteGroup()">{{ lang.t('deleteGroup') }}</button>
+            </div>
+          </mat-card>
         </div>
       </div>
 
@@ -146,6 +171,15 @@ export class GroupSettingsComponent implements OnInit {
   error: string | null = null;
   saveMessage: string | null = null;
 
+  // Group avatar state
+  groupImageSrc: string | null = null;
+
+  currencyOptions = [
+    { code: 'EUR', label: 'Euro', symbol: '€' },
+    { code: 'USD', label: 'US Dollar', symbol: '$' },
+    { code: 'GBP', label: 'British Pound', symbol: '£' },
+  ];
+
   // Add friend modal state
   showAddFriendModal = false;
   availableFriends: any[] = [];
@@ -165,6 +199,25 @@ export class GroupSettingsComponent implements OnInit {
     this.loadAccountDetails();
   }
 
+  deleteGroup() {
+    if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) {
+      alert('No autenticado');
+      return;
+    }
+    this.auth.deleteSharedAccount(this.accountId, String(myId)).subscribe({
+      next: () => {
+        this.router.navigate(['/home']);
+      },
+      error: (err: any) => {
+        alert('No se pudo eliminar el grupo: ' + (err?.error?.message || err?.message || 'Error'));
+        console.error('deleteGroup error', err);
+      },
+    });
+  }
+
   loadAccountDetails() {
     this.loading = true;
     this.error = null;
@@ -173,6 +226,8 @@ export class GroupSettingsComponent implements OnInit {
       next: (acc: any) => {
         this.account = { ...acc };
         this.originalAccount = { ...acc };
+        this.groupImageSrc = acc.foto_grupo || null;
+        if (!this.account.moneda) this.account.moneda = 'EUR';
         this.loadMembers();
       },
       error: (err: any) => {
@@ -204,41 +259,46 @@ export class GroupSettingsComponent implements OnInit {
     this.saveMessage = null;
     this.error = null;
 
-    const payload = {
+    const payload: any = {
       nombre: this.account.nombre,
       descripcion: this.account.descripcion,
+      moneda: this.account.moneda || 'EUR',
     };
+    
+    if (this.account.foto_grupo) {
+      payload.foto_grupo = this.account.foto_grupo;
+    }
 
     this.auth.updateSharedAccount(this.accountId, payload).subscribe({
       next: (res: any) => {
+        console.log('Save success, response:', res);
         this.saving = false;
         this.saveMessage = this.lang.t('changesSaved');
         this.originalAccount = { ...this.account };
+        this.groupImageSrc = this.account.foto_grupo || null;
         setTimeout(() => {
           this.saveMessage = null;
         }, 3000);
       },
       error: (err: any) => {
         this.saving = false;
-        console.error('Save error:', err);
-        // Check if it's actually a successful response with error status
-        if (err.status >= 200 && err.status < 300) {
-          this.saveMessage = this.lang.t('changesSaved');
-          this.originalAccount = { ...this.account };
-          setTimeout(() => {
-            this.saveMessage = null;
-          }, 3000);
-        } else {
-          this.error = err?.error?.message || this.lang.t('errorSaving');
-        }
+        console.error('Full error object:', err);
+        console.error('Error status:', err.status);
+        console.error('Error statusText:', err.statusText);
+        console.error('Error error:', err.error);
+        console.error('Error message:', err.message);
+        const msg = err.error?.message || err.message || err.statusText;
+        this.error = `${this.lang.t('errorSaving')}: ${msg}`;
       },
     });
   }
 
   cancelChanges() {
     this.account = { ...this.originalAccount };
+    if (!this.account.moneda) this.account.moneda = 'EUR';
     this.saveMessage = null;
     this.error = null;
+    this.groupImageSrc = this.account.foto_grupo || null;
   }
 
   goBack() {
@@ -399,5 +459,47 @@ export class GroupSettingsComponent implements OnInit {
       this.error = 'No se pudo copiar el ID';
       setTimeout(() => { this.error = null; }, 2000);
     });
+  }
+
+  onGroupImageSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      const img = new Image();
+      img.onload = () => {
+        const resized = this.downscaleImage(img, 256);
+        this.groupImageSrc = resized;
+        this.account.foto_grupo = resized;
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  private downscaleImage(img: HTMLImageElement, maxSize: number): string {
+    const canvas = document.createElement('canvas');
+    let width = img.width;
+    let height = img.height;
+
+    if (width > height) {
+      if (width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      }
+    } else {
+      if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx?.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.85);
   }
 }

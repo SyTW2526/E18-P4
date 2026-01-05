@@ -4,7 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
 import { LanguageService } from '../../core/language.service';
-import { forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
@@ -44,70 +45,40 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
           <button mat-stroked-button color="primary" (click)="openCreateGasto()">{{ lang.t('addExpense') }}</button>
           <button mat-stroked-button color="accent" (click)="openBalance()">{{ lang.t('balances') }}</button>
           <button mat-stroked-button (click)="openSettings()"><mat-icon style="font-size:18px;margin-right:4px">settings</mat-icon>{{ lang.t('settings') }}</button>
-          <button mat-stroked-button color="warn" (click)="deleteGroup()">{{ lang.t('delete') }}</button>
         </span>
       </div>
 
       <div style="display:flex;gap:1rem;margin-top:0.5rem">
-        <mat-card style="flex:0.9">
-          <h3>{{ lang.t('summary') }}</h3>
-          <p style="margin-bottom:0.35rem">{{ lang.t('accountTotal') }}:</p>
-          <div style="font-size:1.4rem;font-weight:700;margin:0 0 0.75rem">{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
-          <p style="margin-bottom:0.35rem">{{ lang.t('yourTotal') }}:</p>
-          <div style="font-size:1.4rem;font-weight:700;margin:0">{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
-        </mat-card>
-
-          <mat-card *ngIf="gastos.length" style="flex:2.0">
-            <h3>{{ lang.t('dailyExpenses') }}</h3>
-            <div style="padding:1rem 0">
-              <svg [attr.viewBox]="'0 0 ' + chartWidth + ' ' + chartHeight" style="width:100%; height:auto">
-                <!-- X-axis -->
-                <line [attr.x1]="chartPadding" [attr.y1]="chartHeight - chartPadding" 
-                      [attr.x2]="chartWidth - chartPadding" [attr.y2]="chartHeight - chartPadding" 
-                      stroke="var(--text-muted, #666)" stroke-width="1"/>
-                <!-- Y-axis -->
-                <line [attr.x1]="chartPadding" [attr.y1]="chartPadding" 
-                      [attr.x2]="chartPadding" [attr.y2]="chartHeight - chartPadding" 
-                      stroke="var(--text-muted, #666)" stroke-width="1"/>
-                <!-- Y-axis label (currency) -->
-                <text [attr.x]="chartPadding - 35"
-                      [attr.y]="chartPadding - 10"
-                      [attr.fill]="'var(--text-main, #fff)'"
-                      font-size="12"
-                      font-weight="600">{{ gastosCurrency() }}</text>
-              
-                <!-- Bars -->
-                <g *ngFor="let day of dailyExpenseData; let i = index">
-                  <rect [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2"
-                        [attr.y]="chartHeight - chartPadding - day.barHeight"
-                        [attr.width]="barWidth"
-                        [attr.height]="day.barHeight"
-                        [attr.fill]="'var(--primary-color, #B8F12D)'"
-                        opacity="0.8">
-                    <title>{{ day.date }}: {{ day.total | number:'1.2-2' }} {{ gastosCurrency() }}</title>
-                  </rect>
-                  <!-- Date labels -->
-                  <text [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2 + barWidth/2"
-                        [attr.y]="chartHeight - chartPadding + 15"
-                        text-anchor="middle"
-                        [attr.fill]="'var(--text-muted, #666)'"
-                        font-size="10">{{ day.label }}</text>
-                  <!-- Amount labels -->
-                  <text [attr.x]="chartPadding + (i * barWidth) + (i * barGap) + barGap/2 + barWidth/2"
-                        [attr.y]="chartHeight - chartPadding - day.barHeight - 5"
-                        text-anchor="middle"
-                        [attr.fill]="'var(--text-main, #fff)'"
-                        font-size="11"
-                        font-weight="600">{{ day.total | number:'1.0-0' }}</text>
-                </g>
-              </svg>
-            </div>
+        <!-- Left column with summary and net balance -->
+        <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:1rem;width:280px">
+          <mat-card>
+            <h3>{{ lang.t('summary') }}</h3>
+            <p style="margin-bottom:0.35rem;color:var(--text-muted)">{{ lang.t('accountTotal') }}:</p>
+            <div style="font-size:1.4rem;font-weight:700;margin:0">{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
           </mat-card>
+          
+          <div style="padding:1.5rem;background:var(--secondary-bg);border-radius:8px">
+            <h3 *ngIf="!loadingBalance" style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600">
+              {{ userNetBalance > 0 ? (lang.t('youAreOwedNet') || 'You are owed in this group') : (userNetBalance < 0 ? (lang.t('youOweNet') || 'You owe in this group') : (lang.t('balanced') || 'Balanced')) }}
+            </h3>
+            <div *ngIf="loadingBalance" style="color:var(--text-muted);font-size:0.9rem">{{ lang.t('loading') }}...</div>
+            <div *ngIf="!loadingBalance" [style.color]="userNetBalance > 0 ? '#4caf50' : (userNetBalance < 0 ? '#d32f2f' : 'var(--text-main)')" style="font-size:2.5rem;font-weight:bold">
+              {{ abs(userNetBalance) | number:'1.2-2' }} {{ gastosCurrency() }}
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;align-items:baseline;margin-top:-0.75rem">
+            <p style="margin:0;font-size:0.85rem;color:var(--text-muted)">{{ lang.t('youHavePaid') }}:</p>
+            <div style="font-size:1rem;font-weight:700">{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</div>
+          </div>
+        </div>
 
-          <mat-card style="flex:2.6">
-          <h3>{{ lang.t('expenseHistory') }}</h3>
-          <div *ngIf="!gastos.length">{{ lang.t('noExpensesYet') }}</div>
-          <mat-list *ngIf="gastos.length">
+        <!-- Right content area -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:1rem">
+          <mat-card style="flex:1; overflow-y:auto">
+            <h3 style="margin-top:0">{{ lang.t('expenseHistory') }}</h3>
+            <div *ngIf="!gastos.length" style="color: var(--text-muted)">{{ lang.t('noExpensesYet') }}</div>
+            <div *ngIf="gastos.length" style="background: var(--secondary-bg); border-radius: 8px; padding: 1rem">
+            <mat-list style="background: transparent">
               <mat-list-item *ngFor="let g of gastos">
                 <div style="display:flex;justify-content:space-between;width:100%">
                   <div>
@@ -115,14 +86,53 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
                     <div style="font-size:0.9rem;color:#666">{{ lang.t('by') }} {{ displayMember(g.id_pagador) }} · {{ g.fecha ? (g.fecha | date:'dd/MM/yyyy HH:mm') : '' }}</div>
                   </div>
                   <div style="display:flex;gap:0.5rem;align-items:center">
+                    <div [style.color]="getExpenseImpactForUser(g) > 0 ? '#4caf50' : (getExpenseImpactForUser(g) < 0 ? '#d32f2f' : '#a1a1aa')" style="font-weight:700;min-width:60px;text-align:right">
+                      {{ getExpenseImpactForUser(g) > 0 ? '+' : '' }}{{ getExpenseImpactForUser(g) | number:'1.2-2' }}
+                    </div>
                     <div style="font-weight:700">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</div>
                     <button mat-icon-button [title]="lang.t('editExpense')" (click)="editGasto(g._id || g.id || g._id?.toString())"><mat-icon>edit</mat-icon></button>
                     <button mat-icon-button color="warn" [title]="lang.t('deleteExpense')" (click)="removeGasto(g._id || g.id || g._id?.toString())"><mat-icon>delete</mat-icon></button>
                   </div>
                 </div>
               </mat-list-item>
-          </mat-list>
-        </mat-card>
+            </mat-list>
+            </div>
+          </mat-card>
+
+          <div style="flex:1;display:flex;flex-direction:column">
+            <div style="background:var(--mdc-elevated-card-container-color);border-radius:8px 8px 0 0;padding:1.5rem 1.5rem 0 1.5rem">
+              <h3>{{ lang.t('dailyExpenses') }}</h3>
+            </div>
+            <div style="background:var(--mdc-elevated-card-container-color);border-radius:0 0 8px 8px;padding:0 1.5rem 1.5rem 1.5rem;flex:1">
+              <svg width="100%" height="300" style="max-width:100%;background:transparent;display:block" viewBox="0 0 600 300">
+                <!-- Axes -->
+                <line x1="40" y1="20" x2="40" y2="260" stroke="#a1a1aa" stroke-width="2"/>
+                <line x1="40" y1="260" x2="580" y2="260" stroke="#a1a1aa" stroke-width="2"/>
+                
+                <!-- Y-axis label -->
+                <text x="10" y="30" font-size="12" font-weight="600" fill="#ffffff">{{ gastosCurrency() }}</text>
+                
+                <!-- Bars and labels -->
+                <g *ngFor="let day of dailyExpenseData; let i = index">
+                  <!-- Bar (scaled to fit: max height 150, starts at y=100, ends at y=260) -->
+                  <rect [attr.x]="60 + (i * 140)" [attr.y]="260 - (day.barHeight * 150 / 280)" width="50" 
+                        [attr.height]="day.barHeight * 150 / 280" 
+                        fill="#7ae582" opacity="0.8">
+                    <title>{{ day.date }}: {{ day.total | number:'1.2-2' }} {{ gastosCurrency() }}</title>
+                  </rect>
+                  <!-- Amount on top of bar -->
+                  <text [attr.x]="85 + (i * 140)" [attr.y]="255 - (day.barHeight * 150 / 280)" text-anchor="middle" 
+                        font-size="11" font-weight="600" fill="#ffffff">{{ day.total | number:'1.0-0' }}</text>
+                  <!-- Date label below axis -->
+                  <text [attr.x]="85 + (i * 140)" y="280" text-anchor="middle" 
+                        font-size="10" fill="#a1a1aa">{{ day.label }}</text>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Removed old mat-card with embedded chart below -->
       </div>
 
       <!-- Add friend modal -->
@@ -179,11 +189,16 @@ export class AccountDetailComponent implements OnInit {
 
   // Chart properties
   chartWidth = 800;
-  chartHeight = 300;
+  chartHeight = 380;
   chartPadding = 50;
   barWidth = 32;
   barGap = 8;
   dailyExpenseData: Array<{ date: string; label: string; total: number; barHeight: number }> = [];
+  
+  // Balance properties
+  userNetBalance: number = 0;
+  loadingBalance = false;
+  abs = Math.abs;
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
@@ -193,6 +208,7 @@ export class AccountDetailComponent implements OnInit {
     const state = window.history.state || {};
     if (state?.accountName) this.accountName = state.accountName;
     this.loadAccountAndGastos();
+    this.loadUserBalance();
   }
 
   loadAccountAndGastos() {
@@ -278,11 +294,46 @@ export class AccountDetailComponent implements OnInit {
     this.loading = true;
     this.auth.getGastosForGroup(this.accountId).subscribe({
       next: (res: any) => {
-        this.gastos = Array.isArray(res) ? res : (res?.data || []);
+        const baseGastos = Array.isArray(res) ? res : (res?.data || []);
         // normalize fecha if it's a string
-        this.gastos = this.gastos.map((g: any) => ({ ...g, fecha: g.fecha ? new Date(g.fecha) : null }));
-        this.calculateDailyExpenses();
-        this.loading = false;
+        const normalized = baseGastos.map((g: any) => ({ ...g, fecha: g.fecha ? new Date(g.fecha) : null }));
+
+        // fetch participaciones for each gasto and attach
+        const withParticipaciones$: Array<Observable<any>> = normalized.map((g: any) => {
+          const gid = g?._id?.toString ? g._id.toString() : (g?._id || g?.id);
+          if (!gid) return of(g);
+          return this.auth.getParticipacionesForGasto(String(gid)).pipe(
+            map((parts: any[]) => {
+              const normalizedParts = (parts || []).map((p: any) => {
+                const amount = Number(p.monto_asignado ?? p.monto ?? p.amount ?? 0);
+                const userId = p.id_usuario ?? p.userId ?? p.id;
+                return { ...p, amount, userId };
+              });
+              return { ...g, participacion: normalizedParts };
+            }),
+            catchError(() => of(g))
+          );
+        });
+
+        if (withParticipaciones$.length) {
+          forkJoin(withParticipaciones$).subscribe({
+            next: (full: any[]) => {
+              this.gastos = full;
+              this.calculateDailyExpenses();
+              this.loading = false;
+            },
+            error: () => {
+              // fallback without participacion
+              this.gastos = normalized;
+              this.calculateDailyExpenses();
+              this.loading = false;
+            }
+          });
+        } else {
+          this.gastos = normalized;
+          this.calculateDailyExpenses();
+          this.loading = false;
+        }
       },
       error: (err: any) => {
         this.error = err?.error?.message || err?.message || 'No se pudieron cargar los gastos';
@@ -389,6 +440,37 @@ export class AccountDetailComponent implements OnInit {
   gastosCurrency() {
     // try to pick currency from first gasto or fallback to EUR
     return this.gastos.length ? (this.gastos[0].moneda || 'EUR') : 'EUR';
+  }
+
+  loadUserBalance() {
+    this.loadingBalance = true;
+    this.auth.getDetailedBalancesForGroup(this.accountId).subscribe({
+      next: (detailed: any) => {
+        this.loadingBalance = false;
+        const me = this.auth.getUser();
+        const myId = me?._id || me?.id;
+        if (me && Array.isArray(detailed)) {
+          const myBalance = detailed.find((d: any) => {
+            const userId = d?.userId || d?.user?._id || d?.user?.id;
+            return userId && (userId === myId);
+          });
+          if (myBalance) {
+            // Calculate net balance: what others owe me (positive) minus what I owe others (negative)
+            const iOwe = (myBalance.owes || []).reduce((sum: number, debt: any) => sum + (Number(debt.amount) || 0), 0);
+            const owedToMe = (myBalance.owesMoney || []).reduce((sum: number, debt: any) => sum + (Number(debt.amount) || 0), 0);
+            // Net = what I'm owed minus what I owe (positive means they owe me, negative means I owe)
+            this.userNetBalance = owedToMe - iOwe;
+          } else {
+            this.userNetBalance = 0;
+          }
+        } else {
+          this.userNetBalance = 0;
+        }
+      },
+      error: () => {
+        this.loadingBalance = false;
+      }
+    });
   }
 
   openCreateGasto() {
@@ -550,5 +632,55 @@ export class AccountDetailComponent implements OnInit {
         this.addFriendError = err?.error?.message || 'No se pudo añadir el amigo al grupo';
       }
     });
+  }
+
+  getExpenseImpactForUser(gasto: any): number {
+    const me = this.auth.getUser();
+    const myId = me?._id || me?.id;
+    if (!myId) return 0;
+
+    const isUserPayer = gasto.id_pagador === myId;
+    const totalAmount = Number(gasto.monto) || 0;
+    
+    // Get participantes - try different possible field names
+    const participantes = gasto.participacion || gasto.participants || gasto.shares || [];
+    
+    // Use participacion if present
+    const participantCount = participantes?.length || 0;
+
+    // If no participantes data, calculate equal split assumption
+    if (!participantes || participantCount === 0) {
+      if (isUserPayer) {
+        // Payer fronted the whole amount; others owe them
+        return totalAmount;
+      }
+      return 0; // Can't determine impact without participation data
+    }
+
+    // Find user's participation (if exists)
+    const userParticipation = participantes.find((p: any) => {
+      const userId = p.userId || p.id_usuario || p.id;
+      return userId === myId;
+    });
+
+    // If we have an explicit amount, use it; otherwise treat as unknown (0) to avoid forced equal split
+    const rawShare = Number(userParticipation?.amount ?? userParticipation?.monto_asignado ?? userParticipation?.monto);
+    const userShare = Number.isFinite(rawShare) && rawShare > 0 ? rawShare : 0;
+
+    if (!userParticipation) {
+      // User not in participantes
+      if (isUserPayer) {
+        return -totalAmount; // They paid full amount
+      }
+      return 0; // User has no stake in this expense
+    }
+
+    if (isUserPayer) {
+      // Impact: amount others owe them (what they paid minus their share)
+      return totalAmount - userShare;
+    }
+
+    // User didn't pay, they owe their share
+    return -userShare;
   }
 }

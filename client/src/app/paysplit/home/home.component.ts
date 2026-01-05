@@ -15,116 +15,37 @@ import { MatListModule } from '@angular/material/list';
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCardModule, MatListModule],
-  template: `
-    <section style="max-width:900px; width:100%; text-align:center; padding-top:2rem">
-      <h1>{{ lang.t('welcome') }}</h1>
-
-      <ng-container *ngIf="!auth.isLoggedIn()">
-        <p>{{ lang.t('mustLoginFirst') }}</p>
-
-        <div style="display:flex;gap:2rem;justify-content:center; margin-top:1rem">
-          <div style="min-width:300px">
-            <h3>{{ lang.t('signup') }}</h3>
-            <form (ngSubmit)="signup()">
-              <mat-form-field style="width:100%">
-                <input matInput [placeholder]="lang.t('name')" [(ngModel)]="signupModel.nombre" name="nombre" required (ngModelChange)="clearSignupError()" />
-              </mat-form-field>
-              <mat-form-field style="width:100%">
-                <input matInput [placeholder]="lang.t('email')" [(ngModel)]="signupModel.email" name="email" required (ngModelChange)="clearSignupError()" />
-              </mat-form-field>
-              <mat-form-field style="width:100%">
-                <input matInput [placeholder]="lang.t('password')" [(ngModel)]="signupModel.password" name="password" [type]="showSignupPassword ? 'text' : 'password'" required (ngModelChange)="clearSignupError()" />
-                <button mat-icon-button matSuffix type="button" (click)="toggleSignupPassword()" [attr.aria-label]="showSignupPassword ? lang.t('hidePassword') : lang.t('showPassword')">
-                  <mat-icon>{{ showSignupPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-              </mat-form-field>
-              <div style="display:flex;flex-direction:column;gap:0.5rem">
-                <button mat-raised-button color="primary" type="submit" [disabled]="signupLoading">{{ signupLoading ? lang.t('signingUp') : lang.t('signup') }}</button>
-                <div *ngIf="signupError" style="color:#b00020;font-size:0.9rem;text-align:left">{{ signupError }}</div>
-              </div>
-            </form>
-          </div>
-
-          <div style="min-width:300px">
-            <h3>{{ lang.t('signin') }}</h3>
-            <form (ngSubmit)="signin()">
-              <mat-form-field style="width:100%">
-                <input matInput [placeholder]="lang.t('email')" [(ngModel)]="signinModel.email" name="se_email" required (ngModelChange)="clearSigninError()" />
-              </mat-form-field>
-              <mat-form-field style="width:100%">
-                <input matInput [placeholder]="lang.t('password')" [(ngModel)]="signinModel.password" name="se_password" [type]="showSigninPassword ? 'text' : 'password'" required (ngModelChange)="clearSigninError()" />
-                <button mat-icon-button matSuffix type="button" (click)="toggleSigninPassword()" [attr.aria-label]="showSigninPassword ? lang.t('hidePassword') : lang.t('showPassword')">
-                  <mat-icon>{{ showSigninPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
-                </button>
-              </mat-form-field>
-              <div style="display:flex;flex-direction:column;gap:0.5rem">
-                <button mat-raised-button color="accent" type="submit" [disabled]="signinLoading">{{ signinLoading ? lang.t('signingIn') : lang.t('signin') }}</button>
-                <div *ngIf="signinError" style="color:#b00020;font-size:0.9rem;text-align:left">{{ signinError }}</div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </ng-container>
-
-      <div *ngIf="auth.isLoggedIn()" style="margin-top:1rem">
-        <p style="margin:0 auto 1rem;max-width:900px">{{ lang.t('connectedAs') }} <strong>{{ auth.getUser()?.nombre || auth.getUser()?.email }}</strong></p>
-
-        <div style="display:flex;flex-wrap:wrap;gap:2rem;margin-top:1rem;max-width:900px;margin-left:auto;margin-right:auto">
-          <!-- Left sidebar with debt info -->
-          <div style="flex:0 0 auto;padding:1.5rem;background:var(--secondary-bg);border-radius:8px;height:fit-content;min-width:180px">
-            <h3 style="margin:0 0 1rem 0;font-size:0.95rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px">{{ lang.t('youOwe') }}</h3>
-            <div style="font-size:2.5rem;font-weight:bold;color:#d32f2f;margin-bottom:0.5rem">{{ totalDebt.toFixed(2) }} €</div>
-          </div>
-
-          <!-- Right content area with groups -->
-          <div style="flex:1;min-width:280px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <h3>{{ lang.t('myGroups') }}</h3>
-              <div style="display:flex;gap:0.5rem">
-              <button mat-flat-button class="btn-primary" (click)="createFormVisible = !createFormVisible">{{ lang.t('create') }}</button>
-              <button mat-flat-button class="btn-primary" (click)="joinFormVisible = !joinFormVisible">{{ lang.t('join') }}</button>
-            </div>
-          </div>
-
-          <div *ngIf="createFormVisible" style="margin-top:0.75rem;">
-            <mat-form-field style="width:60%">
-              <input matInput [placeholder]="lang.t('newGroupName')" [(ngModel)]="createName" name="createName" />
-            </mat-form-field>
-            <button mat-raised-button color="primary" (click)="createGroupFromForm()" [disabled]="createLoading">{{ createLoading ? lang.t('creating') : lang.t('createGroup') }}</button>
-          </div>
-
-          <div *ngIf="joinFormVisible" style="margin-top:0.75rem;">
-            <mat-form-field style="width:60%">
-              <input matInput [placeholder]="lang.t('groupId')" [(ngModel)]="joinId" name="joinId" />
-            </mat-form-field>
-            <button mat-raised-button color="accent" (click)="joinGroupFromForm()" [disabled]="joinLoading">{{ joinLoading ? lang.t('joining') : lang.t('join') }}</button>
-          </div>
-
-          <div *ngIf="loadingGroups" style="margin-top:1rem">{{ lang.t('loadingGroups') }}</div>
-          <div *ngIf="groupsError" style="color:#b00020;margin-top:1rem">{{ groupsError }}</div>
-
-          <div *ngIf="!loadingGroups && sharedAccounts.length" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
-            <mat-card *ngFor="let g of sharedAccounts" class="group-card" tabindex="0" (click)="openGroup(g)" (keydown.enter)="openGroup(g)">
-              <mat-card-title>{{ g.nombre }}</mat-card-title>
-              <mat-card-subtitle *ngIf="g.moneda">{{ lang.t('currency') }}: {{ g.moneda }}</mat-card-subtitle>
-              <mat-card-content>
-                <p *ngIf="g.descripcion">{{ g.descripcion }}</p>
-              </mat-card-content>
-            </mat-card>
-          </div>
-
-          <div *ngIf="!loadingGroups && !sharedAccounts.length" style="margin-top:1rem">No perteneces a ningún grupo todavía.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-  `,
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
 })
 export class HomeComponent {
+  Math = Math;
   sharedAccounts: any[] = [];
+  groupBalances: { [groupId: string]: number } = {};
   loadingGroups = false;
   groupsError: string | null = null;
   totalDebt = 0;
+
+  getAmountOwed(): number {
+    let sum = 0;
+    Object.values(this.groupBalances).forEach(balance => {
+      if (balance < 0) sum += Math.abs(balance);
+    });
+    return sum;
+  }
+
+  getAmountOwedTo(): number {
+    let sum = 0;
+    Object.values(this.groupBalances).forEach(balance => {
+      if (balance > 0) sum += balance;
+    });
+    return sum;
+  }
+
+  getUserPreferredCurrency(): string {
+    const user = this.auth.getUser();
+    return user?.moneda_preferida || 'EUR';
+  }
   signupModel = { nombre: '', email: '', password: '' };
   signinModel = { email: '', password: '' };
   showSignupPassword = false;
@@ -256,9 +177,11 @@ export class HomeComponent {
         next: (balances: any[]) => {
           // Find the balance for the current user
           const userBalance = balances.find((b: any) => String(b.userId) === String(userId));
-          if (userBalance && userBalance.balance < 0) {
-            // Negative balance means the user owes money
-            debtSum += Math.abs(userBalance.balance);
+          if (userBalance) {
+            const balance = userBalance.balance;
+            this.groupBalances[groupId] = balance;
+            // Add all balances (negative = owes, positive = owed to) to net total
+            debtSum += balance;
           }
           completedGroups++;
           if (completedGroups === this.sharedAccounts.length) {
@@ -432,5 +355,53 @@ export class HomeComponent {
   logout() {
     this.auth.logout();
     this.router.navigate(['/login']);
+  }
+
+  getGroupInitial(group: any): string {
+    return (group?.nombre || 'G').charAt(0).toUpperCase();
+  }
+
+  getCurrencySymbol(code: string): string {
+    const symbols: { [key: string]: string } = {
+      'EUR': '€',
+      'USD': '$',
+      'GBP': '£',
+      'JPY': '¥',
+      'CHF': 'CHF',
+      'CAD': 'C$',
+      'AUD': 'A$',
+      'NZD': 'NZ$',
+      'CNY': '¥',
+      'INR': '₹',
+      'BRL': 'R$',
+      'MXN': '$',
+      'SEK': 'kr',
+      'NOK': 'kr',
+      'DKK': 'kr',
+      'PLN': 'zł',
+      'CZK': 'Kč',
+      'HUF': 'Ft',
+      'RON': 'lei',
+      'BGN': 'лв',
+      'HRK': 'kn',
+      'RUB': '₽',
+      'TRY': '₺',
+      'ZAR': 'R',
+      'SGD': 'S$',
+      'HKD': 'HK$',
+      'THB': '฿',
+      'MYR': 'RM',
+      'PHP': '₱',
+      'IDR': 'Rp',
+      'VND': '₫',
+      'KRW': '₩',
+      'TWD': 'NT$',
+      'AED': 'د.إ',
+      'SAR': '﷼',
+      'KWD': 'د.ك',
+      'QAR': 'ر.ق',
+      'ILS': '₪'
+    };
+    return symbols[code] || code;
   }
 }

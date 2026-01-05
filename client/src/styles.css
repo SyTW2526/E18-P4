@@ -1,3 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+
+/* Hide up/down arrows (spinners) on all number input fields */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+/* Global font application */
+html, body {
+  font-family: var(--font-family);
+}
+/* Make mat-form-fields look exactly like the custom dropdowns (currency/paid by) */
+.mat-mdc-form-field-appearance-fill .mat-mdc-text-field-wrapper {
+  border-radius: 4px !important;
+  background: var(--secondary-bg) !important;
+  border: 1px solid var(--divider-color) !important;
+  box-shadow: none !important;
+  min-height: 48px;
+  padding: 0 !important;
+  color: var(--text-main) !important;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-flex {
+  padding: 0 16px !important;
+  align-items: center;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-infix {
+  padding: 12px 0 8px 0 !important;
+  background: transparent !important;
+  font-size: 1rem !important;
+}
+
+.mat-mdc-form-field-appearance-fill.mat-mdc-form-field {
+  background: none !important;
+}
+
+.mat-mdc-form-field-appearance-fill .mat-mdc-form-field-subscript-wrapper {
+  background: transparent !important;
+}
+/* Force hide Angular Material underline globally */
+.mdc-line-ripple {
+  display: none !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+  opacity: 0 !important;
+}
 :root {
   /* Paleta extraída de tu imagen de referencia */
   --bg-color: #0a0a0a;       /* Fondo oscuro casi negro */
@@ -24,7 +76,7 @@
   --panel-border-top: rgba(255, 255, 255, 0.05);
   
   /* Tipografía */
-  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-family: 'Outfit', system-ui, -apple-system, sans-serif;
 }
 
 :root[data-theme="light"] {
@@ -53,13 +105,22 @@
 }
 
 html, body {
+  background-image: linear-gradient(to bottom, #000000 0%, color-mix(in srgb, #000000 60%, #4F9E55) 100%, #4F9E55 100%);
   background-color: var(--bg-color);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text-main);
   font-family: var(--font-family);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   max-width: 100%;
+}
+
+app-root {
+  min-height: 100vh;
+  background: transparent;
 }
 
 /* Clases de utilidad para botones estilo "Landing" */
@@ -193,11 +254,13 @@ button[mat-flat-button][color="primary"]:active {
   box-shadow: none !important;
 }
 
-/* Force Material toolbar to use the app primary color 
-Color del header en sí*/
+/* Force Material toolbar to customize */
 .mat-toolbar.mat-primary {
-  background-color: var(--primary-color);
-  color: var(--secondary-bg);
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  min-height: 72px !important;
+  height: 72px !important;
+  padding: 0.8rem 0 !important;
 }
 
 /* Make the app header stick to the top of the viewport */
@@ -209,31 +272,94 @@ Color del header en sí*/
   z-index: 1200;
 }
 
-/* Ensure Material overlay (menus, dialogs, tooltips) appears above the fixed toolbar */
-.cdk-overlay-container .cdk-overlay-pane {
+
+/* Angular CDK overlay: let Angular manage positioning by default */
+
+.cdk-overlay-container {
   z-index: 1300 !important;
 }
 
-/* Ensure the overlay container is positioned relative to the viewport
-   so CDK overlays (menus, tooltips, dialogs) are placed correctly.
-   Some transforms/containers can break overlay positioning — forcing
-   the container to be fixed and full-viewport prevents that. */
-.cdk-overlay-container {
+/* Backdrop must be clickable and positioned to cover viewport */
+.cdk-overlay-backdrop {
+  z-index: 1299 !important;
   position: fixed !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  cursor: pointer !important;
 }
-.cdk-overlay-container .cdk-overlay-pane {
-  position: absolute !important;
+
+.cdk-overlay-pane {
   pointer-events: auto !important;
+  /* Use framework-provided positioning; avoid forcing absolute/animation */
+}
+
+/* Ensure Material Datepicker panel renders and matches dark theme */
+.cdk-overlay-pane .mat-datepicker-content,
+.cdk-overlay-pane .mat-mdc-datepicker-content {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.65), 0 6px 12px rgba(0,0,0,0.45) !important;
+  z-index: 1301 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.mat-calendar {
+  color: var(--text-main) !important;
+}
+.mat-calendar-body-cell-content,
+.mat-mdc-calendar-body-cell-content {
+  color: var(--text-main) !important;
+}
+.mat-calendar-body-selected,
+.mat-mdc-calendar-body-selected {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+.mat-calendar-body-cell:hover .mat-calendar-body-cell-content,
+.mat-mdc-calendar-body-cell:hover .mat-mdc-calendar-body-cell-content {
+  background: var(--primary-hover) !important;
+  color: var(--text-contrast) !important;
+}
+
+/* Override the bounding box flex alignment that pushes menu to bottom */
+/* Avoid forcing global alignment; allow strategy to place overlays */
+
+/* Do NOT force overlay positioning for Datepicker; restore defaults */
+.cdk-overlay-pane:has(.mat-datepicker-content),
+.cdk-overlay-pane:has(.mat-mdc-datepicker-content) {
+  position: fixed !important; /* let CDK manage exact placement */
+  animation: none !important;
+  transform: none !important;
+  z-index: 1301 !important;
+}
+.cdk-overlay-connected-position-bounding-box:has(.mat-datepicker-content),
+.cdk-overlay-connected-position-bounding-box:has(.mat-mdc-datepicker-content) {
+  align-items: center !important; /* center near trigger */
+  justify-content: center !important;
+}
+
+/* Hide submenu arrow from profile menu items */
+.profile-menu .mat-mdc-menu-item-submenu-trigger .mat-mdc-menu-submenu-icon {
+  display: none !important;
+}
+
+/* Force profile menu to appear below button, not at bottom of bounding box */
+.cdk-overlay-pane .mat-mdc-menu-panel.ng-star-inserted:has(.mat-mdc-menu-item button[routerlink="/settings"]) {
+  position: relative !important;
+  top: 0 !important;
+}
+
+.cdk-overlay-connected-position-bounding-box:has(.mat-mdc-menu-panel .mat-mdc-menu-item button[routerlink="/settings"]) {
+  height: auto !important;
+  align-items: flex-start !important;
 }
 
 /* Amigos / Mat-menu styling ------------------------------------------------- */
 /* Style the menu panel itself (both legacy and MDC variants) */
-.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
-.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel,
 .cdk-overlay-pane .mat-menu-panel,
 .cdk-overlay-pane .mat-mdc-menu-panel {
   background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
@@ -451,7 +577,7 @@ Color del header por la derecha*/
 .mat-toolbar.mat-primary .mat-button,
 .mat-toolbar.mat-primary button,
 .mat-toolbar.mat-primary .mat-icon {
-  color: #000 !important;
+  color: var(--text-main) !important;
 }
 
 /* Make the whole card show an accent highlight on hover/focus */
@@ -470,6 +596,24 @@ Color del header por la derecha*/
 
 .group-card:focus {
   outline: 2px solid color-mix(in srgb, var(--primary-hover) 40%, transparent);
+}
+
+/* Danger button (delete) styling with subtle hover */
+.danger-btn {
+  background: #d32f2f !important;
+  color: #fff !important;
+  transition: filter 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.danger-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(211,47,47,0.35);
+}
+.danger-btn:active {
+  transform: translateY(0);
+  filter: brightness(0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
 /* Round all Material card variants and clip overflow (ripples/content) */
