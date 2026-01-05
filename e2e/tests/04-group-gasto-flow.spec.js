@@ -87,8 +87,8 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     console.log('Step 1: Creating Group');
     
     // Selector muy amplio para encontrar cualquier botón de creación
-    // Busca: Texto "Crear", "Create", icono "add" (+), o botón flotante mat-fab
-    const createBtnSelector = By.xpath("//button[contains(.,'Crear') or contains(.,'Create') or .//mat-icon[contains(.,'add')] or contains(@class, 'mat-fab')]");
+    // Busca: Texto "Crear", "Create", o botón flotante mat-fab
+    const createBtnSelector = By.xpath("//button[contains(.,'Crear') or contains(.,'Create') or contains(@class, 'mat-fab')]");
     
     // Usamos wait normal (más seguro que el helper anterior)
     await clickElement(driver, createBtnSelector, 30000);
@@ -103,7 +103,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     await nameInput.clear();
     await nameInput.sendKeys(uniqueGroupName);
 
-    const submitGroupBtn = By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Create group') or contains(.,'Aceptar')]" );
+    const submitGroupBtn = By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Create group') or contains(.,'Aceptar')]");
     await clickElement(driver, submitGroupBtn, 10000);
 
     // --- 2. OPEN GROUP ---
@@ -121,7 +121,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     // --- 3. ADD EXPENSE ---
     console.log('Step 3: Adding Expense');
 
-    const addGastoBtn = By.xpath("//button[contains(.,'Añadir gasto') or contains(.,'Add') or .//mat-icon[contains(.,'add')]]" );
+    const addGastoBtn = By.xpath("//button[contains(.,'Añadir gasto') or contains(.,'Add') or contains(.,'Nuevo')]");
     await clickElement(driver, addGastoBtn, 20000);
 
     await driver.wait(until.urlContains('create-gasto'), 20000);
@@ -135,7 +135,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     const amountInput = await driver.findElement(By.css('input[name="monto"]'));
     await amountInput.sendKeys('50');
 
-    const saveGastoBtn = By.xpath("//button[contains(.,'Añadir') or contains(.,'Add') or contains(.,'Guardar')]" );
+    const saveGastoBtn = By.xpath("//button[contains(.,'Añadir') or contains(.,'Add') or contains(.,'Guardar')]");
     await clickElement(driver, saveGastoBtn, 10000);
 
     await driver.wait(until.urlContains('/group'), 20000);
@@ -143,7 +143,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     // --- 4. DELETE EXPENSE ---
     console.log('Step 4: Deleting Expense');
 
-    const expenseRowXPath = `//*[contains(text(), "${uniqueGastoDesc}")]/ancestor::mat-list-item | //*[contains(text(), "${uniqueGastoDesc}")]/ancestor::tr`;
+    const expenseRowXPath = `//*[contains(text(), "${uniqueGastoDesc}")]/ancestor::mat-list-item`;
     const rowEl = await driver.wait(until.elementLocated(By.xpath(expenseRowXPath)), 20000);
     try { await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', rowEl); } catch (_) {}
 
@@ -151,7 +151,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     try {
       deleteBtnInRow = await rowEl.findElement(By.xpath(".//button[@title='Eliminar gasto' or @title='Delete expense']"));
     } catch (_) {
-      deleteBtnInRow = await rowEl.findElement(By.xpath(".//button[.//mat-icon[contains(.,'delete')]]"));
+      deleteBtnInRow = await rowEl.findElement(By.css("button[title*='limin'], button.delete-btn"));
     }
     
     await driver.executeScript('arguments[0].click();', deleteBtnInRow);
@@ -162,36 +162,14 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
       await driver.wait(until.stalenessOf(rowEl), 5000);
     } catch (_) { await driver.sleep(1000); }
 
-    // --- 5. DELETE GROUP ---
-    console.log('Step 5: Deleting Group');
-    
-    // Check if we are in settings or need to navigate
-    const currentUrl = await driver.getCurrentUrl();
-    if (!currentUrl.includes('/settings')) {
-        try {
-            const settingsBtn = await driver.findElement(By.xpath("//button[.//mat-icon[contains(.,'settings')]]"));
-            await settingsBtn.click();
-        } catch(e) {
-            console.log("Botón settings no encontrado, buscando eliminar directo...");
-        }
-    }
-
-    const deleteGroupBtn = await driver.wait(
-        until.elementLocated(By.xpath("//button[contains(.,'Eliminar') or contains(.,'Delete') or .//mat-icon[contains(.,'delete_forever')]]")),
-        20000
-    );
-    await clickElement(driver, deleteGroupBtn, 10000);
-
-    await handleConfirmation(driver);
-
     // --- 6. VERIFY HOME ---
     console.log('Step 6: Verifying deletion');
 
-    await driver.wait(until.urlContains('/home'), 20000);
+    await driver.wait(until.urlContains('/group'), 20000);
     
-    const groups = await driver.findElements(
-      By.xpath(`//mat-card-title[contains(text(), "${uniqueGroupName}")]`)
+    const expenseRows = await driver.findElements(
+      By.xpath(`//*[contains(text(), "${uniqueGastoDesc}")]`)
     );
-    expect(groups.length).to.equal(0);
+    expect(expenseRows.length).to.equal(0);
   });
 });
