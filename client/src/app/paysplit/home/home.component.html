@@ -17,84 +17,180 @@
       </div>
     </header>
 
-    <section class="content-wrapper">
-      <!-- Left Column: Stats -->
-      <div class="left-column">
-        <div class="stats-column">
-          <div class="stat-card positive">
-            <div class="stat-icon">
-              <mat-icon>arrow_downward</mat-icon>
-            </div>
-            <div class="stat-content">
-              <span class="label">Te deben</span>
-              <span class="value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwedTo() | number:'1.2-2' }}</span>
-            </div>
-          </div>
-
-          <div class="stat-card negative">
-            <div class="stat-icon">
-              <mat-icon>arrow_upward</mat-icon>
-            </div>
-            <div class="stat-content">
-              <span class="label">Debes</span>
-              <span class="value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwed() | number:'1.2-2' }}</span>
-            </div>
-          </div>
-
-          <div class="stat-card action-card">
-            <span class="label">Gestión rápida</span>
-            <div class="action-buttons">
-              <button class="primary-btn-small" (click)="createGroup()">
-                <mat-icon>add</mat-icon> Crear Grupo
-              </button>
-              <button class="secondary-btn-small" (click)="joinGroup()">
-                <mat-icon>group_add</mat-icon> Unirse
-              </button>
-            </div>
-          </div>
+    <!-- Top Dashboard Cards (Summary Metrics) -->
+    <section class="dashboard-metrics">
+      <div class="metric-card metric-positive">
+        <div class="metric-icon">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Te deben</span>
+          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwedTo() | number:'1.2-2' }}</span>
         </div>
       </div>
 
+      <div class="metric-card metric-negative">
+        <div class="metric-icon">
+          <mat-icon>trending_down</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Debes</span>
+          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwed() | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-balance" [ngClass]="{
+        'is-positive': (getAmountOwedTo() - getAmountOwed()) > 0,
+        'is-negative': (getAmountOwedTo() - getAmountOwed()) < 0
+      }">
+        <div class="metric-icon">
+          <mat-icon>account_balance_wallet</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">Balance Total</span>
+          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ (getAmountOwedTo() - getAmountOwed()) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-wrapper">
+      <!-- Left Column: Sidebar with actions and widgets -->
+      <aside class="sidebar-column">
+        <!-- Quick Actions Card -->
+        <div class="sidebar-card quick-actions">
+          <h4 class="sidebar-title">
+            <mat-icon>bolt</mat-icon>
+            Acciones Rápidas
+          </h4>
+          <div class="action-buttons">
+            <button class="action-btn primary-action" (click)="createGroup()">
+              <mat-icon>add_circle</mat-icon>
+              <span>Crear Grupo</span>
+            </button>
+            <button class="action-btn secondary-action" (click)="joinGroup()">
+              <mat-icon>group_add</mat-icon>
+              <span>Unirse a Grupo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group Stats Widget -->
+        <div class="sidebar-card stats-widget">
+          <h4 class="sidebar-title">
+            <mat-icon>insights</mat-icon>
+            Estadísticas
+          </h4>
+          <div class="stat-row">
+            <span class="stat-label">Total de grupos:</span>
+            <span class="stat-number">{{ sharedAccounts.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Grupos activos:</span>
+            <span class="stat-number">{{ sharedAccounts.length }}</span>
+          </div>
+        </div>
+
+        <!-- Balance Summary Card -->
+        <div class="sidebar-card balance-summary">
+          <h4 class="sidebar-title">
+            <mat-icon>pie_chart</mat-icon>
+            Resumen
+          </h4>
+          <div class="balance-circle">
+            <svg viewBox="0 0 100 100" class="donut-chart">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(248, 113, 113, 0.2)" stroke-width="12"/>
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#4ade80" stroke-width="12" 
+                      [attr.stroke-dasharray]="getAmountOwedTo() > 0 ? (getAmountOwedTo() / (getAmountOwedTo() + getAmountOwed()) * 251.2) + ' 251.2' : '0 251.2'"
+                      stroke-dashoffset="62.8" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="balance-center">
+              <div class="balance-label">Balance</div>
+              <div class="balance-value" [style.color]="(getAmountOwedTo() - getAmountOwed()) > 0 ? '#4ade80' : '#f87171'">
+                {{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ Math.abs(getAmountOwedTo() - getAmountOwed()) | number:'1.0-0' }}
+              </div>
+            </div>
+          </div>
+          <div class="balance-legend">
+            <div class="legend-item">
+              <span class="legend-dot positive"></span>
+              <span>Te deben</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot negative"></span>
+              <span>Debes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decorative Illustration (hidden) -->
+        <div class="sidebar-illustration">
+          <img src="assets/images/ilustracion1.svg" alt="Illustration" />
+        </div>
+      </aside>
+
       <!-- Right Column: Groups -->
-      <section class="right-column">
+      <section class="main-column">
       <div class="section-header">
-        <h3>Tus Grupos <span class="badge">{{ sharedAccounts.length }}</span></h3>
+        <h3>
+          <mat-icon>groups</mat-icon>
+          Tus Grupos
+          <span class="badge">{{ sharedAccounts.length }}</span>
+        </h3>
+        <div class="filter-pills">
+          <button class="pill active">Todos</button>
+          <button class="pill">Activos</button>
+        </div>
       </div>
 
       <div *ngIf="groupsError" class="error-message">{{ groupsError }}</div>
 
       <div *ngIf="loadingGroups" class="loading-grid">
-        <div class="skeleton-card" *ngFor="let i of [1,2,3,4]"></div>
+        <div class="skeleton-card" *ngFor="let i of [1,2,3]"></div>
       </div>
 
-      <div class="groups-grid" *ngIf="!loadingGroups">
+      <div class="groups-grid-modern" *ngIf="!loadingGroups">
         <ng-container *ngIf="sharedAccounts.length > 0; else emptyState">
           
-          <div class="group-card-modern" *ngFor="let group of sharedAccounts" (click)="openGroup(group)">
-            <div class="card-top">
-              <div class="group-avatar-modern">{{ getGroupInitial(group) }}</div>
-              <div class="group-meta">
-                <h4>{{ group.nombre }}</h4>
-                <span class="date">Activo</span>
+          <article class="expense-card" *ngFor="let group of sharedAccounts" (click)="openGroup(group)">
+            <div class="card-header">
+              <div class="expense-avatar">
+                <img *ngIf="group.foto_grupo" [src]="group.foto_grupo" [alt]="group.nombre" />
+                <span *ngIf="!group.foto_grupo">{{ getGroupInitial(group) }}</span>
+              </div>
+              <div class="expense-info">
+                <h4 class="expense-title">{{ group.nombre }}</h4>
+                <span class="expense-date">Actualizado recientemente</span>
+              </div>
+              <div class="expense-amount" [ngClass]="{
+                'amount-positive': (groupBalances[group._id || group.id] || 0) > 0,
+                'amount-negative': (groupBalances[group._id || group.id] || 0) < 0,
+                'amount-neutral': (groupBalances[group._id || group.id] || 0) === 0
+              }">
+                <span class="currency">{{ getCurrencySymbol(getUserPreferredCurrency()) }}</span>
+                <span class="amount">{{ Math.abs(groupBalances[group._id || group.id] || 0) | number:'1.2-2' }}</span>
               </div>
             </div>
             
-            <div class="card-body">
-              <p class="desc">{{ group.descripcion || 'Sin descripción' }}</p>
+            <div class="card-description">
+              <p>{{ group.descripcion || 'Sin descripción' }}</p>
             </div>
 
-            <div class="card-footer">
-              <div class="balance-badge" [ngClass]="{
-                'is-positive': (groupBalances[group._id || group.id] || 0) > 0,
-                'is-negative': (groupBalances[group._id || group.id] || 0) < 0,
-                'is-neutral': (groupBalances[group._id || group.id] || 0) === 0
+            <div class="card-status">
+              <span class="status-badge" [ngClass]="{
+                'status-positive': (groupBalances[group._id || group.id] || 0) > 0,
+                'status-negative': (groupBalances[group._id || group.id] || 0) < 0,
+                'status-neutral': (groupBalances[group._id || group.id] || 0) === 0
               }">
-                <span *ngIf="(groupBalances[group._id || group.id] || 0) < 0">Debes:</span>
-                <span *ngIf="(groupBalances[group._id || group.id] || 0) >= 0">Te deben:</span>
-                <strong>{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ Math.abs(groupBalances[group._id || group.id] || 0) | number:'1.2-2' }}</strong>
-              </div>
+                <mat-icon>{{ (groupBalances[group._id || group.id] || 0) > 0 ? 'arrow_downward' : ((groupBalances[group._id || group.id] || 0) < 0 ? 'arrow_upward' : 'remove') }}</mat-icon>
+                <span *ngIf="(groupBalances[group._id || group.id] || 0) < 0">Debes</span>
+                <span *ngIf="(groupBalances[group._id || group.id] || 0) > 0">Te deben</span>
+                <span *ngIf="(groupBalances[group._id || group.id] || 0) === 0">Equilibrado</span>
+              </span>
+              <button class="card-action-btn" (click)="openGroup(group); $event.stopPropagation()">
+                <mat-icon>arrow_forward</mat-icon>
+              </button>
             </div>
-          </div>
+          </article>
 
         </ng-container>
       </div>
@@ -102,8 +198,18 @@
       <ng-template #emptyState>
         <div class="empty-state-modern">
           <img src="assets/images/ilustracion1.svg" alt="Empty" class="empty-img">
-          <p>No tienes grupos activos.</p>
-          <button class="primary-btn" (click)="createGroup()">Crear tu primer grupo</button>
+          <h3>No tienes grupos activos</h3>
+          <p>Crea tu primer grupo o únete a uno existente para comenzar</p>
+          <div class="empty-actions">
+            <button class="primary-btn" (click)="createGroup()">
+              <mat-icon>add_circle</mat-icon>
+              Crear Grupo
+            </button>
+            <button class="secondary-btn" (click)="joinGroup()">
+              <mat-icon>group_add</mat-icon>
+              Unirse a Grupo
+            </button>
+          </div>
         </div>
       </ng-template>
       </section>
