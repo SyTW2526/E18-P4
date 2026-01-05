@@ -19,8 +19,11 @@ import { MatExpansionModule } from '@angular/material/expansion';
   imports: [CommonModule, FormsModule, MatCardModule, MatListModule, MatButtonModule, MatIconModule, MatExpansionModule],
   template: `
     <section style="max-width:1000px;margin:0 auto;padding-bottom:1.5rem">
-      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.75rem">
-        <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        <button mat-raised-button (click)="goBack()" style="background:var(--primary-color);color:white;display:flex;align-items:center;gap:0.5rem">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Atrás</span>
+        </button>
         <h2 style="margin:0">{{ lang.t('balances') }}</h2>
       </div>
 
