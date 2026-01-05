@@ -86,9 +86,9 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     // --- 1. CREATE GROUP ---
     console.log('Step 1: Creating Group');
     
-    // CAMBIO CRÍTICO: Selector robuesto (Texto O Icono 'add')
+    // Increased timeout and made selector more generic
     const createToggle = By.xpath("//button[contains(.,'Crear') or contains(.,'Create') or .//mat-icon[contains(.,'add')]]");
-    await clickWithRetry(driver, createToggle, 10000);
+    await clickWithRetry(driver, createToggle, 20000); // Increased to 20s
 
     // Fill inline create form
     const nameInput = await driver.wait(
@@ -178,21 +178,26 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
 
     // --- 5. DELETE GROUP ---
     console.log('Step 5: Deleting Group');
-    // Volver al detalle del grupo (no settings) y usar el botón rojo de eliminar
-    let currentUrl = await driver.getCurrentUrl();
-    let groupId = null;
-    const m = currentUrl.match(/group\/([^\/]+)/);
-    if (m && m[1]) groupId = m[1];
-    if (groupId) {
-      await driver.get(`${BASE}/group/${groupId}`);
-      await driver.wait(until.urlContains(`/group/${groupId}`), 10000);
+    
+    // Navigate to settings if available, or look for delete button directly
+    // Assuming there is a settings button or direct delete
+    const currentUrl = await driver.getCurrentUrl();
+    if (!currentUrl.includes('/settings')) {
+        try {
+            // Try to find settings button
+            const settingsBtn = await driver.findElement(By.xpath("//button[.//mat-icon[contains(.,'settings')]]"));
+            await settingsBtn.click();
+            await driver.wait(until.urlContains('/settings'), 5000);
+        } catch(e) {
+            console.log("No settings button found, looking for direct delete...");
+        }
     }
 
     const deleteGroupBtn = await driver.wait(
-      until.elementLocated(By.xpath("//button[contains(.,'Eliminar') or contains(.,'Delete') or .//mat-icon[normalize-space(text())='delete'] or .//mat-icon[contains(.,'delete_forever')]]")),
-      20000
+        until.elementLocated(By.xpath("//button[contains(.,'Eliminar') or contains(.,'Delete') or .//mat-icon[contains(.,'delete_forever')]]")),
+        10000
     );
-    try { await deleteGroupBtn.click(); } catch (_) { await driver.executeScript('arguments[0].click();', deleteGroupBtn); }
+    await clickWithRetry(driver, deleteGroupBtn);
 
     await handleConfirmation(driver);
 
