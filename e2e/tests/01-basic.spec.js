@@ -1,17 +1,10 @@
 const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
-
-async function waitForAppReady(driver, timeout = 60000) {
-  await driver.wait(async () => {
-    return await driver.executeScript(
-      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
-    );
-  }, timeout);
-}
+const { waitForAppReady, CI_TIMEOUT } = require('../driver');
 
 describe('E2E - Basic smoke tests', function () {
-  this.timeout(180000); 
+  this.timeout(180000);
   let driver;
   const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
 

@@ -56,3 +56,25 @@ module.exports = async function createDriver() {
     .setChromeOptions(options)
     .build();
 };
+
+// === SHARED HELPERS ===
+const CI_TIMEOUT = 60000;
+
+async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
+
+async function injectFakeAuth(driver, userId = 'u_e2e', userName = 'E2E User', userEmail = 'test@e2e.com') {
+  await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_E2E_TOKEN');");
+  await driver.executeScript(
+    `window.localStorage.setItem('auth_user', JSON.stringify({_id:'${userId}', nombre:'${userName}', email:'${userEmail}'}));`
+  );
+}
+
+module.exports.waitForAppReady = waitForAppReady;
+module.exports.injectFakeAuth = injectFakeAuth;
+module.exports.CI_TIMEOUT = CI_TIMEOUT;

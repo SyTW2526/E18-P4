@@ -1,58 +1,10 @@
 const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
+const { waitForAppReady, injectFakeAuth, CI_TIMEOUT } = require('../driver');
 
-// --- CONSTANTS & HELPERS ---
-const CI_TIMEOUT = 60000;
+// --- CONSTANTS ---
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
-
-// Helper to handle "Stale Element" errors automatically
-async function clickWithRetry(driver, locator, timeout = 60000) {
-  const endTime = Date.now() + timeout;
-  let lastError;
-  while (Date.now() < endTime) {
-    try {
-      const el = await driver.wait(until.elementLocated(locator), 4000);
-      await driver.wait(until.elementIsVisible(el), 4000);
-      try {
-        await el.click();
-      } catch (_) {
-        await driver.executeScript('arguments[0].click();', el);
-      }
-      return;
-    } catch (e) {
-      lastError = e;
-      await driver.sleep(300);
-    }
-  }
-  throw lastError || new Error('clickWithRetry: failed to click element ' + locator);
-}
-
-// Helper to handle Angular Material Confirm Dialogs
-async function handleConfirmation(driver) {
-  try {
-    await driver.wait(until.alertIsPresent(), 2000);
-    const alert = await driver.switchTo().alert();
-    await alert.accept();
-    return;
-  } catch (_) {}
-
-  try {
-    const confirmBtn = await driver.wait(
-      until.elementLocated(By.css('mat-dialog-container button.mat-primary, mat-dialog-container button[color="warn"], .swal2-confirm')),
-      3000
-    );
-    await confirmBtn.click();
-  } catch (_) {}
-}
-
-async function waitForAppReady(driver) {
-  await driver.wait(async () => {
-    return await driver.executeScript(
-      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText.trim().length > 0);'
-    );
-  }, CI_TIMEOUT);
-}
 
 // --- TEST SUITE ---
 
@@ -68,11 +20,8 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     await driver.get(BASE + '/home');
     await waitForAppReady(driver);
 
-    // Fake auth
-    await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_E2E_TOKEN');");
-    await driver.executeScript(
-      "window.localStorage.setItem('auth_user', JSON.stringify({_id:'u_e2e', nombre:'E2E User', email:'test@e2e.com'}));"
-    );
+    // Inject fake auth
+    await injectFakeAuth(driver);
 
     await driver.navigate().refresh();
     await waitForAppReady(driver);

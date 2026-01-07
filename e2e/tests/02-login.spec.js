@@ -1,17 +1,7 @@
 const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
-
-// CONSTANTE PARA CI
-const CI_TIMEOUT = 60000;
-
-async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
-  await driver.wait(async () => {
-    return await driver.executeScript(
-      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
-    );
-  }, timeout);
-}
+const { waitForAppReady, CI_TIMEOUT } = require('../driver');
 
 describe('E2E - Login page', function () {
   // Mocha timeout debe ser mayor que los waits de Selenium
