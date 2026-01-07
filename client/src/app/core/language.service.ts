@@ -14,7 +14,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     landingSubtitle: 'Gestiona gastos compartidos de forma simple y eficiente.',
     start: 'Comenzar',
     footerRight: 'Hecho con Angular y Node.js',
-    footerTagline: 'Frase de ejemplo. Aquí podría ir un eslogan o algo.',
+    footerTagline: 'Simplifica la gestión de gastos en grupo. Transparencia y equidad para todos.',
     footerBrand: 'Grupo 18',
     emailLabel: 'Email',
     passwordLabel: 'Contraseña',
@@ -141,6 +141,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     quickActions: 'Acciones rápidas',
     stats: 'Estadísticas',
     group: 'Grupo',
+    createFirstExpense: 'Crear primer gasto',
   },
   en: {
     appTitle: 'PaySplit',
@@ -152,7 +153,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     landingSubtitle: 'Manage shared expenses simply and efficiently.',
     start: 'Get Started',
     footerRight: 'Made with Angular and Node.js',
-    footerTagline: 'Sample phrase. A tagline could go here.',
+    footerTagline: 'Simplify group expense management. Transparency and fairness for everyone.',
     footerBrand: 'Grupo 18',
     emailLabel: 'Email',
     passwordLabel: 'Password',
@@ -279,6 +280,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     quickActions: 'Quick actions',
     stats: 'Stats',
     group: 'Group',
+    createFirstExpense: 'Create first expense',
   },
 };
 

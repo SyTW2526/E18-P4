@@ -1,28 +1,473 @@
-/* Ensure number fields align left and remove extra width/margin */
-.custom-dropdown-container {
-	position: relative;
-	width: auto;
-	margin: 0;
-	max-width: 140px;
-}
-/* Fix number input alignment and sizing */
-.custom-dropdown-trigger[type="number"] {
-	display: block;
-	width: 100%;
-	max-width: 140px;
-	box-sizing: border-box;
+/* =========================================
+   VIEWPORT (FONDO Y CONTENEDOR BASE)
+   ========================================= */
+.gasto-viewport {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  padding: 3rem 3rem 2rem 3rem;
+  background: transparent;
+  overflow-x: hidden;
 }
 
-/* Remove display:flex from all .custom-dropdown-trigger inputs */
-.custom-dropdown-trigger {
-	display: block;
+/* =========================================
+   CONTENEDOR PRINCIPAL
+   ========================================= */
+.gasto-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-/* Ensure the row aligns items to the left */
-.gasto-row {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.5rem 0;
-	justify-content: flex-start;
+/* =========================================
+   HEADER
+   ========================================= */
+.gasto-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(122, 229, 130, 0.15);
+}
+
+.back-btn {
+  background: rgba(122, 229, 130, 0.08);
+  border: 1px solid rgba(122, 229, 130, 0.2);
+  color: #7ae582;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.back-btn:hover {
+  background: rgba(122, 229, 130, 0.15);
+  border-color: #7ae582;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(122, 229, 130, 0.25);
+}
+
+.gasto-title {
+  color: var(--text-main);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  letter-spacing: -0.02em;
+}
+
+.title-icon {
+  color: #7ae582;
+  font-size: 2rem;
+  width: 2rem;
+  height: 2rem;
+}
+
+/* =========================================
+   CARD PRINCIPAL
+   ========================================= */
+.gasto-card {
+  background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(20, 20, 20, 0.85));
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.gasto-card:hover {
+  border-color: rgba(122, 229, 130, 0.2);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* =========================================
+   SECCIONES DEL FORMULARIO
+   ========================================= */
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #7ae582;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.section-label mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* =========================================
+   CAMPOS DEL FORMULARIO
+   ========================================= */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  position: relative;
+  flex: 1;
+  min-width: 140px;
+}
+
+.form-field.date-field {
+  flex: 1.5;
+}
+
+.form-field.full-width {
+  width: 100%;
+  flex: auto;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(122, 229, 130, 0.3);
+}
+
+.form-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #7ae582;
+  box-shadow: 0 0 0 3px rgba(122, 229, 130, 0.1);
+}
+
+.form-input.full-width {
+  width: 100%;
+}
+
+/* =========================================
+   SELECTS Y DROPDOWNS
+   ========================================= */
+.form-select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.form-select:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(122, 229, 130, 0.3);
+}
+
+.select-label {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.select-value {
+  flex: 1;
+  color: var(--text-main);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  background: rgba(30, 30, 30, 0.98);
+  border: 1px solid rgba(122, 229, 130, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  font-size: 0.95rem;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(122, 229, 130, 0.1);
+}
+
+.dropdown-item mat-icon {
+  color: #7ae582;
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.dropdown-arrow-open {
+  transform: rotate(180deg);
+  transition: transform 0.2s;
+}
+
+/* =========================================
+   SECCIÓN DE PARTICIPANTES
+   ========================================= */
+.participants-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.divide-btn {
+  background: linear-gradient(135deg, #7ae582, #5bc45f);
+  border: none;
+  color: #000;
+  padding: 0.625rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 12px rgba(122, 229, 130, 0.3);
+}
+
+.divide-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(122, 229, 130, 0.4);
+  filter: brightness(1.1);
+}
+
+.divide-btn:active {
+  transform: translateY(0);
+}
+
+.divide-btn mat-icon {
+  font-size: 1.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.participant-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(122, 229, 130, 0.2);
+}
+
+.participant-checkbox {
+  flex-shrink: 0;
+}
+
+.participant-name {
+  flex: 1;
+  color: var(--text-main);
+  font-size: 0.95rem;
+}
+
+.participant-amount {
+  width: 140px;
+  padding: 0.625rem 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 0.9rem;
+  text-align: right;
+  transition: all 0.2s ease;
+}
+
+.participant-amount:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(122, 229, 130, 0.3);
+}
+
+.participant-amount:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: #7ae582;
+  box-shadow: 0 0 0 2px rgba(122, 229, 130, 0.1);
+}
+
+/* =========================================
+   BOTONES DE ACCIÓN
+   ========================================= */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary {
+  flex: 1;
+  background: linear-gradient(135deg, #7ae582, #5bc45f);
+  border: none;
+  color: #000;
+  padding: 1rem 2rem;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  box-shadow: 0 6px 20px rgba(122, 229, 130, 0.35);
+  text-align: center;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(122, 229, 130, 0.5);
+  filter: brightness(1.1);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1;
+}
+
+.btn-secondary {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 1rem 2rem;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  text-align: center;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary mat-icon {
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 768px) {
+  .gasto-viewport {
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+  }
+
+  .gasto-card {
+    padding: 1.5rem;
+  }
+
+  .gasto-title {
+    font-size: 1.5rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-field {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+  }
 }

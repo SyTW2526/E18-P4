@@ -124,7 +124,7 @@
           </div>
           <div class="stat-row">
             <span class="stat-label">{{ lang.t('accountTotal') }}:</span>
-            <span class="stat-number">{{ accountTotal() | number:'1.2-0' }}</span>
+            <span class="stat-number">{{ accountTotal() | number:'1.0-0' }} {{ gastosCurrency() }}</span>
           </div>
         </div>
 
@@ -318,4 +318,32 @@
     </div>
   </div>
 
-</div>
+  <!-- Delete Gasto Confirmation Modal -->
+  <div *ngIf="showDeleteGastoModal" class="modal-overlay" (click)="closeDeleteGastoModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ lang.t('deleteExpense') }}</h3>
+        <button class="close-btn" (click)="closeDeleteGastoModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirmation-message">
+          <mat-icon class="warning-icon">warning</mat-icon>
+          <p>¿Estás seguro de que quieres eliminar este gasto?</p>
+          <p class="confirmation-subtitle">Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" (click)="closeDeleteGastoModal()" [disabled]="deletingGasto">
+          {{ lang.t('cancel') }}
+        </button>
+        <button class="modal-btn delete-btn" (click)="confirmDeleteGasto()" [disabled]="deletingGasto">
+          {{ deletingGasto ? lang.t('loading') : lang.t('delete') }}
+        </button>
+      </div>
+    </div>
+  </div>
+

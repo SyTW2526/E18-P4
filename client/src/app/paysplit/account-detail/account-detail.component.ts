@@ -63,6 +63,11 @@ export class AccountDetailComponent implements OnInit {
   addingFriend = false;
   addFriendError: string | null = null;
 
+  // Delete gasto confirmation modal state
+  showDeleteGastoModal = false;
+  gastoToDelete: string | null = null;
+  deletingGasto = false;
+
   // Chart properties
   chartWidth = 800;
   chartHeight = 380;
@@ -367,11 +372,30 @@ export class AccountDetailComponent implements OnInit {
   }
 
   removeGasto(id: string) {
-    if (!confirm('¿Eliminar este gasto?')) return;
-    this.auth.deleteGasto(id).subscribe({
-      next: () => this.loadGastos(),
-      error: (err: any) => alert('No se pudo eliminar el gasto: ' + (err?.error?.message || err?.message || 'Error')),
+    this.gastoToDelete = id;
+    this.showDeleteGastoModal = true;
+  }
+
+  confirmDeleteGasto() {
+    if (!this.gastoToDelete) return;
+    this.deletingGasto = true;
+    this.auth.deleteGasto(this.gastoToDelete).subscribe({
+      next: () => {
+        this.deletingGasto = false;
+        this.showDeleteGastoModal = false;
+        this.gastoToDelete = null;
+        this.loadGastos();
+      },
+      error: (err: any) => {
+        this.deletingGasto = false;
+        this.error = 'No se pudo eliminar el gasto: ' + (err?.error?.message || err?.message || 'Error');
+      },
     });
+  }
+
+  closeDeleteGastoModal() {
+    this.showDeleteGastoModal = false;
+    this.gastoToDelete = null;
   }
 
   deleteGroup() {

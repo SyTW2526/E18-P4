@@ -735,8 +735,8 @@
   background: rgba(122, 229, 130, 0.1);
   border: 1px solid rgba(122, 229, 130, 0.2);
   color: #7ae582;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -760,9 +760,9 @@
 
 .edit-btn mat-icon,
 .delete-btn mat-icon {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 .expense-item-footer {
@@ -840,12 +840,17 @@
   margin: 0;
 }
 
-.empty-state mat-icon {
+.empty-state > mat-icon {
   font-size: 48px;
   width: 48px;
   height: 48px;
   color: rgba(122, 229, 130, 0.3);
   margin-bottom: 0.5rem;
+}
+
+/* Center the call-to-action button content specifically in empty state */
+.empty-state .action-btn {
+  justify-content: center;
 }
 
 /* =========================================
@@ -1073,6 +1078,51 @@
 .confirm-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(122, 229, 130, 0.4);
+}
+
+/* Delete button for confirmation modals - más específico para evitar conflictos */
+.modal-btn.delete-btn {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.3);
+  padding: 0.7rem 2rem;
+  min-width: 120px;
+}
+
+.modal-btn.delete-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(248, 113, 113, 0.4);
+}
+
+/* Confirmation message styles */
+.confirmation-message {
+  text-align: center;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.warning-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+  color: #f59e0b;
+  opacity: 0.9;
+}
+
+.confirmation-message p {
+  margin: 0;
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.confirmation-subtitle {
+  font-size: 0.9rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 400 !important;
 }
 
 /* =========================================
