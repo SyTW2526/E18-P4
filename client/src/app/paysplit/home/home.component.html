@@ -230,4 +230,68 @@
     </div>
   </ng-template>
 
+  <!-- Create Group Modal -->
+  <div *ngIf="createFormVisible && auth.isLoggedIn()" class="modal-overlay" (click)="closeCreateForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ lang.t('createGroup') }}</h3>
+        <button class="close-btn" (click)="closeCreateForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="fill" class="full-width">
+          <input matInput [(ngModel)]="createName" (keyup.enter)="createGroupFromForm()" [placeholder]="lang.t('groupName')">
+        </mat-form-field>
+
+        <div *ngIf="groupsError" class="error-message-inline">
+          <mat-icon>error</mat-icon>
+          <span>{{ groupsError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" (click)="closeCreateForm()" [disabled]="createLoading">
+          {{ lang.t('cancel') }}
+        </button>
+        <button class="modal-btn confirm-btn" (click)="createGroupFromForm()" [disabled]="!createName.trim() || createLoading">
+          {{ createLoading ? lang.t('loading') : lang.t('create') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Group Modal -->
+  <div *ngIf="joinFormVisible && auth.isLoggedIn()" class="modal-overlay" (click)="closeJoinForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ lang.t('join') }} {{ lang.t('group') || 'Grupo' }}</h3>
+        <button class="close-btn" (click)="closeJoinForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <mat-form-field appearance="fill" class="full-width">
+          <input matInput [(ngModel)]="joinId" (keyup.enter)="joinGroupFromForm()" [placeholder]="lang.t('groupId')">
+        </mat-form-field>
+
+        <div *ngIf="groupsError" class="error-message-inline">
+          <mat-icon>error</mat-icon>
+          <span>{{ groupsError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" (click)="closeJoinForm()" [disabled]="joinLoading">
+          {{ lang.t('cancel') }}
+        </button>
+        <button class="modal-btn confirm-btn" (click)="joinGroupFromForm()" [disabled]="!joinId.trim() || joinLoading">
+          {{ joinLoading ? lang.t('loading') : lang.t('join') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>

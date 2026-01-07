@@ -1,23 +1,24 @@
-<section style="transform:translateY(2rem)">
-  <mat-card style="width: 600px; min-height: 320px; display: flex; flex-direction: row; align-items: flex-start; padding: 2rem 1.5rem; gap: 2rem;">
+<section class="settings-viewport">
+  <mat-card class="settings-card">
     <div class="avatar-col">
       <div class="avatar-box">
         <img *ngIf="profileImgSrc"
              [src]="profileImgSrc"
              alt="avatar"
              (error)="onProfileImgError()"
-             style="width: 112px; height: 112px; min-width: 112px; min-height: 112px; max-width: 112px; max-height: 112px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.12); background: #222; border: 2px solid #444; display: block; margin-bottom: 0.5rem;" />
+             class="avatar-image" />
         <div *ngIf="!profileImgSrc" class="avatar-fallback">{{ fallbackInitials }}</div>
         <input #fileInput type="file" accept="image/*" hidden (change)="onFileSelected($event)" />
-        <button mat-stroked-button color="primary" class="avatar-action" type="button" (click)="triggerFileInput(fileInput)">
+        <button mat-stroked-button class="avatar-action" type="button" (click)="triggerFileInput(fileInput)">
           <mat-icon>photo_camera</mat-icon>
         </button>
       </div>
     </div>
-    <div class="settings-col" style="flex:1;">
-      <mat-card-title>{{ lang.t('userSettings') }}</mat-card-title>
-      <mat-card-content style="width: 100%;">
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" style="margin-top: 1.5rem;">
+
+    <div class="settings-content">
+      <mat-card-title class="settings-title">{{ lang.t('userSettings') }}</mat-card-title>
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="form-group">
             <label>{{ lang.t('nombre') }}</label>
             <mat-form-field appearance="fill" class="full-width">
@@ -45,12 +46,12 @@
             </select>
           </div>
 
-          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
+          <div class="button-row">
             <button mat-button type="button" (click)="cancel()">{{ lang.t('cancel') }}</button>
             <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">{{ lang.t('save') }}</button>
           </div>
-          <div style="display:flex;gap:8px;justify-content:flex-start;margin-top:1rem;">
-            <button mat-stroked-button style="color:#d32f2f;border-color:#d32f2f" type="button" (click)="confirmDelete()">{{ lang.t('deleteAccount') }}</button>
+          <div class="button-row-left">
+            <button mat-stroked-button class="danger-btn" type="button" (click)="confirmDelete()">{{ lang.t('deleteAccount') }}</button>
           </div>
         </form>
       </mat-card-content>

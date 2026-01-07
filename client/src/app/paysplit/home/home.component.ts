@@ -202,70 +202,23 @@ export class HomeComponent {
   }
 
   createGroup() {
-    const nombre = prompt('Nombre del nuevo grupo:');
-    if (!nombre) return;
-    const user = this.auth.getUser();
-    // server schema expects 'creador_id', 'moneda' and 'fecha_creacion'
-    const payload: any = { nombre };
-    payload.fecha_creacion = new Date();
-    payload.moneda = 'EUR';
-    if (user?._id) payload.creador_id = user._id;
-
-    this.auth.createSharedAccount(payload).subscribe({
-      next: (res: any) => {
-        // refresh list
-        this.loadSharedAccounts();
-      },
-      error: (err: any) => {
-        alert('No se pudo crear el grupo: ' + (err?.error?.message || err?.message || 'Error'));
-        console.error('createGroup error', err);
-      },
-    });
+    this.createFormVisible = true;
   }
 
   joinGroup() {
-    const id = prompt('Introduce el id del grupo al que quieres unirte:');
-    if (!id) return;
-    const user = this.auth.getUser();
+    this.joinFormVisible = true;
+  }
+
+  closeCreateForm() {
+    this.createFormVisible = false;
+    this.createName = '';
     this.groupsError = null;
-    this.loadingGroups = true;
+  }
 
-    // reload accounts to find the target
-    this.auth.getSharedAccounts().subscribe({
-      next: (res: any) => {
-        const list = Array.isArray(res) ? res : (res?.data || []);
-        const target = list.find((g: any) => (g._id || g.id) === id);
-        if (!target) {
-          this.groupsError = 'Grupo no encontrado';
-          this.loadingGroups = false;
-          return;
-        }
-
-        // Instead of mutating shared_accounts (schema doesn't allow extra fields),
-        // create a user_groups relation entry on the server.
-        const uid = user?._id || user?.id;
-        if (!uid) {
-          this.groupsError = 'Usuario no identificado';
-          this.loadingGroups = false;
-          return;
-        }
-        const relation = { id_usuario: String(uid), id_grupo: String(target._id || target.id), rol: 'miembro' };
-        this.auth.createUserGroup(relation).subscribe({
-          next: () => {
-            this.loadSharedAccounts();
-          },
-          error: (err: any) => {
-            this.groupsError = err?.error?.message || err?.message || 'No se pudo unirse al grupo';
-            this.loadingGroups = false;
-            console.error('joinGroup error', err);
-          },
-        });
-      },
-      error: (err: any) => {
-        this.groupsError = err?.error?.message || err?.message || 'No se pudieron cargar los grupos';
-        this.loadingGroups = false;
-      },
-    });
+  closeJoinForm() {
+    this.joinFormVisible = false;
+    this.joinId = '';
+    this.groupsError = null;
   }
 
   clearSignupError() {

@@ -1,0 +1,349 @@
+<div class="group-viewport">
+  
+  <div class="group-shell">
+    
+    <!-- Header Section -->
+    <header class="group-header">
+      <div class="header-left">
+        <button class="back-btn" (click)="goBack()" title="Volver">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-title">
+          <h1>{{ accountName || lang.t('sharedAccount') }}</h1>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="action-icon-btn" (click)="loadAccountAndGastos()" title="Actualizar">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button class="action-primary-btn" (click)="openCreateGasto()">
+          <mat-icon>add_circle</mat-icon>
+          <span>{{ lang.t('addExpense') }}</span>
+        </button>
+        <button class="action-secondary-btn" (click)="openBalance()">
+          <mat-icon>account_balance_wallet</mat-icon>
+          <span>{{ lang.t('balances') }}</span>
+        </button>
+        <button class="action-secondary-btn" (click)="openSettings()">
+          <mat-icon>settings</mat-icon>
+          <span>{{ lang.t('settings') }}</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Metric Cards -->
+    <section class="group-metrics">
+      <div class="metric-card metric-balance" [ngClass]="{
+        'is-positive': userNetBalance > 0,
+        'is-negative': userNetBalance < 0,
+        'is-neutral': userNetBalance === 0
+      }">
+        <div class="metric-icon">
+          <mat-icon>{{ userNetBalance > 0 ? 'trending_up' : (userNetBalance < 0 ? 'trending_down' : 'account_balance') }}</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">{{ userNetBalance > 0 ? (lang.t('youAreOwedNet') || 'Te deben') : (userNetBalance < 0 ? (lang.t('youOweNet') || 'Debes') : (lang.t('balanced') || 'Equilibrado')) }}</span>
+          <span class="metric-value" *ngIf="!loadingBalance">{{ abs(userNetBalance) | number:'1.2-2' }} {{ gastosCurrency() }}</span>
+          <span class="metric-value" *ngIf="loadingBalance">{{ lang.t('loading') }}...</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-info">
+        <div class="metric-icon">
+          <mat-icon>receipt_long</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">{{ lang.t('accountTotal') }}</span>
+          <span class="metric-value">{{ accountTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-info">
+        <div class="metric-icon">
+          <mat-icon>group</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">{{ lang.t('members') }}</span>
+          <span class="metric-value">{{ miembros.length }}</span>
+        </div>
+      </div>
+
+      <div class="metric-card metric-info">
+        <div class="metric-icon">
+          <mat-icon>paid</mat-icon>
+        </div>
+        <div class="metric-content">
+          <span class="metric-label">{{ lang.t('youHavePaid') }}</span>
+          <span class="metric-value">{{ userTotal() | number:'1.2-2' }} {{ gastosCurrency() }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Content Wrapper -->
+    <section class="content-wrapper">
+      
+      <!-- Left Sidebar -->
+      <aside class="sidebar-column">
+        
+        <!-- Quick Actions -->
+        <div class="sidebar-card quick-actions">
+          <h4 class="sidebar-title">
+            <mat-icon>bolt</mat-icon>
+            {{ lang.t('quickActions') || 'Acciones Rápidas' }}
+          </h4>
+          <div class="action-buttons">
+            <button class="action-btn primary-action" (click)="openCreateGasto()">
+              <mat-icon>add_circle</mat-icon>
+              <span>{{ lang.t('addExpense') }}</span>
+            </button>
+            <button class="action-btn secondary-action" (click)="openAddFriendModal()">
+              <mat-icon>group_add</mat-icon>
+              <span>{{ lang.t('addMember') }}</span>
+            </button>
+            <button class="action-btn secondary-action" (click)="openSettings()">
+              <mat-icon>settings</mat-icon>
+              <span>{{ lang.t('settings') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Group Stats -->
+        <div class="sidebar-card stats-widget">
+          <h4 class="sidebar-title">
+            <mat-icon>insights</mat-icon>
+            {{ lang.t('stats') || 'Estadísticas' }}
+          </h4>
+          <div class="stat-row">
+            <span class="stat-label">{{ lang.t('totalExpenses') }}:</span>
+            <span class="stat-number">{{ gastos.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">{{ lang.t('members') }}:</span>
+            <span class="stat-number">{{ miembros.length }}</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">{{ lang.t('accountTotal') }}:</span>
+            <span class="stat-number">{{ accountTotal() | number:'1.0-0' }} {{ gastosCurrency() }}</span>
+          </div>
+        </div>
+
+        <!-- Your Balance in Group -->
+        <div class="sidebar-card balance-summary">
+          <h4 class="sidebar-title">
+            <mat-icon>pie_chart</mat-icon>
+            {{ lang.t('yourBalance') }}
+          </h4>
+          <div *ngIf="loadingBalance" style="text-align: center; color: var(--text-muted);">
+            {{ lang.t('loading') }}...
+          </div>
+          <div *ngIf="!loadingBalance" class="balance-display">
+            <div class="balance-amount" [ngClass]="{
+              'is-positive': userNetBalance > 0,
+              'is-negative': userNetBalance < 0,
+              'is-neutral': userNetBalance === 0
+            }">
+              {{ userNetBalance > 0 ? '+' : '' }}{{ userNetBalance | number:'1.2-2' }}
+            </div>
+            <div class="balance-label">{{ gastosCurrency() }}</div>
+            <div class="balance-status">
+              <span *ngIf="userNetBalance > 0" class="badge badge-positive">{{ lang.t('youAreOwed') || 'Te deben' }}</span>
+              <span *ngIf="userNetBalance < 0" class="badge badge-negative">{{ lang.t('youOwe') || 'Debes' }}</span>
+              <span *ngIf="userNetBalance === 0" class="badge badge-neutral">{{ lang.t('balanced') || 'Equilibrado' }}</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Main Content Area -->
+      <div class="main-column">
+        
+        <!-- Error Message -->
+        <div *ngIf="error" class="error-message">
+          <mat-icon>error</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+
+        <!-- Expense History -->
+        <div class="content-card expenses-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <mat-icon>history</mat-icon>
+              {{ lang.t('expenseHistory') || 'Historial de Gastos' }}
+            </h3>
+            <span class="badge">{{ gastos.length }}</span>
+          </div>
+
+          <div *ngIf="loading" class="loading-state">
+            <mat-icon class="loading-spinner">refresh</mat-icon>
+            <span>{{ lang.t('loading') }}...</span>
+          </div>
+
+          <div *ngIf="!loading && gastos.length === 0" class="empty-state">
+            <mat-icon>receipt</mat-icon>
+            <p>{{ lang.t('noExpensesYet') }}</p>
+            <button class="action-btn primary-action" (click)="openCreateGasto()">
+              <mat-icon>add_circle</mat-icon>
+              <span>{{ lang.t('createFirstExpense') || 'Crear primer gasto' }}</span>
+            </button>
+          </div>
+
+          <div *ngIf="!loading && gastos.length > 0" class="expenses-list">
+            <div *ngFor="let g of gastos" class="expense-item">
+              <div class="expense-item-header">
+                <div class="expense-details">
+                  <div class="expense-description">{{ g.descripcion }}</div>
+                  <div class="expense-meta">
+                    <span class="meta-by">{{ lang.t('by') }} <strong>{{ displayMember(g.id_pagador) }}</strong></span>
+                    <span class="meta-date">{{ g.fecha ? (g.fecha | date:'dd/MM/yyyy HH:mm') : '' }}</span>
+                  </div>
+                </div>
+                <div class="expense-actions">
+                  <button mat-icon-button class="edit-btn" [title]="lang.t('editExpense')" (click)="editGasto(g._id || g.id || g._id?.toString())">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="delete-btn" [title]="lang.t('deleteExpense')" (click)="removeGasto(g._id || g.id || g._id?.toString())">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="expense-item-footer">
+                <div class="expense-amount-display" [ngClass]="{
+                  'amount-positive': getExpenseImpactForUser(g) > 0,
+                  'amount-negative': getExpenseImpactForUser(g) < 0,
+                  'amount-neutral': getExpenseImpactForUser(g) === 0
+                }">
+                  <span class="amount-total">{{ g.monto | number:'1.2-2' }} {{ g.moneda || gastosCurrency() }}</span>
+                  <span class="amount-impact">{{ getExpenseImpactForUser(g) > 0 ? '+' : '' }}{{ getExpenseImpactForUser(g) | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Daily Expenses Chart -->
+        <div class="content-card chart-card">
+          <div class="card-header-section">
+            <h3 class="card-title">
+              <mat-icon>trending_up</mat-icon>
+              {{ lang.t('dailyExpenses') || 'Gastos Diarios' }}
+            </h3>
+          </div>
+          <div class="chart-container">
+            <div *ngIf="gastos.length === 0" class="no-data-message">
+              {{ lang.t('noExpensesYet') }}
+            </div>
+            <svg *ngIf="gastos.length > 0" [attr.width]="chartWidth" height="300" class="expense-chart" viewBox="0 0 600 300">
+              <!-- Axes -->
+              <line x1="40" y1="20" x2="40" y2="260" stroke="#a1a1aa" stroke-width="2"/>
+              <line x1="40" y1="260" x2="580" y2="260" stroke="#a1a1aa" stroke-width="2"/>
+              
+              <!-- Y-axis label -->
+              <text x="10" y="30" font-size="12" font-weight="600" fill="var(--text-main)">{{ gastosCurrency() }}</text>
+              
+              <!-- Bars and labels -->
+              <g *ngFor="let day of dailyExpenseData; let i = index">
+                <!-- Bar -->
+                <rect [attr.x]="60 + (i * 140)" [attr.y]="260 - (day.barHeight * 150 / 280)" width="50" 
+                      [attr.height]="day.barHeight * 150 / 280" 
+                      fill="#7ae582" opacity="0.85" rx="4">
+                  <title>{{ day.date }}: {{ day.total | number:'1.2-2' }} {{ gastosCurrency() }}</title>
+                </rect>
+                <!-- Amount on top of bar -->
+                <text [attr.x]="85 + (i * 140)" [attr.y]="255 - (day.barHeight * 150 / 280)" text-anchor="middle" 
+                      font-size="11" font-weight="700" fill="var(--text-main)">{{ day.total | number:'1.0-0' }}</text>
+                <!-- Date label below axis -->
+                <text [attr.x]="85 + (i * 140)" y="280" text-anchor="middle" 
+                      font-size="10" fill="var(--text-muted)">{{ day.label }}</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Add Friend Modal -->
+  <div *ngIf="showAddFriendModal" class="modal-overlay" (click)="closeAddFriendModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ lang.t('addMember') || 'Añadir Miembro' }}</h3>
+        <button class="close-btn" (click)="closeAddFriendModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="loadingFriends" class="modal-loading">
+          <mat-icon class="loading-spinner">refresh</mat-icon>
+          <span>{{ lang.t('loading') }}...</span>
+        </div>
+
+        <div *ngIf="!loadingFriends && availableFriends.length === 0" class="modal-empty">
+          <mat-icon>people</mat-icon>
+          <p>{{ lang.t('noMembers') }}</p>
+        </div>
+
+        <div *ngIf="!loadingFriends && availableFriends.length > 0" class="friends-list">
+          <div *ngFor="let friend of availableFriends" 
+               class="friend-item"
+               [class.selected]="selectedFriendToAdd === friend._id"
+               (click)="selectFriendToAdd(friend)">
+            <div class="friend-info">
+              <div class="friend-name">{{ friend.nombre || friend.username || friend.email }}</div>
+              <div class="friend-email">{{ friend.email }}</div>
+            </div>
+            <mat-icon *ngIf="selectedFriendToAdd === friend._id" class="check-icon">check_circle</mat-icon>
+          </div>
+        </div>
+
+        <div *ngIf="addFriendError" class="error-message-inline">
+          <mat-icon>error</mat-icon>
+          <span>{{ addFriendError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" (click)="closeAddFriendModal()" [disabled]="addingFriend">
+          {{ lang.t('cancel') }}
+        </button>
+        <button class="modal-btn confirm-btn" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">
+          {{ addingFriend ? lang.t('loading') : lang.t('add') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Gasto Confirmation Modal -->
+  <div *ngIf="showDeleteGastoModal" class="modal-overlay" (click)="closeDeleteGastoModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ lang.t('deleteExpense') }}</h3>
+        <button class="close-btn" (click)="closeDeleteGastoModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="confirmation-message">
+          <mat-icon class="warning-icon">warning</mat-icon>
+          <p>¿Estás seguro de que quieres eliminar este gasto?</p>
+          <p class="confirmation-subtitle">Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="modal-btn cancel-btn" (click)="closeDeleteGastoModal()" [disabled]="deletingGasto">
+          {{ lang.t('cancel') }}
+        </button>
+        <button class="modal-btn delete-btn" (click)="confirmDeleteGasto()" [disabled]="deletingGasto">
+          {{ deletingGasto ? lang.t('loading') : lang.t('delete') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
