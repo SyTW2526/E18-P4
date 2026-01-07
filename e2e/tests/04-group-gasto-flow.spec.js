@@ -1,22 +1,10 @@
 const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
+const { waitForAppReady, injectFakeAuth, clickElement, CI_TIMEOUT } = require('../driver');
 
 // --- CONSTANTS & HELPERS ---
-const CI_TIMEOUT = 60000;
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:4200';
-
-// Helper simplified for retrying clicks
-async function clickElement(driver, locator, timeout = 20000) {
-  const el = await driver.wait(until.elementLocated(locator), timeout);
-  await driver.wait(until.elementIsVisible(el), timeout);
-  try {
-    await el.click();
-  } catch (e) {
-    // Si el click normal falla (elemento tapado), forzamos con JS
-    await driver.executeScript('arguments[0].click();', el);
-  }
-}
 
 // Helper to handle Angular Material Confirm Dialogs
 async function handleConfirmation(driver) {
@@ -36,13 +24,7 @@ async function handleConfirmation(driver) {
   } catch (_) {}
 }
 
-async function waitForAppReady(driver) {
-  await driver.wait(async () => {
-    return await driver.executeScript(
-      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText.trim().length > 0);'
-    );
-  }, CI_TIMEOUT);
-}
+// waitForAppReady is imported from ../driver
 
 // --- TEST SUITE ---
 
@@ -61,10 +43,7 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     await waitForAppReady(driver);
 
     // 2. Inyectar autenticación falsa
-    await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_E2E_TOKEN');");
-    await driver.executeScript(
-      "window.localStorage.setItem('auth_user', JSON.stringify({_id:'u_e2e', nombre:'E2E User', email:'test@e2e.com'}));"
-    );
+    await injectFakeAuth(driver);
 
     // 3. Ir explícitamente a /home
     await driver.get(BASE + '/home');

@@ -3,6 +3,43 @@ const { Builder, logging } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const firefox = require('selenium-webdriver/firefox');
 
+const CI_TIMEOUT = 60000;
+
+// Helper para inyectar autenticación falsa
+async function injectFakeAuth(driver, userId = 'u_e2e', userName = 'E2E User', userEmail = 'test@e2e.com') {
+  await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_E2E_TOKEN');");
+  await driver.executeScript(
+    `window.localStorage.setItem('auth_user', JSON.stringify({_id:'${userId}', nombre:'${userName}', email:'${userEmail}'}));`
+  );
+}
+
+// Helper para esperar a que Angular esté listo
+async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
+  await driver.wait(async () => {
+    return await driver.executeScript(
+      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
+    );
+  }, timeout);
+}
+
+// Helper para click robusto
+async function clickElement(driver, locator, timeout = 20000) {
+  const el = await driver.wait(async () => {
+    try {
+      const elem = await driver.findElement(locator);
+      if (await elem.isDisplayed()) return elem;
+    } catch (_) {}
+    return null;
+  }, timeout, `Element not found or not visible: ${locator}`);
+  
+  try {
+    await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', el);
+    await el.click();
+  } catch (e) {
+    await driver.executeScript('arguments[0].click();', el);
+  }
+}
+
 module.exports = async function createDriver() {
   const browser = (process.env.E2E_BROWSER || 'chrome').toLowerCase();
 
@@ -56,3 +93,9 @@ module.exports = async function createDriver() {
     .setChromeOptions(options)
     .build();
 };
+
+// Exportar helpers
+module.exports.injectFakeAuth = injectFakeAuth;
+module.exports.waitForAppReady = waitForAppReady;
+module.exports.clickElement = clickElement;
+module.exports.CI_TIMEOUT = CI_TIMEOUT;

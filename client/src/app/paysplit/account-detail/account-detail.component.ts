@@ -103,29 +103,29 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
             <div style="background:var(--mdc-elevated-card-container-color);border-radius:8px 8px 0 0;padding:1.5rem 1.5rem 0 1.5rem">
               <h3>{{ lang.t('dailyExpenses') }}</h3>
             </div>
-            <div style="background:var(--mdc-elevated-card-container-color);border-radius:0 0 8px 8px;padding:0 1.5rem 1.5rem 1.5rem;flex:1">
-              <svg width="100%" height="300" style="max-width:100%;background:transparent;display:block" viewBox="0 0 600 300">
+            <div style="background:var(--mdc-elevated-card-container-color);border-radius:0 0 8px 8px;padding:0 1.5rem 1.5rem 1.5rem;flex:1;overflow-x:auto">
+              <svg [attr.width]="Math.max(600, dailyExpenseData.length * 100 + 100)" height="300" style="min-width:100%;background:transparent;display:block">
                 <!-- Axes -->
-                <line x1="40" y1="20" x2="40" y2="260" stroke="#a1a1aa" stroke-width="2"/>
-                <line x1="40" y1="260" x2="580" y2="260" stroke="#a1a1aa" stroke-width="2"/>
+                <line x1="50" y1="30" x2="50" y2="250" stroke="#a1a1aa" stroke-width="2"/>
+                <line x1="50" y1="250" [attr.x2]="Math.max(600, dailyExpenseData.length * 100 + 100) - 20" y2="250" stroke="#a1a1aa" stroke-width="2"/>
                 
                 <!-- Y-axis label -->
-                <text x="10" y="30" font-size="12" font-weight="600" fill="#ffffff">{{ gastosCurrency() }}</text>
+                <text x="15" y="35" font-size="13" font-weight="600" fill="var(--text-main)">{{ gastosCurrency() }}</text>
                 
                 <!-- Bars and labels -->
                 <g *ngFor="let day of dailyExpenseData; let i = index">
-                  <!-- Bar (scaled to fit: max height 150, starts at y=100, ends at y=260) -->
-                  <rect [attr.x]="60 + (i * 140)" [attr.y]="260 - (day.barHeight * 150 / 280)" width="50" 
-                        [attr.height]="day.barHeight * 150 / 280" 
-                        fill="#7ae582" opacity="0.8">
+                  <!-- Bar -->
+                  <rect [attr.x]="80 + (i * 100)" [attr.y]="250 - day.barHeight" [attr.width]="60" 
+                        [attr.height]="day.barHeight" 
+                        fill="#7ae582" opacity="0.85" rx="4">
                     <title>{{ day.date }}: {{ day.total | number:'1.2-2' }} {{ gastosCurrency() }}</title>
                   </rect>
                   <!-- Amount on top of bar -->
-                  <text [attr.x]="85 + (i * 140)" [attr.y]="255 - (day.barHeight * 150 / 280)" text-anchor="middle" 
-                        font-size="11" font-weight="600" fill="#ffffff">{{ day.total | number:'1.0-0' }}</text>
+                  <text [attr.x]="110 + (i * 100)" [attr.y]="Math.max(30, 240 - day.barHeight)" text-anchor="middle" 
+                        font-size="13" font-weight="700" fill="var(--text-main)">{{ day.total >= 1000 ? ((day.total / 1000) | number:'1.0-1') + 'k' : (day.total | number:'1.0-0') }}</text>
                   <!-- Date label below axis -->
-                  <text [attr.x]="85 + (i * 140)" y="280" text-anchor="middle" 
-                        font-size="10" fill="#a1a1aa">{{ day.label }}</text>
+                  <text [attr.x]="110 + (i * 100)" y="268" text-anchor="middle" 
+                        font-size="11" fill="#a1a1aa">{{ day.label }}</text>
                 </g>
               </svg>
             </div>
@@ -199,6 +199,7 @@ export class AccountDetailComponent implements OnInit {
   userNetBalance: number = 0;
   loadingBalance = false;
   abs = Math.abs;
+  Math = Math;
 
   constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
 
@@ -360,21 +361,22 @@ export class AccountDetailComponent implements OnInit {
       .map(([date, total]) => ({ date, total }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    // Calculate bar heights
+    // Calculate bar heights with fixed scale (200px max height)
     const maxTotal = Math.max(...sortedDays.map(d => d.total), 1);
-    const availableHeight = this.chartHeight - (2 * this.chartPadding);
+    const availableHeight = 200;
 
-    // Update chart dimensions based on number of days
-    const numDays = sortedDays.length;
-    const base = this.chartPadding * 2 + numDays * (this.barWidth + this.barGap);
-    this.chartWidth = Math.min(900, Math.max(520, base + 40));
-
-    this.dailyExpenseData = sortedDays.map(day => ({
-      date: day.date,
-      label: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-      total: day.total,
-      barHeight: (day.total / maxTotal) * availableHeight
-    }));
+    this.dailyExpenseData = sortedDays.map(day => {
+      const parsedDate = new Date(day.date);
+      const dayNum = parsedDate.getDate();
+      const monthShort = parsedDate.toLocaleDateString('es-ES', { month: 'short' });
+      
+      return {
+        date: day.date,
+        label: `${dayNum} ${monthShort}`,
+        total: day.total,
+        barHeight: Math.max(10, (day.total / maxTotal) * availableHeight)
+      };
+    });
   }
 
   createGastoFromForm() {

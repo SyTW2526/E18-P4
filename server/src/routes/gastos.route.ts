@@ -18,15 +18,15 @@ GastosRouter.get("/grupo/:id_grupo", async (req: express.Request, res: express.R
 // Agregar un nuevo gasto
 GastosRouter.post("/", async (req: express.Request, res: express.Response) => {
   try {
-    const gasto = req.body;
+    const { participacion, ...gastoData } = req.body;
     // Asegurar que la fecha sea un objeto Date
-    gasto.fecha = new Date(gasto.fecha);
+    gastoData.fecha = new Date(gastoData.fecha);
 
-    const result = await collections.gastos!.insertOne(gasto);
+    const result = await collections.gastos!.insertOne(gastoData);
 
     // Si se envían participaciones, guardarlas asociando el id del gasto insertado
-    if (result?.insertedId && Array.isArray(gasto.participacion) && gasto.participacion.length) {
-      const participaciones = gasto.participacion.map((p: any) => ({
+    if (result?.insertedId && Array.isArray(participacion) && participacion.length) {
+      const participaciones = participacion.map((p: any) => ({
         id_usuario: p.id_usuario,
         id_gasto: String(result.insertedId),
         monto_asignado: Number(p.monto_asignado ?? p.monto ?? 0),

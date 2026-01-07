@@ -1,16 +1,7 @@
 const { By, until } = require('selenium-webdriver');
 const { expect } = require('chai');
 const createDriver = require('../driver');
-
-const CI_TIMEOUT = 60000;
-
-async function waitForAppReady(driver, timeout = CI_TIMEOUT) {
-  await driver.wait(async () => {
-    return await driver.executeScript(
-      'return !!(document.querySelector("app-root") && document.querySelector("app-root").innerText && document.querySelector("app-root").innerText.trim().length>0);'
-    );
-  }, timeout);
-}
+const { waitForAppReady, injectFakeAuth, CI_TIMEOUT } = require('../driver');
 
 describe('E2E - User Settings', function () {
   this.timeout(120000);
@@ -21,9 +12,8 @@ describe('E2E - User Settings', function () {
     driver = await createDriver();
     await driver.get(BASE + '/');
     await waitForAppReady(driver, CI_TIMEOUT);
-    await driver.executeScript("window.localStorage.setItem('auth_token','FAKE_TOKEN');");
-    await driver.executeScript("window.localStorage.setItem('auth_user', JSON.stringify({_id:'u1', nombre:'Test', email:'t@t.com', preferencia_tema:'claro'}));");
-    await driver.navigate().refresh(); // Refresh
+    await injectFakeAuth(driver, 'u1', 'Test', 't@t.com');
+    await driver.navigate().refresh();
     await waitForAppReady(driver, CI_TIMEOUT);
   });
 
