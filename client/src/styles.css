@@ -1,4 +1,481 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  /* Paleta extraída de tu imagen de referencia */
+  --bg-color: #0a0a0a;       /* Fondo oscuro casi negro */
+  --text-main: #ffffff;      /* Texto blanco */
+  --text-muted: #a1a1aa;     /* Gris para descripciones */
+  --primary-color: #7ae582;  /* Verde Lima (Botones de acción) */
+  --primary-hover: #a3d925;
+  --secondary-bg: #1c1c1c;   /* Para tarjetas o secciones secundarias */
+  --text-contrast: #000000;  /* Texto sobre superficies claras o primarias */
+  --glass-start: rgba(255, 255, 255, 0.08);
+  --glass-end: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --badge-bg: rgba(255, 255, 255, 0.1);
+  --badge-border: rgba(184, 241, 45, 0.2);
+  --primary-shadow: rgba(184, 241, 45, 0.3);
+  --primary-glow: rgba(184, 241, 45, 0.15);
+  --muted-border: rgba(255, 255, 255, 0.1);
+  --muted-border-strong: rgba(255, 255, 255, 0.2);
+  --muted-surface: rgba(255, 255, 255, 0.05);
+  --text-gradient-start: #ffffff;
+  --text-gradient-end: #999999;
+  --feature-icon-end: rgba(184, 241, 45, 0.6);
+  --divider-color: rgba(255, 255, 255, 0.1);
+  --panel-border-top: rgba(255, 255, 255, 0.05);
+  
+  /* Tipografía */
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+:root[data-theme="light"] {
+  --bg-color: #f7f7fb;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --primary-color: #4ade80;
+  --primary-hover: #22c55e;
+  --secondary-bg: #e2e8f0;
+  --text-contrast: #052e16;
+  --glass-start: rgba(0, 0, 0, 0.04);
+  --glass-end: rgba(0, 0, 0, 0.02);
+  --glass-border: rgba(0, 0, 0, 0.05);
+  --badge-bg: rgba(74, 222, 128, 0.08);
+  --badge-border: rgba(34, 197, 94, 0.3);
+  --primary-shadow: rgba(34, 197, 94, 0.25);
+  --primary-glow: rgba(34, 197, 94, 0.12);
+  --muted-border: rgba(0, 0, 0, 0.06);
+  --muted-border-strong: rgba(0, 0, 0, 0.12);
+  --muted-surface: rgba(0, 0, 0, 0.03);
+  --text-gradient-start: #111827;
+  --text-gradient-end: #475569;
+  --feature-icon-end: rgba(34, 197, 94, 0.7);
+  --divider-color: rgba(0, 0, 0, 0.08);
+  --panel-border-top: rgba(0, 0, 0, 0.05);
+}
+
+html, body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Clases de utilidad para botones estilo "Landing" */
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #000;
+  padding: 12px 24px;
+  border-radius: 30px; /* Bordes redondeados como en la imagen */
+  font-weight: 600;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Strong overrides to ensure .btn-primary wins over Angular Material styles */
+button.btn-primary,
+button.mat-flat-button.btn-primary,
+button[mat-flat-button].btn-primary,
+button.mat-mdc-button.btn-primary,
+.mat-mdc-button.btn-primary {
+  background-color: var(--primary-color) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+button.btn-primary:hover,
+button.mat-flat-button.btn-primary:hover,
+button[mat-flat-button].btn-primary:hover,
+button.mat-mdc-button.btn-primary:hover,
+button.btn-primary:focus,
+button.mat-flat-button.btn-primary:focus,
+button[mat-flat-button].btn-primary:focus,
+button.mat-mdc-button.btn-primary:focus,
+button.btn-primary:active,
+button.mat-flat-button.btn-primary:active,
+button[mat-flat-button].btn-primary:active,
+button.mat-mdc-button.btn-primary:active {
+  background-color: var(--primary-hover) !important;
+  /* letras de botones de crear e unirse*/
+  color: var(--secondary-bg) !important;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-main);
+  padding: 12px 24px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 30px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Group card styles */
+.group-card {
+  background: var(--secondary-bg) !important;
+  color: var(--text-main);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+mat-card.group-card,
+.mat-mdc-card.group-card {
+  background: var(--secondary-bg) !important;
+}
+
+.group-card .mat-card-title {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.group-card mat-card-subtitle,
+.group-card .mat-card-subtitle,
+.group-card .mat-mdc-card-subtitle,
+.group-card .mat-card-subtitle * {
+  color: var(--text-muted) !important;
+}
+
+.group-card .mat-card-content p,
+.group-card .mat-typography p {
+  color: var(--text-muted) !important;
+}
+
+.group-card .group-id {
+  color: var(--text-muted) !important;
+  font-size: 0.9rem;
+}
+
+/* Ensure Mat primary flat buttons match our primary color */
+button.mat-flat-button.mat-primary {
+  background-color: var(--primary-color) !important;
+  color: #000000 !important;
+}
+
+button.mat-raised-button.mat-primary {
+  background-color: var(--primary-color) !important;
+  color: #000 !important;
+}
+
+/* Apply primary-hover on hover/focus/active for main primary button variants */
+/* Hover/focus/active styles for primary button variants (expanded for compatibility) */
+button.mat-flat-button.mat-primary:hover,
+button.mat-flat-button.mat-primary:focus,
+button.mat-flat-button.mat-primary:active,
+button.mat-raised-button.mat-primary:hover,
+button.mat-raised-button.mat-primary:focus,
+button.mat-raised-button.mat-primary:active,
+button.mat-button.mat-primary:hover,
+button.mat-button.mat-primary:focus,
+button.mat-button.mat-primary:active,
+button.mat-mdc-button.mat-primary:hover,
+button.mat-mdc-button.mat-primary:focus,
+button.mat-mdc-button.mat-primary:active,
+button.mat-mdc-flat-button.mat-primary:hover,
+button.mat-mdc-flat-button.mat-primary:focus,
+button.mat-mdc-flat-button.mat-primary:active,
+button[mat-flat-button][color="primary"]:hover,
+button[mat-flat-button][color="primary"]:focus,
+button[mat-flat-button][color="primary"]:active {
+  background-color: var(--primary-hover) !important;
+  color: #000 !important;
+  box-shadow: none !important;
+}
+
+/* Force Material toolbar to use the app primary color 
+Color del header en sí*/
+.mat-toolbar.mat-primary {
+  background-color: var(--primary-color);
+  color: var(--secondary-bg);
+}
+
+/* Make the app header stick to the top of the viewport */
+.mat-toolbar.mat-primary {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1200;
+}
+
+/* Ensure Material overlay (menus, dialogs, tooltips) appears above the fixed toolbar */
+.cdk-overlay-container .cdk-overlay-pane {
+  z-index: 1300 !important;
+}
+
+/* Ensure the overlay container is positioned relative to the viewport
+   so CDK overlays (menus, tooltips, dialogs) are placed correctly.
+   Some transforms/containers can break overlay positioning — forcing
+   the container to be fixed and full-viewport prevents that. */
+.cdk-overlay-container {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+}
+.cdk-overlay-container .cdk-overlay-pane {
+  position: absolute !important;
+  pointer-events: auto !important;
+}
+
+/* Amigos / Mat-menu styling ------------------------------------------------- */
+/* Style the menu panel itself (both legacy and MDC variants) */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel,
+.cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-pane .mat-mdc-menu-panel {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 2px 6px rgba(0,0,0,0.4) !important;
+  padding: 6px 0 !important;
+  min-width: 200px !important;
+}
+
+/* Mat-select dropdown panel styling */
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-select-panel,
+.cdk-overlay-pane .mat-mdc-select-panel,
+.mat-mdc-select-panel {
+  background: var(--secondary-bg) !important;
+  color: var(--text-main) !important;
+  border-radius: 8px !important;
+}
+
+/* Mat-option (dropdown items) styling */
+.mat-mdc-option,
+.mat-option {
+  color: var(--text-main) !important;
+  background: transparent !important;
+}
+
+.mat-mdc-option:hover,
+.mat-option:hover,
+.mat-mdc-option.mat-mdc-option-active,
+.mat-option.mat-active {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+
+.mat-mdc-option.mat-mdc-selected:not(.mat-mdc-option-multiple),
+.mat-option.mat-selected {
+  background: var(--primary-color) !important;
+  color: var(--text-contrast) !important;
+}
+
+/* Dialog styling ----------------------------------------------------------- */
+/* Style Material Dialog containers (legacy and MDC) to match app theme */
+.cdk-overlay-container .cdk-overlay-pane .mat-dialog-container,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-dialog-container,
+.cdk-overlay-pane .mat-dialog-container,
+.cdk-overlay-pane .mat-mdc-dialog-container {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.65), 0 6px 12px rgba(0,0,0,0.45) !important;
+  padding: 20px !important;
+  font-family: var(--font-family) !important;
+}
+
+.mat-dialog-title, .mat-mdc-dialog-title {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.mat-dialog-content, .mat-mdc-dialog-content {
+  color: var(--text-main);
+}
+
+.mat-dialog-actions, .mat-mdc-dialog-actions {
+  padding-top: 12px;
+}
+
+/* Dialog buttons: primary color and hover */
+.mat-dialog-actions button.mat-flat-button,
+.mat-mdc-dialog-actions button.mat-mdc-button.mat-flat {
+  background-color: var(--primary-color) !important;
+  color: #000 !important;
+}
+.mat-dialog-actions button.mat-flat-button:hover,
+.mat-mdc-dialog-actions button.mat-mdc-button.mat-flat:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+/* Inputs inside dialogs should use light text and subtle background */
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-container .mat-mdc-form-field .mdc-text-field__input,
+.cdk-overlay-pane .mat-mdc-form-field .mdc-text-field__input {
+  background: rgba(255,255,255,0.02) !important;
+  color: var(--text-main) !important;
+}
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-input-element,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-input-element,
+.cdk-overlay-container .mat-mdc-text-field__input,
+.cdk-overlay-pane .mat-mdc-text-field__input,
+.cdk-overlay-container input,
+.cdk-overlay-pane input,
+.cdk-overlay-container textarea,
+.cdk-overlay-pane textarea {
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+}
+
+/* Force input caret & placeholder color to light */
+.cdk-overlay-pane input::placeholder,
+.cdk-overlay-container input::placeholder,
+.cdk-overlay-pane textarea::placeholder {
+  color: rgba(255,255,255,0.5) !important;
+}
+
+/* Ensure dialog close/secondary buttons contrast */
+.mat-dialog-actions button.mat-button,
+.mat-mdc-dialog-actions button.mat-button {
+  color: var(--text-main) !important;
+}
+
+/* VERY STRONG overrides for any remaining white input boxes inside overlays */
+/* Targets MDC and legacy Material form-field internals inside overlay panes */
+.cdk-overlay-pane .mat-form-field-infix,
+.cdk-overlay-container .mat-form-field-infix,
+.cdk-overlay-pane .mat-form-field-flex,
+.cdk-overlay-container .mat-form-field-flex,
+.cdk-overlay-pane .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-container .mat-form-field-appearance-fill .mat-form-field-flex,
+.cdk-overlay-pane .mat-mdc-text-field__input,
+.cdk-overlay-container .mat-mdc-text-field__input,
+.cdk-overlay-pane input,
+.cdk-overlay-container input,
+.cdk-overlay-pane textarea,
+.cdk-overlay-container textarea {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  color: var(--text-main) !important;
+}
+
+.cdk-overlay-pane .mat-form-field-infix::before,
+.cdk-overlay-pane .mat-form-field-infix::after,
+.cdk-overlay-container .mat-form-field-infix::before,
+.cdk-overlay-container .mat-form-field-infix::after {
+  background: transparent !important;
+}
+
+/* If MDC applies a surface class, make sure it's dark */
+.cdk-overlay-pane .mdc-text-field,
+.cdk-overlay-container .mdc-text-field {
+  background: transparent !important;
+}
+
+/* Target MDC dialog inner elements (title/content/actions/surface) to remove white backgrounds */
+.cdk-overlay-pane .mat-mdc-dialog-container .mdc-dialog__surface,
+.cdk-overlay-pane .mat-mdc-dialog-container .mdc-dialog__scrim,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-actions,
+.cdk-overlay-container .mat-mdc-dialog-container .mdc-dialog__surface,
+.cdk-overlay-container .mat-mdc-dialog-container .mdc-dialog__scrim,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-actions {
+  background: linear-gradient(180deg, var(--secondary-bg) 0%, #151515 100%) !important;
+  color: var(--text-main) !important;
+  box-shadow: none !important;
+}
+
+/* Ensure titles/contents/actions don't have white backgrounds or borders */
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-title {
+  background: transparent !important;
+  color: var(--primary-color) !important;
+}
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-content,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-content {
+  background: transparent !important;
+  color: var(--text-main) !important;
+}
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-actions,
+.cdk-overlay-container .mat-mdc-dialog-container .mat-mdc-dialog-actions {
+  background: transparent !important;
+}
+
+
+/* Menu item styles */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-menu-item,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item {
+  color: var(--text-main) !important;
+  background: transparent !important;
+  padding: 8px 16px !important;
+  font-weight: 600;
+}
+
+/* Hover state for menu items only (no persistent focus/active styling) */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-menu-item:hover,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item:hover {
+  background: var(--primary-color) !important;
+  color: #000 !important;
+}
+
+/* Small icon spacing inside menu items */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel .mat-icon,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel .mat-icon {
+  margin-right: 12px;
+  color: var(--text-main);
+}
+
+/* Align text and ensure menu uses app's font */
+.cdk-overlay-container .cdk-overlay-pane .mat-menu-panel,
+.cdk-overlay-container .cdk-overlay-pane .mat-mdc-menu-panel {
+  font-family: var(--font-family);
+}
+
+/* Ensure main content is pushed below the fixed header */
+main {
+  padding-top: 6px; /* adjust if toolbar height changes */
+}
+
+/* Ensure toolbar buttons and icons contrast correctly 
+Color del header por la derecha*/
+.mat-toolbar.mat-primary .mat-button,
+.mat-toolbar.mat-primary button,
+.mat-toolbar.mat-primary .mat-icon {
+  color: #000 !important;
+}
+
+/* Make the whole card show an accent highlight on hover/focus */
+.group-card:hover,
+.group-card:focus {
+  box-shadow: 8px 5px 6px var(--primary-color);
+  border: 1px solid var(--primary-hover);
+  /* Make the hover tint darker but transition to the dark card background quickly
+     — top uses a darker mix (primary-hover blended with the dark background),
+     then switch to `--secondary-bg` early so the card becomes dark sooner. */
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--primary-color) 20%, var(--primary-color)) 1%,
+    var(--primary-color) 2%,
+    var(--secondary-bg) 20%);
+}
+
+.group-card:focus {
+  outline: 2px solid color-mix(in srgb, var(--primary-hover) 40%, transparent);
+}
+
+/* Round all Material card variants and clip overflow (ripples/content) */
+mat-card,
+.mat-card,
+.mat-mdc-card {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Component } from '@angular/core';
 import { AccountDetailComponent } from './account-detail.component';
 import { AuthService } from '../../auth/auth.service';
 import { ActivatedRoute } from '@angular/router';
@@ -22,8 +23,15 @@ describe('AccountDetailComponent', () => {
   let fixture: ComponentFixture<AccountDetailComponent>;
 
   beforeEach(waitForAsync(() => {
+    @Component({
+      selector: 'test-dummy',
+      standalone: true,
+      template: ''
+    })
+    class DummyComponent {}
+
     TestBed.configureTestingModule({
-      imports: [AccountDetailComponent, NoopAnimationsModule, RouterTestingModule],
+      imports: [AccountDetailComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'g1' } } } },

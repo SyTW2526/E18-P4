@@ -1,0 +1,16 @@
+{
+  "name": "e2e",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "wait-on http-get://localhost:4200/ && mocha --timeout 180000 --exit \"tests/**/*.spec.js\"",
+    "test:local": "wait-on http-get://localhost:4200/ && mocha --timeout 180000 --exit \"tests/**/*.spec.js\"",
+    "test:open": "E2E_HEADLESS=false E2E_BASE_URL=http://127.0.0.1:4200 npm run test"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "^4.16.0",
+    "wait-on": "^9.0.3"
+  }
+}

@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev, frontend ]
+
+jobs:
+  tests:
+    name: Run Unit/Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Shortcut for caching ~/.npm based on package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd server && npm ci
+          cd ../client && npm ci
+
+      - name: Run server tests
+        working-directory: server
+        env:
+          MONGO_TEST_URI: mongodb://localhost:27017
+          ATLAS_URI: ${{ secrets.ATLAS_URI || 'mongodb://localhost:27017' }}
+        run: npm test
+
+      - name: Run client tests (headless)
+        working-directory: client
+        run: npm run test:ci
+
+  e2e:
+    name: E2E Tests (Selenium)
+    needs: tests
+    runs-on: ubuntu-latest
+    # Define Mongo here to avoid manual 'docker run' commands
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+    env:
+      E2E_BROWSER: chrome
+      E2E_HEADLESS: 'true'
+      ATLAS_URI: ${{ secrets.ATLAS_URI || 'mongodb://localhost:27017' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install All Dependencies
+        # Installing everything at root or individually. 
+        # Assuming typical structure: server, client, e2e folders
+        run: |
+          npm ci --prefix server
+          npm ci --prefix client
+          npm ci --prefix e2e
+
+      # Standard Action to ensure Chrome is present. 
+      # We DON'T need to manually install ChromeDriver if using Selenium 4.6+
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Start Server (Background)
+        run: |
+          cd server
+          # Start server in background using '&'
+          # Ensure your start script listens on port 5200
+          npm start &
+          
+          # Wait for port 5200 to be ready
+          npx wait-on tcp:5200 --timeout 60000
+
+      - name: Build + Serve client
+        run: |
+          cd client
+          npm run build -- --configuration production
+          
+          # Serve dist folder on port 4200
+
+          
+          # CHANGE HERE: Add --proxy to redirect API calls to the backend (port 5200)
+          # Also add --cors just in case
+          # Dynamically locate the folder that contains index.html
+          # This works for both older Angular (dist/app) and newer Angular (dist/app/browser)
+          DIST_DIR=$(dirname $(find dist -name index.html | head -n 1))
+          
+          echo "Sirviendo aplicación desde: $DIST_DIR"
+          
+          # Arrancamos el servidor apuntando a esa carpeta exacta
+          npx http-server "$DIST_DIR" -p 4200 -a 127.0.0.1 --proxy http://localhost:5200 --cors &
+          
+          # Wait for client to be ready
+          npx wait-on http://127.0.0.1:4200/ --timeout 60000
+
+      - name: Run E2E Tests
+        working-directory: e2e
+        run: |
+          mkdir -p test-output
+          # Modern Selenium will automatically find the Chrome binary from the step above
+          # and download the matching driver into cache.
+          npm run test:local
+
+      - name: Upload E2E Artifacts (Logs/Screenshots)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-logs
+          path: |
+             e2e/test-output
+             e2e/*.log
+             e2e/screenshots # If your tests take screenshots on failure

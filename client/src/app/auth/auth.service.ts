@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 export interface AuthResponse {
   user: any;
@@ -22,6 +23,12 @@ export class AuthService {
 
   signin(payload: { email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/users/signin`, payload).pipe(
+      tap((res) => this.saveAuth(res))
+    );
+  }
+
+  signinGoogle(token: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/users/signin-google`, { token }).pipe(
       tap((res) => this.saveAuth(res))
     );
   }
@@ -96,8 +103,8 @@ export class AuthService {
     return this.http.get<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
   }
 
-  deleteSharedAccount(id: string) {
-    return this.http.delete<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
+  deleteSharedAccount(id: string, requesterId: string) {
+    return this.http.request<any>('delete', `${this.baseUrl}/user-group/shared-accounts/${id}`, { body: { requesterId } });
   }
 
   getMembersForGroup(id: string) {
@@ -113,26 +120,102 @@ export class AuthService {
     return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances`);
   }
 
+  getDetailedBalancesForGroup(id: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances-detailed`);
+  }
+
   // User-group relations (join a group)
   createUserGroup(payload: { id_usuario: string; id_grupo: string; rol?: string }) {
     return this.http.post<any>(`${this.baseUrl}/user-group/user-groups`, payload);
+  }
+
+  updateUserGroupRole(groupId: string, requesterId: string, targetUserId: string, role: 'admin' | 'miembro') {
+    return this.http.put<any>(`${this.baseUrl}/user-group/user-groups/${groupId}/role`, { requesterId, targetUserId, role });
+  }
+
+  removeUserFromGroup(groupId: string, requesterId: string, targetUserId: string) {
+    return this.http.request<any>('delete', `${this.baseUrl}/user-group/user-groups`, { body: { requesterId, targetUserId, groupId } });
+  }
+
+  // Group invitations
+  sendGroupInvitation(id_grupo: string, id_invitado: string, id_invitador: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations`, { id_grupo, id_invitado, id_invitador });
+  }
+
+  getGroupInvitationsForUser(userId: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/group-invitations/user/${userId}`);
+  }
+
+  acceptGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/accept`, { userId });
+  }
+
+  rejectGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/reject`, { userId });
   }
 
   getUserById(id: string) {
     return this.http.get<any>(`${this.baseUrl}/users/${id}`);
   }
 
+  getUserBasicInfo(id: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${id}/basic`);
+  }
+
+  // Get amigos (friends) list (returns { amigos: [...] })
+  getAmigos(userId: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${userId}/amigos`);
+  }
+
+  // Get incoming friend requests (peticiones_amistad)
+  getPeticiones(userId: string) {
+    return this.http.get<any>(`${this.baseUrl}/users/${userId}/peticiones-amistad`);
+  }
+
+  // Send a friend request (add senderId to receiver's peticiones_amistad)
+  addAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/add-amigo`, { senderId });
+  }
+
+  // Accept a friend request (current user accepts senderId)
+  acceptAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/accept-amigo`, { senderId });
+  }
+
+  // Reject a friend request (current user rejects senderId)
+  rejectAmigo(receiverId: string, senderId: string) {
+    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/reject-amigo`, { senderId });
+  }
+
+  // Remove a friend (delete) - requests server to remove amigoId from user's amigos list
+  removeAmigo(userId: string, amigoId: string) {
+    // Use HTTP request to send a DELETE with a body (some Angular versions require request() helper)
+    return this.http.request('delete', `${this.baseUrl}/users/${userId}/remove-amigo`, { body: { amigoId } });
+  }
+
+  // Helper: find a user by username (server-side lookup)
+  findUserByUsername(username: string) {
+    return this.http.get<any[]>(`${this.baseUrl}/users/lookup?username=${encodeURIComponent(String(username))}`);
+  }
+
   updateUser(id: string, payload: any) {
-    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payload).pipe(
-      tap((updated) => {
+    // map client theme values to server schema ('light'/'dark' -> 'claro'/'oscuro')
+    const payloadToSend = { ...payload };
+    if (payloadToSend?.preferencia_tema) {
+      if (payloadToSend.preferencia_tema === 'light') payloadToSend.preferencia_tema = 'claro';
+      else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
+    }
+
+    // After updating, update localStorage with the updated data
+    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend).pipe(
+      tap((updatedUser) => {
         try {
           if (typeof window !== 'undefined' && window?.localStorage) {
-            const current = window.localStorage.getItem('auth_user');
-            if (current) {
-              const parsed = JSON.parse(current);
-              const merged = { ...parsed, ...updated };
-              window.localStorage.setItem('auth_user', JSON.stringify(merged));
-            }
+            // Update auth_user in localStorage with the server-format response
+            const currentUser = this.getUser() || {};
+            // Ensure we use the server response's preferencia_tema (claro/oscuro format)
+            const merged = { ...currentUser, ...updatedUser, preferencia_tema: payloadToSend.preferencia_tema };
+            window.localStorage.setItem('auth_user', JSON.stringify(merged));
           }
         } catch (e) {
           console.warn('Failed to update auth_user in localStorage', e);

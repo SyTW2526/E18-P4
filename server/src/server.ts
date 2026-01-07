@@ -6,6 +6,8 @@ import { userRouter } from "./routes/users.route";
 import { userGroupRouter } from "./routes/user-group.route";
 import { participacionRouter } from "./routes/participacion.route";
 import { GastosRouter } from "./routes/gastos.route";
+import { notificationsRouter } from "./routes/notifications.route";
+import { groupInvitationsRouter } from "./routes/group-invitations.route";
 
 
 // Load environment variables from the .env file, where the ATLAS_URI is configured
@@ -33,6 +35,10 @@ connectToDatabase(ATLAS_URI)
   app.use("/participacion", participacionRouter);
   // mount gastos router
   app.use("/gastos", GastosRouter);
+  // mount notifications router
+  app.use("/notifications", notificationsRouter);
+  // mount group invitations router
+  app.use("/group-invitations", groupInvitationsRouter);
 
     // start the Express server
     app.listen(5200, () => {

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { FormsModule } from '@angular/forms';
+import { LanguageService } from '../../core/language.service';
+import { NotificationService } from '../../core/notification.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,19 +27,22 @@ import { MatDividerModule } from '@angular/material/divider';
     <section style="max-width:900px;margin:0 auto">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:0.5rem">
         <button mat-icon-button (click)="goBack()"><mat-icon>arrow_back</mat-icon></button>
-        <h2 style="margin:0">{{ editMode ? 'Editar gasto' : 'Añadir gasto' }}</h2>
+        <h2 style="margin:0">{{ editMode ? lang.t('edit') + ' ' + lang.t('expenses').toLowerCase() : lang.t('addExpense') }}</h2>
       </div>
 
       <mat-card>
-        <mat-form-field style="width:100%">
-          <input matInput placeholder="Descripción" [(ngModel)]="descripcion" name="descripcion" />
+        <mat-form-field class="full-width">
+          <mat-label>{{ lang.t('description') }}</mat-label>
+          <input matInput [(ngModel)]="descripcion" name="descripcion" />
         </mat-form-field>
 
-        <div style="display:flex;gap:0.5rem;align-items:center">
-          <mat-form-field style="flex:1">
-            <input matInput placeholder="Monto" type="number" [(ngModel)]="monto" name="monto" />
+        <div style="display:flex;gap:0.5rem;align-items:flex-start">
+          <mat-form-field class="amount-field">
+            <mat-label>{{ lang.t('amount') }}</mat-label>
+            <input matInput type="number" [(ngModel)]="monto" name="monto" step="0.01" />
           </mat-form-field>
           <mat-form-field style="width:120px">
+            <mat-label>{{ lang.t('currency') }}</mat-label>
             <mat-select [(ngModel)]="moneda" name="moneda">
               <mat-option value="EUR">€</mat-option>
               <mat-option value="USD">$</mat-option>
@@ -46,14 +51,15 @@ import { MatDividerModule } from '@angular/material/divider';
           </mat-form-field>
         </div>
 
-        <mat-form-field style="width:100%;margin-top:0.5rem">
-          <mat-select [(ngModel)]="pagador" name="pagador" placeholder="Pagado por">
+        <mat-form-field class="full-width" style="margin-top:0.5rem">
+          <mat-label>{{ lang.t('paidBy') }}</mat-label>
+          <mat-select [(ngModel)]="pagador" name="pagador">
             <mat-option *ngFor="let m of miembros" [value]="m._id || m.id">{{ displayMember(m) }}</mat-option>
           </mat-select>
         </mat-form-field>
 
         <div style="margin-top:1rem">
-          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">Dividir</mat-checkbox>
+          <mat-checkbox [(ngModel)]="dividir" name="dividir" (change)="recalcSplit()">{{ lang.t('divide') }}</mat-checkbox>
 
           <mat-divider style="margin:0.5rem 0"></mat-divider>
 
@@ -61,23 +67,33 @@ import { MatDividerModule } from '@angular/material/divider';
             <mat-checkbox [(ngModel)]="p.selected" (change)="onToggleParticipant(i)"></mat-checkbox>
             <div style="flex:1">{{ displayMember(p.user) }}</div>
             <mat-form-field style="width:140px;margin:0">
-              <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" />
+              <mat-label>Monto</mat-label>
+              <input matInput type="number" [(ngModel)]="p.monto_asignado" (ngModelChange)="onAmountChange(i)" step="0.01" />
             </mat-form-field>
           </div>
         </div>
 
         <div style="margin-top:1rem;display:flex;gap:0.5rem">
-          <button mat-raised-button color="primary" (click)="createGasto()" [disabled]="creating">Añadir</button>
-          <button mat-button (click)="goBack()">Cancelar</button>
+          <button mat-raised-button color="primary" (click)="createGasto()" [disabled]="creating">{{ lang.t('add') }}</button>
+          <button mat-button (click)="goBack()">{{ lang.t('cancel') }}</button>
         </div>
       </mat-card>
     </section>
   `,
+  styles: [`
+    .full-width {
+      width: 100%;
+    }
+    .amount-field {
+      flex: 1;
+      min-width: 150px;
+    }
+  `],
 })
 export class CreateGastoComponent implements OnInit {
   accountId = '';
   descripcion = '';
-  monto: number | null = null;
+  monto = '';
   moneda = 'EUR';
   pagador: string | null = null;
   miembros: any[] = [];
@@ -89,7 +105,13 @@ export class CreateGastoComponent implements OnInit {
   private membersReadyResolve: (() => void) | null = null;
   private membersReady: Promise<void> = new Promise((r) => (this.membersReadyResolve = r));
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private auth: AuthService, 
+    private router: Router, 
+    public lang: LanguageService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
@@ -276,7 +298,11 @@ export class CreateGastoComponent implements OnInit {
                   const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
                   const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
                   (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                    next: () => { this.creating = false; this.router.navigate(['/group', this.accountId]); },
+                    next: () => { 
+                      this.sendEditNotificationsToParticipants(gastoId, selectedParts);
+                      this.creating = false; 
+                      this.router.navigate(['/group', this.accountId]); 
+                    },
                     error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
                   });
                 },
@@ -288,7 +314,11 @@ export class CreateGastoComponent implements OnInit {
               const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
               const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
               (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                next: () => { this.creating = false; this.router.navigate(['/group', this.accountId]); },
+                next: () => { 
+                  this.sendEditNotificationsToParticipants(gastoId, selectedParts);
+                  this.creating = false; 
+                  this.router.navigate(['/group', this.accountId]); 
+                },
                 error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
               });
             }
@@ -336,6 +366,8 @@ export class CreateGastoComponent implements OnInit {
 
         (forkJoin(calls) as any).subscribe({
           next: () => {
+            // Enviar notificaciones a todos los participantes excepto el creador
+            this.sendNotificationsToParticipants(gastoId, selectedParts);
             this.creating = false;
             this.router.navigate(['/group', this.accountId]);
           },
@@ -349,6 +381,68 @@ export class CreateGastoComponent implements OnInit {
         this.creating = false;
         console.error('createGasto error', err);
       },
+    });
+  }
+
+  sendNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+    const me = this.auth.getUser();
+    if (!me || !me._id) return;
+
+    const creatorName = me.nombre || me.name || me.email || 'Alguien';
+    
+    // Enviar notificación a cada participante excepto el creador
+    selectedParts.forEach(part => {
+      const userId = String(part.user._id || part.user.id);
+      if (userId === me._id) return; // No notificar al creador
+
+      const notification = {
+        tipo: 'gasto_creado' as const,
+        de_usuario: me._id,
+        para_usuario: userId,
+        id_grupo: this.accountId,
+        id_gasto: gastoId,
+        mensaje: `${creatorName} creó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+      };
+
+      this.notificationService.createNotification(notification).subscribe({
+        next: () => {
+          console.log('Notificación enviada a', userId);
+        },
+        error: (err: any) => {
+          console.error('Error enviando notificación:', err);
+        }
+      });
+    });
+  }
+
+  sendEditNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+    const me = this.auth.getUser();
+    if (!me || !me._id) return;
+
+    const editorName = me.nombre || me.name || me.email || 'Alguien';
+    
+    // Enviar notificación a cada participante excepto el editor
+    selectedParts.forEach(part => {
+      const userId = String(part.user._id || part.user.id);
+      if (userId === me._id) return; // No notificar al editor
+
+      const notification = {
+        tipo: 'gasto_creado' as const,
+        de_usuario: me._id,
+        para_usuario: userId,
+        id_grupo: this.accountId,
+        id_gasto: gastoId,
+        mensaje: `${editorName} editó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+      };
+
+      this.notificationService.createNotification(notification).subscribe({
+        next: () => {
+          console.log('Notificación de edición enviada a', userId);
+        },
+        error: (err: any) => {
+          console.error('Error enviando notificación de edición:', err);
+        }
+      });
     });
   }
 

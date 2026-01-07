@@ -8,6 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
+import { ThemeService } from '../core/theme.service';
+import { LanguageService } from '../core/language.service';
 
 @Component({
   selector: 'app-user-settings',
@@ -22,42 +24,64 @@ import { Router } from '@angular/router';
     MatSelectModule,
   ],
   template: `
-    <mat-card style="width: 480px;">
-      <mat-card-title>Configuración de usuario</mat-card-title>
+    <section style="transform:translateY(2rem)">
+      <mat-card style="width: 480px;">
+      <mat-card-title>{{ lang.t('userSettings') }}</mat-card-title>
       <mat-card-content>
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="nombre" />
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('nombre') }}</label>
+            <mat-form-field appearance="fill" class="full-width">
+              <input matInput formControlName="nombre" />
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" />
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('email') }}</label>
+            <mat-form-field appearance="fill" class="full-width">
+              <input matInput formControlName="email" />
+            </mat-form-field>
+          </div>
 
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Tema</mat-label>
-            <mat-select formControlName="preferencia_tema">
-              <mat-option value="light">Claro</mat-option>
-              <mat-option value="dark">Oscuro</mat-option>
-            </mat-select>
-          </mat-form-field>
+          <div class="form-group">
+            <label>{{ lang.t('theme') }}</label>
+            <mat-form-field appearance="fill" class="full-width" (click)="$event.stopPropagation(); themeOpen ? themeSelect.close() : themeSelect.open()">
+              <mat-select #themeSelect formControlName="preferencia_tema" (openedChange)="themeOpen=$event">
+                <mat-option value="light">{{ lang.t('light') }}</mat-option>
+                <mat-option value="dark">{{ lang.t('dark') }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
 
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
-            <button mat-button type="button" (click)="cancel()">Cancelar</button>
-            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Guardar</button>
+            <button mat-button type="button" (click)="cancel()">{{ lang.t('cancel') }}</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">{{ lang.t('save') }}</button>
           </div>
           <div style="display:flex;gap:8px;justify-content:flex-start;margin-top:1rem;">
-            <button mat-stroked-button color="warn" type="button" (click)="confirmDelete()">Eliminar cuenta</button>
+            <button mat-stroked-button style="color:#d32f2f;border-color:#d32f2f" type="button" (click)="confirmDelete()">{{ lang.t('deleteAccount') }}</button>
           </div>
         </form>
       </mat-card-content>
     </mat-card>
+    </section>
   `,
   styles: [
     `
       .full-width { width: 100%; }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .form-group label {
+        color: var(--text-muted, #a1a1aa);
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+      ::ng-deep .mat-mdc-form-field-label {
+        display: none !important;
+      }
     `,
   ],
 })
@@ -69,34 +93,29 @@ export class UserSettingsComponent implements OnInit {
   });
 
   userId: string | null = null;
+  themeOpen = false;
 
-  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
 
   ngOnInit(): void {
     const u = this.auth.getUser();
     if (u && u._id) {
       this.userId = u._id;
-      // try to fetch fresh data
-      if (this.userId) {
-        this.auth.getUserById(this.userId).subscribe({
-        next: (data) => {
-          this.form.patchValue({
-            nombre: data.nombre ?? data.name ?? '',
-            email: data.email ?? '',
-            preferencia_tema: data.preferencia_tema ?? 'light',
-          });
-        },
-        error: () => {
-          // fallback to local data
-          this.form.patchValue({
-            nombre: u.nombre ?? u.name ?? '',
-            email: u.email ?? '',
-            preferencia_tema: u.preferencia_tema ?? 'light',
-          });
-        },
-        });
-      }
+      // Use local storage data directly to avoid 401 error
+      const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
+      this.form.patchValue({
+        nombre: u.nombre ?? u.name ?? '',
+        email: u.email ?? '',
+        preferencia_tema: ut,
+      });
     }
+
+    // apply theme when user changes selection in the form
+    this.form.get('preferencia_tema')?.valueChanges.subscribe((v) => {
+      if (v === 'dark' || v === 'light') {
+        try { this.theme.applyTheme(v); } catch(e) { /* noop */ }
+      }
+    });
   }
 
   onSubmit() {
@@ -104,6 +123,13 @@ export class UserSettingsComponent implements OnInit {
     const payload = this.form.value;
     this.auth.updateUser(this.userId, payload).subscribe({
       next: () => {
+        // apply selected theme immediately and store preference
+        const t = payload?.preferencia_tema;
+        if (t === 'dark' || t === 'light') {
+          try { 
+            this.theme.applyTheme(t);
+          } catch(e) {}
+        }
         this.router.navigate(['/home']);
       },
       error: (err) => {

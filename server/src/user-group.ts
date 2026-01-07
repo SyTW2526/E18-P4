@@ -5,14 +5,14 @@ import * as mongodb from 'mongodb';
  *  - id_usuario_grupo: UUID o INT opcional
  *  - id_usuario: FK hacia usuario (id externo o string del ObjectId)
  *  - id_grupo: FK hacia grupo/SharedAccount (id externo o string del ObjectId)
- *  - rol: 'admin' | 'miembro'
+ *  - rol: 'owner' | 'admin' | 'miembro'
  *  - fecha_union: fecha en que el usuario se unió al grupo
  */
 export interface UserGroup {
   id_usuario_grupo?: string | number;
   id_usuario: string | number;
   id_grupo: string | number;
-  rol: 'admin' | 'miembro';
+  rol: 'owner' | 'admin' | 'miembro';
   fecha_union: Date;
   _id?: mongodb.ObjectId;
 }
