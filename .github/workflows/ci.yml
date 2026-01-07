@@ -128,3 +128,8 @@ jobs:
              e2e/test-output
              e2e/*.log
              e2e/screenshots # If your tests take screenshots on failure
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

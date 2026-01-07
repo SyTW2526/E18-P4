@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Component } from '@angular/core';
@@ -23,7 +23,7 @@ describe('BalanceComponent', () => {
   let component: BalanceComponent;
   let fixture: ComponentFixture<BalanceComponent>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     @Component({
       selector: 'test-dummy',
       standalone: true,
@@ -31,7 +31,7 @@ describe('BalanceComponent', () => {
     })
     class DummyComponent {}
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [BalanceComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
@@ -42,7 +42,7 @@ describe('BalanceComponent', () => {
 
     fixture = TestBed.createComponent(BalanceComponent);
     component = fixture.componentInstance;
-  }));
+  });
 
   it('should create and load balances', () => {
     fixture.detectChanges();

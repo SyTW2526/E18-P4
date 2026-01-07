@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Component } from '@angular/core';
@@ -22,7 +22,7 @@ describe('AccountDetailComponent', () => {
   let component: AccountDetailComponent;
   let fixture: ComponentFixture<AccountDetailComponent>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     @Component({
       selector: 'test-dummy',
       standalone: true,
@@ -30,7 +30,7 @@ describe('AccountDetailComponent', () => {
     })
     class DummyComponent {}
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [AccountDetailComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
@@ -40,7 +40,7 @@ describe('AccountDetailComponent', () => {
 
     fixture = TestBed.createComponent(AccountDetailComponent);
     component = fixture.componentInstance;
-  }));
+  });
 
   it('should create and load gastos and miembros', () => {
     fixture.detectChanges();

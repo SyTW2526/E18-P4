@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HomeComponent } from './home.component';
 import { AuthService } from '../../auth/auth.service';
 import { of } from 'rxjs';
@@ -13,15 +13,15 @@ describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [HomeComponent],
       providers: [ { provide: AuthService, useClass: MockAuthService } ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);
     component = fixture.componentInstance;
-  }));
+  });
 
   it('should create and load groups on init', () => {
     fixture.detectChanges();
