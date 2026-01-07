@@ -135,6 +135,12 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     logout: 'Salir',
     deleteAccount: 'Eliminar cuenta',
     dailyExpenses: 'Gastos diarios',
+    addMember: 'Añadir miembro',
+    totalExpenses: 'Total de gastos',
+    yourBalance: 'Tu balance',
+    quickActions: 'Acciones rápidas',
+    stats: 'Estadísticas',
+    group: 'Grupo',
   },
   en: {
     appTitle: 'PaySplit',
@@ -267,6 +273,12 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     logout: 'Logout',
     deleteAccount: 'Delete Account',
     dailyExpenses: 'Daily Expenses',
+    addMember: 'Add member',
+    totalExpenses: 'Total expenses',
+    yourBalance: 'Your balance',
+    quickActions: 'Quick actions',
+    stats: 'Stats',
+    group: 'Group',
   },
 };
 
