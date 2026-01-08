@@ -1,14 +1,18 @@
 <section class="settings-shell">
   <header class="section-header">
     <div class="header-left">
-      <button class="icon-btn" (click)="goBack()" title="Volver">
+      <button
+        class="icon-btn"
+        (click)="goBack()"
+        [title]="lang.t('backButton')"
+      >
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <h2>{{ lang.t('groupSettings') }}</h2>
+      <h2>{{ lang.t("groupSettings") }}</h2>
     </div>
   </header>
 
-  <div *ngIf="loading" class="loading-center">{{ lang.t('loading') }}...</div>
+  <div *ngIf="loading" class="loading-center">{{ lang.t("loading") }}...</div>
   <div *ngIf="error" class="error-inline">{{ error }}</div>
 
   <div *ngIf="!loading && account" class="settings-grid">
@@ -17,63 +21,114 @@
       <div class="panel-body">
         <div class="card-header">
           <mat-icon>group</mat-icon>
-          <h3>{{ lang.t('groupProfile') }}</h3>
+          <h3>{{ lang.t("groupProfile") }}</h3>
         </div>
 
         <div class="profile-row">
           <div class="avatar-box">
             <div class="avatar" *ngIf="groupImageSrc || account.foto_grupo">
-              <img [src]="groupImageSrc || account.foto_grupo" alt="Group avatar" />
+              <img
+                [src]="groupImageSrc || account.foto_grupo"
+                alt="Group avatar"
+              />
             </div>
-            <div class="avatar placeholder" *ngIf="!groupImageSrc && !account.foto_grupo">
-              {{ (account.nombre || 'G').charAt(0).toUpperCase() }}
+            <div
+              class="avatar placeholder"
+              *ngIf="!groupImageSrc && !account.foto_grupo"
+            >
+              {{ (account.nombre || "G").charAt(0).toUpperCase() }}
             </div>
 
-            <input #groupFileInput type="file" accept="image/*" (change)="onGroupImageSelected($event)" hidden />
-            <button mat-stroked-button color="primary" class="avatar-action" (click)="groupFileInput.click()" title="Cambiar foto">
+            <input
+              #groupFileInput
+              type="file"
+              accept="image/*"
+              (change)="onGroupImageSelected($event)"
+              hidden
+            />
+            <button
+              mat-stroked-button
+              color="primary"
+              class="avatar-action"
+              (click)="groupFileInput.click()"
+              title="Cambiar foto"
+            >
               <mat-icon>photo_camera</mat-icon>
             </button>
           </div>
 
           <div class="profile-form">
             <div class="field">
-              <label class="label">{{ lang.t('groupName') }}</label>
-              <input class="text-input" type="text" [(ngModel)]="account.nombre" name="nombre" />
+              <label class="label">{{ lang.t("groupName") }}</label>
+              <input
+                class="text-input"
+                type="text"
+                [(ngModel)]="account.nombre"
+                name="nombre"
+              />
             </div>
 
             <div class="field">
-              <label class="label">{{ lang.t('id') || 'ID' }}</label>
+              <label class="label">{{ lang.t("id") || "ID" }}</label>
               <div class="mono muted">{{ account._id || account.id }}</div>
             </div>
           </div>
         </div>
 
         <div class="field">
-          <label class="label">{{ lang.t('description') }}</label>
-          <textarea class="textarea desc-textarea" [(ngModel)]="account.descripcion" name="descripcion" rows="3"></textarea>
+          <label class="label">{{ lang.t("description") }}</label>
+          <textarea
+            class="textarea desc-textarea"
+            [(ngModel)]="account.descripcion"
+            name="descripcion"
+            rows="3"
+          ></textarea>
         </div>
 
         <div class="field">
-          <label class="label">{{ lang.t('currency') || 'Moneda' }}</label>
+          <label class="label">{{ lang.t("currency") || "Moneda" }}</label>
           <select class="select" [(ngModel)]="account.moneda" name="moneda">
-            <option *ngFor="let c of currencyOptions" [value]="c.code">{{ c.symbol }} - {{ c.label }}</option>
+            <option *ngFor="let c of currencyOptions" [value]="c.code">
+              {{ c.symbol }} - {{ c.label }}
+            </option>
           </select>
         </div>
 
         <div class="field">
-          <label class="label">{{ lang.t('groupId') || 'ID del grupo' }}</label>
+          <label class="label">{{ lang.t("groupId") || "ID del grupo" }}</label>
           <div class="copy-row">
-            <input class="text-input" type="text" [value]="account._id || account.id" readonly />
-            <button mat-icon-button (click)="copyGroupId()" title="{{ lang.t('copy') || 'Copiar' }}">
+            <input
+              class="text-input"
+              type="text"
+              [value]="account._id || account.id"
+              readonly
+            />
+            <button
+              mat-icon-button
+              (click)="copyGroupId()"
+              title="{{ lang.t('copy') || 'Copiar' }}"
+            >
               <mat-icon>content_copy</mat-icon>
             </button>
           </div>
         </div>
 
         <div class="actions-row">
-          <button mat-stroked-button class="pill-btn pill-outline" (click)="cancelChanges()">{{ lang.t('cancel') }}</button>
-          <button mat-flat-button color="primary" class="pill-btn pill-primary" (click)="saveChanges()" [disabled]="saving">
-            {{ saving ? (lang.t('saving') + '...') : lang.t('saveChanges') }}
+          <button
+            mat-stroked-button
+            class="pill-btn pill-outline"
+            (click)="cancelChanges()"
+          >
+            {{ lang.t("cancel") }}
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            class="pill-btn pill-primary"
+            (click)="saveChanges()"
+            [disabled]="saving"
+          >
+            {{ saving ? lang.t("saving") + "..." : lang.t("saveChanges") }}
           </button>
         </div>
 
@@ -86,39 +141,83 @@
       <mat-card class="panel-card">
         <div class="panel-body">
           <div class="card-header">
-            <div style="display:flex; align-items:center; gap:0.75rem">
+            <div style="display: flex; align-items: center; gap: 0.75rem">
               <mat-icon>groups</mat-icon>
-              <h3>{{ lang.t('members') }} ({{ miembros.length }})</h3>
+              <h3>{{ lang.t("members") }} ({{ miembros.length }})</h3>
             </div>
-            <button mat-icon-button (click)="openAddFriendModal()" title="{{ lang.t('addFriend') }}">
+            <button
+              mat-icon-button
+              (click)="openAddFriendModal()"
+              title="{{ lang.t('addFriend') }}"
+            >
               <mat-icon>person_add</mat-icon>
             </button>
           </div>
 
-          <div *ngIf="!miembros.length" class="muted">{{ lang.t('noMembers') }}</div>
+          <div *ngIf="!miembros.length" class="muted">
+            {{ lang.t("noMembers") }}
+          </div>
 
           <div *ngIf="miembros.length" class="member-list">
             <div class="member-item" *ngFor="let m of miembros">
               <div class="member-avatar">
-                {{ (m.nombre || m.email || 'U').charAt(0).toUpperCase() }}
+                {{ (m.nombre || m.email || "U").charAt(0).toUpperCase() }}
               </div>
               <div class="member-info">
                 <div class="member-name-row">
-                  <div class="member-name">{{ m.nombre || m.username || 'Usuario' }}</div>
-                  <span class="role-pill">{{ m.rol || 'miembro' }}</span>
+                  <div class="member-name">
+                    {{ m.nombre || m.username || "Usuario" }}
+                  </div>
+                  <span class="role-pill">{{ m.rol || "miembro" }}</span>
                 </div>
                 <div class="member-email">{{ m.email }}</div>
               </div>
-              <div class="member-actions" *ngIf="canRemove(m) || canPromote(m) || canDemote(m)">
-                <button mat-icon-button color="primary" *ngIf="canPromote(m)" (click)="promoteToAdmin(m)"
-                        [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')"
-                        title="Hacer admin"><mat-icon>arrow_circle_up</mat-icon></button>
-                <button mat-icon-button color="accent" *ngIf="canDemote(m)" (click)="demoteToMember(m)"
-                        [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')"
-                        title="Quitar admin"><mat-icon>arrow_circle_down</mat-icon></button>
-                <button mat-icon-button color="warn" *ngIf="canRemove(m)" (click)="removeMember(m)"
-                        [disabled]="actionLoading === (m._id + ':promote') || actionLoading === (m._id + ':demote') || actionLoading === (m._id + ':remove')"
-                        title="Expulsar"><mat-icon>delete</mat-icon></button>
+              <div
+                class="member-actions"
+                *ngIf="canRemove(m) || canPromote(m) || canDemote(m)"
+              >
+                <button
+                  mat-icon-button
+                  color="primary"
+                  *ngIf="canPromote(m)"
+                  (click)="promoteToAdmin(m)"
+                  [disabled]="
+                    actionLoading === m._id + ':promote' ||
+                    actionLoading === m._id + ':demote' ||
+                    actionLoading === m._id + ':remove'
+                  "
+                  title="Hacer admin"
+                >
+                  <mat-icon>arrow_circle_up</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="accent"
+                  *ngIf="canDemote(m)"
+                  (click)="demoteToMember(m)"
+                  [disabled]="
+                    actionLoading === m._id + ':promote' ||
+                    actionLoading === m._id + ':demote' ||
+                    actionLoading === m._id + ':remove'
+                  "
+                  title="Quitar admin"
+                >
+                  <mat-icon>arrow_circle_down</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  *ngIf="canRemove(m)"
+                  (click)="removeMember(m)"
+                  [disabled]="
+                    actionLoading === m._id + ':promote' ||
+                    actionLoading === m._id + ':demote' ||
+                    actionLoading === m._id + ':remove'
+                  "
+                  title="Expulsar"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
               </div>
             </div>
           </div>
@@ -128,54 +227,119 @@
       </mat-card>
 
       <!-- Invitation Links -->
-      <mat-card class="panel-card" *ngIf="myRole === 'owner' || myRole === 'admin'">
+      <mat-card
+        class="panel-card"
+        *ngIf="myRole === 'owner' || myRole === 'admin'"
+      >
         <div class="panel-body">
           <div class="card-header">
-            <div style="display:flex; align-items:center; gap:0.75rem">
+            <div style="display: flex; align-items: center; gap: 0.75rem">
               <mat-icon>link</mat-icon>
-              <h3>{{ lang.t('invitationLinks') || 'Enlaces de invitación' }}</h3>
+              <h3>
+                {{ lang.t("invitationLinks") || "Enlaces de invitación" }}
+              </h3>
             </div>
-            <button mat-icon-button (click)="toggleCreateLinkForm()" title="{{ lang.t('createLink') || 'Crear enlace' }}">
-              <mat-icon>{{ showCreateLinkForm ? 'close' : 'add_link' }}</mat-icon>
+            <button
+              mat-icon-button
+              (click)="toggleCreateLinkForm()"
+              title="{{ lang.t('createLink') || 'Crear enlace' }}"
+            >
+              <mat-icon>{{
+                showCreateLinkForm ? "close" : "add_link"
+              }}</mat-icon>
             </button>
           </div>
 
           <div *ngIf="showCreateLinkForm" class="form-box">
             <div class="field">
-              <label class="label">{{ lang.t('maxUses') || 'Usos máximos' }}</label>
-              <input class="text-input" type="number" [(ngModel)]="newLinkMaxUses" placeholder="Ilimitado" min="1" />
+              <label class="label">{{
+                lang.t("maxUses") || "Usos máximos"
+              }}</label>
+              <input
+                class="text-input"
+                type="number"
+                [(ngModel)]="newLinkMaxUses"
+                [placeholder]="lang.t('unlimited')"
+                min="1"
+              />
             </div>
             <div class="field">
-              <label class="label">{{ lang.t('expirationDays') || 'Días hasta expirar' }}</label>
-              <input class="text-input" type="number" [(ngModel)]="newLinkExpirationDays" placeholder="Sin expiración" min="1" />
+              <label class="label">{{
+                lang.t("expirationDays") || "Días hasta expirar"
+              }}</label>
+              <input
+                class="text-input"
+                type="number"
+                [(ngModel)]="newLinkExpirationDays"
+                [placeholder]="lang.t('noExpiration')"
+                min="1"
+              />
             </div>
             <div class="actions-row">
-              <button mat-button (click)="toggleCreateLinkForm()">{{ lang.t('cancel') }}</button>
-              <button mat-flat-button color="primary" (click)="createInvitationLink()" [disabled]="creatingLink">
-                {{ creatingLink ? (lang.t('creating') + '...') : (lang.t('create') || 'Crear') }}
+              <button mat-button (click)="toggleCreateLinkForm()">
+                {{ lang.t("cancel") }}
+              </button>
+              <button
+                mat-flat-button
+                color="primary"
+                (click)="createInvitationLink()"
+                [disabled]="creatingLink"
+              >
+                {{
+                  creatingLink
+                    ? lang.t("creating") + "..."
+                    : lang.t("create") || "Crear"
+                }}
               </button>
             </div>
             <div *ngIf="linkError" class="error-inline">{{ linkError }}</div>
           </div>
 
-          <div *ngIf="loadingLinks" class="loading-center muted">{{ lang.t('loading') }}...</div>
-          <div *ngIf="!loadingLinks && invitationLinks.length === 0" class="muted">{{ lang.t('noActiveLinks') || 'No hay enlaces activos' }}</div>
+          <div *ngIf="loadingLinks" class="loading-center muted">
+            {{ lang.t("loading") }}...
+          </div>
+          <div
+            *ngIf="!loadingLinks && invitationLinks.length === 0"
+            class="muted"
+          >
+            {{ lang.t("noActiveLinks") || "No hay enlaces activos" }}
+          </div>
 
-          <div *ngIf="!loadingLinks && invitationLinks.length > 0" class="invite-list">
+          <div
+            *ngIf="!loadingLinks && invitationLinks.length > 0"
+            class="invite-list"
+          >
             <div class="invite-item" *ngFor="let link of invitationLinks">
               <div class="invite-meta">
                 <mat-icon class="invite-icon">link</mat-icon>
                 <div class="invite-info">
                   <div class="invite-sub muted">
-                    {{ link.usos_actuales || 0 }} / {{ link.usos_maximos || '∞' }} usos
-                    <span *ngIf="link.expira_en"> • Expira: {{ link.expira_en | date:'dd/MM/yyyy' }}</span>
+                    {{ link.usos_actuales || 0 }} /
+                    {{ link.usos_maximos || "∞" }} usos
+                    <span *ngIf="link.expira_en">
+                      • Expira: {{ link.expira_en | date: "dd/MM/yyyy" }}</span
+                    >
                   </div>
                   <div class="copy-row">
-                    <input class="text-input small mono" readonly [value]="getLinkUrl(link.token)" />
-                    <button mat-icon-button (click)="copyLink(link.token)" title="{{ lang.t('copy') || 'Copiar' }}">
+                    <input
+                      class="text-input small mono"
+                      readonly
+                      [value]="getLinkUrl(link.token)"
+                    />
+                    <button
+                      mat-icon-button
+                      (click)="copyLink(link.token)"
+                      title="{{ lang.t('copy') || 'Copiar' }}"
+                    >
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <button mat-icon-button color="warn" (click)="revokeLink(link)" title="{{ lang.t('revoke') || 'Revocar' }}" [disabled]="revokingLink === link._id">
+                    <button
+                      mat-icon-button
+                      color="warn"
+                      (click)="revokeLink(link)"
+                      title="{{ lang.t('revoke') || 'Revocar' }}"
+                      [disabled]="revokingLink === link._id"
+                    >
                       <mat-icon>delete</mat-icon>
                     </button>
                   </div>
@@ -188,45 +352,92 @@
 
       <mat-card class="panel-card">
         <div class="panel-body">
-          <button mat-raised-button class="pill-btn pill-danger" (click)="deleteGroup()">{{ lang.t('deleteGroup') }}</button>
+          <button
+            mat-raised-button
+            class="pill-btn pill-danger"
+            (click)="deleteGroup()"
+          >
+            {{ lang.t("deleteGroup") }}
+          </button>
         </div>
       </mat-card>
     </div>
   </div>
 
   <!-- Add friend modal -->
-  <div *ngIf="showAddFriendModal" class="modal-overlay" (click)="closeAddFriendModal()">
+  <div
+    *ngIf="showAddFriendModal"
+    class="modal-overlay"
+    (click)="closeAddFriendModal()"
+  >
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ lang.t('addFriend') }}</h3>
+        <h3>{{ lang.t("addFriend") }}</h3>
         <button class="close-btn" (click)="closeAddFriendModal()">
           <mat-icon>close</mat-icon>
         </button>
       </div>
 
       <div class="modal-body">
-        <div *ngIf="loadingFriends" class="loading-center">{{ lang.t('loading') }}...</div>
-        <div *ngIf="!loadingFriends && availableFriends.length === 0" class="muted">{{ lang.t('noMembers') }}</div>
+        <div *ngIf="loadingFriends" class="loading-center">
+          {{ lang.t("loading") }}...
+        </div>
+        <div
+          *ngIf="!loadingFriends && availableFriends.length === 0"
+          class="muted"
+        >
+          {{ lang.t("noMembers") }}
+        </div>
 
-        <div *ngIf="!loadingFriends && availableFriends.length > 0" class="modal-list">
-          <div class="modal-list-item" *ngFor="let friend of availableFriends"
-               [class.selected]="selectedFriendToAdd === friend._id"
-               (click)="selectFriendToAdd(friend)">
+        <div
+          *ngIf="!loadingFriends && availableFriends.length > 0"
+          class="modal-list"
+        >
+          <div
+            class="modal-list-item"
+            *ngFor="let friend of availableFriends"
+            [class.selected]="selectedFriendToAdd === friend._id"
+            (click)="selectFriendToAdd(friend)"
+          >
             <div class="modal-list-info">
-              <div class="modal-name">{{ friend.nombre || friend.username || friend.email }}</div>
+              <div class="modal-name">
+                {{ friend.nombre || friend.username || friend.email }}
+              </div>
               <div class="modal-email muted">{{ friend.email }}</div>
             </div>
-            <mat-icon *ngIf="selectedFriendToAdd === friend._id" color="primary">check_circle</mat-icon>
+            <mat-icon *ngIf="selectedFriendToAdd === friend._id" color="primary"
+              >check_circle</mat-icon
+            >
           </div>
         </div>
 
-        <div *ngIf="addFriendError" class="error-inline">{{ addFriendError }}</div>
-        <div *ngIf="addFriendSuccess" class="success-inline">{{ lang.t('invitationSent') || 'Invitación enviada' }}</div>
+        <div *ngIf="addFriendError" class="error-inline">
+          {{ addFriendError }}
+        </div>
+        <div *ngIf="addFriendSuccess" class="success-inline">
+          {{ lang.t("invitationSent") || "Invitación enviada" }}
+        </div>
       </div>
 
       <div class="modal-footer">
-        <button class="modal-btn cancel-btn" (click)="closeAddFriendModal()" [disabled]="addingFriend">{{ lang.t('cancel') }}</button>
-        <button class="modal-btn confirm-btn" (click)="addFriendToGroup()" [disabled]="!selectedFriendToAdd || addingFriend">{{ addingFriend ? (lang.t('loading') + '...') : (lang.t('sendInvitation') || 'Enviar invitación') }}</button>
+        <button
+          class="modal-btn cancel-btn"
+          (click)="closeAddFriendModal()"
+          [disabled]="addingFriend"
+        >
+          {{ lang.t("cancel") }}
+        </button>
+        <button
+          class="modal-btn confirm-btn"
+          (click)="addFriendToGroup()"
+          [disabled]="!selectedFriendToAdd || addingFriend"
+        >
+          {{
+            addingFriend
+              ? lang.t("loading") + "..."
+              : lang.t("sendInvitation") || "Enviar invitación"
+          }}
+        </button>
       </div>
     </div>
   </div>

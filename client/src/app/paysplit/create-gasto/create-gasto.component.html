@@ -6,8 +6,14 @@
         <mat-icon>arrow_back</mat-icon>
       </button>
       <h2 class="gasto-title">
-        <mat-icon class="title-icon">{{ editMode ? 'edit' : 'add_circle' }}</mat-icon>
-        {{ editMode ? lang.t('edit') + ' ' + lang.t('expenses').toLowerCase() : lang.t('addExpense') }}
+        <mat-icon class="title-icon">{{
+          editMode ? "edit" : "add_circle"
+        }}</mat-icon>
+        {{
+          editMode
+            ? lang.t("edit") + " " + lang.t("expenses").toLowerCase()
+            : lang.t("addExpense")
+        }}
       </h2>
     </header>
 
@@ -17,7 +23,7 @@
       <div class="form-section">
         <label class="section-label">
           <mat-icon>description</mat-icon>
-          {{ lang.t('description') }}
+          {{ lang.t("description") }}
         </label>
         <input
           class="form-input full-width"
@@ -45,15 +51,29 @@
               step="0.01"
             />
           </div>
-          
-          <div class="form-field" [appClickOutsideEnabled]="currencyMenuOpen" (appClickOutside)="currencyMenuOpen = false">
-            <button type="button" class="form-select" (click)="currencyMenuOpen = !currencyMenuOpen">
-              <span class="select-label">{{ lang.t('currency') }}:</span>
+
+          <div
+            class="form-field"
+            [appClickOutsideEnabled]="currencyMenuOpen"
+            (appClickOutside)="currencyMenuOpen = false"
+          >
+            <button
+              type="button"
+              class="form-select"
+              (click)="currencyMenuOpen = !currencyMenuOpen"
+            >
+              <span class="select-label">{{ lang.t("currency") }}:</span>
               <span class="select-value">{{ moneda }}</span>
-              <mat-icon [ngClass]="{'dropdown-arrow-open': currencyMenuOpen}">arrow_drop_down</mat-icon>
+              <mat-icon [ngClass]="{ 'dropdown-arrow-open': currencyMenuOpen }"
+                >arrow_drop_down</mat-icon
+              >
             </button>
             <div *ngIf="currencyMenuOpen" class="dropdown-menu">
-              <button class="dropdown-item" *ngFor="let opt of ['EUR', 'USD', 'GBP']" (click)="moneda = opt; currencyMenuOpen = false">
+              <button
+                class="dropdown-item"
+                *ngFor="let opt of ['EUR', 'USD', 'GBP']"
+                (click)="moneda = opt; currencyMenuOpen = false"
+              >
                 <span>{{ opt }}</span>
                 <mat-icon *ngIf="moneda === opt">check</mat-icon>
               </button>
@@ -76,15 +96,31 @@
       <div class="form-section">
         <label class="section-label">
           <mat-icon>person</mat-icon>
-          {{ lang.t('paidBy') }}
+          {{ lang.t("paidBy") }}
         </label>
-        <div class="form-field full-width" [appClickOutsideEnabled]="pagadorMenuOpen" (appClickOutside)="pagadorMenuOpen = false">
-          <button type="button" class="form-select" (click)="pagadorMenuOpen = !pagadorMenuOpen">
-            <span class="select-value">{{ displayMember(getMemberById(pagador)) }}</span>
-            <mat-icon [ngClass]="{'dropdown-arrow-open': pagadorMenuOpen}">arrow_drop_down</mat-icon>
+        <div
+          class="form-field full-width"
+          [appClickOutsideEnabled]="pagadorMenuOpen"
+          (appClickOutside)="pagadorMenuOpen = false"
+        >
+          <button
+            type="button"
+            class="form-select"
+            (click)="pagadorMenuOpen = !pagadorMenuOpen"
+          >
+            <span class="select-value">{{
+              displayMember(getMemberById(pagador))
+            }}</span>
+            <mat-icon [ngClass]="{ 'dropdown-arrow-open': pagadorMenuOpen }"
+              >arrow_drop_down</mat-icon
+            >
           </button>
           <div *ngIf="pagadorMenuOpen" class="dropdown-menu">
-            <button class="dropdown-item" *ngFor="let m of miembros" (click)="pagador = m._id || m.id; pagadorMenuOpen = false">
+            <button
+              class="dropdown-item"
+              *ngFor="let m of miembros"
+              (click)="pagador = m._id || m.id; pagadorMenuOpen = false"
+            >
               <span>{{ displayMember(m) }}</span>
               <mat-icon *ngIf="pagador === (m._id || m.id)">check</mat-icon>
             </button>
@@ -101,13 +137,20 @@
           </label>
           <button class="divide-btn" type="button" (click)="recalcSplit()">
             <mat-icon>calculate</mat-icon>
-            {{ lang.t('divide') }}
+            {{ lang.t("divide") }}
           </button>
         </div>
 
         <div class="participants-list">
-          <div *ngFor="let p of participaciones; let i = index" class="participant-item">
-            <mat-checkbox [(ngModel)]="p.selected" (change)="onToggleParticipant(i)" class="participant-checkbox"></mat-checkbox>
+          <div
+            *ngFor="let p of participaciones; let i = index"
+            class="participant-item"
+          >
+            <mat-checkbox
+              [(ngModel)]="p.selected"
+              (change)="onToggleParticipant(i)"
+              class="participant-checkbox"
+            ></mat-checkbox>
             <span class="participant-name">{{ displayMember(p.user) }}</span>
             <input
               class="participant-amount"
@@ -123,13 +166,17 @@
 
       <!-- Action Buttons -->
       <div class="form-actions">
-        <button class="btn-primary" (click)="createGasto()" [disabled]="creating">
-          <mat-icon>{{ editMode ? 'save' : 'add' }}</mat-icon>
-          {{ editMode ? lang.t('save') : lang.t('add') }}
+        <button
+          class="btn-primary"
+          (click)="createGasto()"
+          [disabled]="creating"
+        >
+          <mat-icon>{{ editMode ? "save" : "add" }}</mat-icon>
+          {{ editMode ? lang.t("save") : lang.t("add") }}
         </button>
         <button class="btn-secondary" (click)="goBack()">
           <mat-icon>close</mat-icon>
-          {{ lang.t('cancel') }}
+          {{ lang.t("cancel") }}
         </button>
       </div>
     </div>

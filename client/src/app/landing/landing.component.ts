@@ -10,7 +10,7 @@ import { LanguageService } from '../core/language.service';
   standalone: true,
   imports: [CommonModule, RouterModule, MatButtonModule, MatCardModule],
   templateUrl: './landing.component.html',
-  styleUrls: ['./landing.component.css']
+  styleUrls: ['./landing.component.css'],
 })
 export class LandingComponent {
   constructor(public lang: LanguageService) {}

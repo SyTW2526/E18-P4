@@ -20,7 +20,9 @@ import { LanguageService } from '../../core/language.service';
             aria-label="Facebook"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M15 8.5h-2V7.1c0-.6.3-.9 1-.9h1V4h-2.5C9.9 4 9 5.6 9 7.1V8.5H7v2.6h2V20h4v-8.9h2.1L15 8.5Z" />
+              <path
+                d="M15 8.5h-2V7.1c0-.6.3-.9 1-.9h1V4h-2.5C9.9 4 9 5.6 9 7.1V8.5H7v2.6h2V20h4v-8.9h2.1L15 8.5Z"
+              />
             </svg>
           </a>
           <a
@@ -31,7 +33,9 @@ import { LanguageService } from '../../core/language.service';
             aria-label="Instagram"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5Zm0 2c-1.7 0-3 .3-3.8 1.2C3.3 6.9 3 8.3 3 10v4c0 1.7.3 3.1 1.2 4C5 18.9 6.3 19 8 19h8c1.7 0 3-.1 3.8-1 1-.9 1.2-2.3 1.2-4v-4c0-1.7-.2-3.1-1.2-4C18.9 5.3 17.7 5 16 5Zm8 2.1a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2.1A1.9 1.9 0 1 0 14 12a1.9 1.9 0 0 0-2-1.9Z" />
+              <path
+                d="M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5Zm0 2c-1.7 0-3 .3-3.8 1.2C3.3 6.9 3 8.3 3 10v4c0 1.7.3 3.1 1.2 4C5 18.9 6.3 19 8 19h8c1.7 0 3-.1 3.8-1 1-.9 1.2-2.3 1.2-4v-4c0-1.7-.2-3.1-1.2-4C18.9 5.3 17.7 5 16 5Zm8 2.1a1.1 1.1 0 1 1-2.2 0 1.1 1.1 0 0 1 2.2 0ZM12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 2.1A1.9 1.9 0 1 0 14 12a1.9 1.9 0 0 0-2-1.9Z"
+              />
             </svg>
           </a>
           <a
@@ -42,7 +46,9 @@ import { LanguageService } from '../../core/language.service';
             aria-label="X"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M5 4h4l3 4 3.5-4H19l-4.6 5.2L19 20h-4l-3.2-4.6L8 20H5l5-5.8Z" />
+              <path
+                d="M5 4h4l3 4 3.5-4H19l-4.6 5.2L19 20h-4l-3.2-4.6L8 20H5l5-5.8Z"
+              />
             </svg>
           </a>
         </div>
@@ -108,7 +114,11 @@ import { LanguageService } from '../../core/language.service';
         border: 1.5px solid #0f172a;
         color: #0f172a;
         background: transparent;
-        transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          background-color 0.2s ease,
+          color 0.2s ease,
+          border-color 0.2s ease;
       }
 
       .social-button:hover {

@@ -14,9 +14,19 @@ import { MatListModule } from '@angular/material/list';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatIconModule, MatCardModule, MatListModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatIconModule,
+    MatCardModule,
+    MatListModule,
+  ],
   templateUrl: './home.component.html',
-  styleUrls: ['./home.component.css']
+  styleUrls: ['./home.component.css'],
 })
 export class HomeComponent {
   Math = Math;
@@ -28,7 +38,7 @@ export class HomeComponent {
 
   getAmountOwed(): number {
     let sum = 0;
-    Object.values(this.groupBalances).forEach(balance => {
+    Object.values(this.groupBalances).forEach((balance) => {
       if (balance < 0) sum += Math.abs(balance);
     });
     return sum;
@@ -36,7 +46,7 @@ export class HomeComponent {
 
   getAmountOwedTo(): number {
     let sum = 0;
-    Object.values(this.groupBalances).forEach(balance => {
+    Object.values(this.groupBalances).forEach((balance) => {
       if (balance > 0) sum += balance;
     });
     return sum;
@@ -63,9 +73,9 @@ export class HomeComponent {
   joinLoading = false;
 
   constructor(
-    public auth: AuthService, 
-    private router: Router, 
-    public lang: LanguageService
+    public auth: AuthService,
+    private router: Router,
+    public lang: LanguageService,
   ) {}
 
   ngOnInit(): void {
@@ -93,7 +103,10 @@ export class HomeComponent {
       },
       error: (e: any) => {
         this.signupLoading = false;
-        this.signupError = e?.error?.message || e?.message || 'Error al registrarse. Intenta de nuevo.';
+        this.signupError =
+          e?.error?.message ||
+          e?.message ||
+          'Error al registrarse. Intenta de nuevo.';
         console.error('signup error', e);
       },
     });
@@ -110,7 +123,10 @@ export class HomeComponent {
       },
       error: (e: any) => {
         this.signinLoading = false;
-        this.signinError = e?.error?.message || e?.message || 'Error al iniciar sesión. Revisa tus credenciales.';
+        this.signinError =
+          e?.error?.message ||
+          e?.message ||
+          'Error al iniciar sesión. Revisa tus credenciales.';
         console.error('signin error', e);
       },
     });
@@ -131,7 +147,7 @@ export class HomeComponent {
     // fetch only the groups the current user belongs to
     this.auth.getGroupsForUser(String(userId)).subscribe({
       next: (res: any) => {
-        const list = Array.isArray(res) ? res : (res?.data || []);
+        const list = Array.isArray(res) ? res : res?.data || [];
         // the server may return fallback objects like { id: 'nonObjectId' }
         // normalize so template can always read _id
         this.sharedAccounts = list.map((g: any) => {
@@ -139,7 +155,7 @@ export class HomeComponent {
           if (!g._id && g.id) g._id = g.id;
           return g;
         });
-        
+
         // Load balances for each group and calculate total debt
         if (this.sharedAccounts.length > 0) {
           this.loadBalancesForAllGroups();
@@ -148,7 +164,10 @@ export class HomeComponent {
         }
       },
       error: (err: any) => {
-        this.groupsError = err?.error?.message || err?.message || 'No se pudieron cargar los grupos';
+        this.groupsError =
+          err?.error?.message ||
+          err?.message ||
+          this.lang.t('failedLoadGroups');
         this.sharedAccounts = [];
         this.loadingGroups = false;
         console.error('loadSharedAccounts error', err);
@@ -176,7 +195,9 @@ export class HomeComponent {
       this.auth.getBalancesForGroup(String(groupId)).subscribe({
         next: (balances: any[]) => {
           // Find the balance for the current user
-          const userBalance = balances.find((b: any) => String(b.userId) === String(userId));
+          const userBalance = balances.find(
+            (b: any) => String(b.userId) === String(userId),
+          );
           if (userBalance) {
             const balance = userBalance.balance;
             this.groupBalances[groupId] = balance;
@@ -231,18 +252,24 @@ export class HomeComponent {
 
   openGroup(g: any) {
     // navigate to account detail route
-    this.router.navigate(['/group', g._id], { state: { accountName: g.nombre } });
+    this.router.navigate(['/group', g._id], {
+      state: { accountName: g.nombre },
+    });
   }
 
   createGroupFromForm() {
     if (!this.createName || !this.createName.trim()) {
-      this.groupsError = 'Introduce un nombre para el grupo.';
+      this.groupsError = this.lang.t('enterGroupName');
       return;
     }
     this.createLoading = true;
     const user = this.auth.getUser();
     // match server schema: nombre, fecha_creacion, moneda, creador_id
-    const payload: any = { nombre: this.createName.trim(), fecha_creacion: new Date(), moneda: 'EUR' };
+    const payload: any = {
+      nombre: this.createName.trim(),
+      fecha_creacion: new Date(),
+      moneda: 'EUR',
+    };
     if (user?._id) payload.creador_id = user._id;
 
     this.auth.createSharedAccount(payload).subscribe({
@@ -254,7 +281,10 @@ export class HomeComponent {
       },
       error: (err: any) => {
         this.createLoading = false;
-        this.groupsError = err?.error?.message || err?.message || 'No se pudo crear el grupo';
+        this.groupsError =
+          err?.error?.message ||
+          err?.message ||
+          this.lang.t('failedCreateGroup');
         console.error('createGroupFromForm error', err);
       },
     });
@@ -262,28 +292,34 @@ export class HomeComponent {
 
   joinGroupFromForm() {
     if (!this.joinId || !this.joinId.trim()) {
-      this.groupsError = 'Introduce el id del grupo.';
+      this.groupsError = this.lang.t('enterGroupId');
       return;
     }
     this.joinLoading = true;
     const uid = this.auth.getUser()?._id || this.auth.getUser()?.id;
     if (!uid) {
-      this.groupsError = 'Usuario no identificado.';
+      this.groupsError = this.lang.t('userNotFound');
       this.joinLoading = false;
       return;
     }
 
     this.auth.getSharedAccounts().subscribe({
       next: (res: any) => {
-        const list = Array.isArray(res) ? res : (res?.data || []);
-        const target = list.find((g: any) => (g._id || g.id) === this.joinId.trim());
+        const list = Array.isArray(res) ? res : res?.data || [];
+        const target = list.find(
+          (g: any) => (g._id || g.id) === this.joinId.trim(),
+        );
         if (!target) {
-          this.groupsError = 'Grupo no encontrado';
+          this.groupsError = this.lang.t('groupNotFound');
           this.joinLoading = false;
           return;
         }
         // create a user_groups relation instead of mutating the shared_account document
-        const relation = { id_usuario: String(uid), id_grupo: String(target._id || target.id), rol: 'miembro' };
+        const relation = {
+          id_usuario: String(uid),
+          id_grupo: String(target._id || target.id),
+          rol: 'miembro',
+        };
         this.auth.createUserGroup(relation).subscribe({
           next: () => {
             this.joinLoading = false;
@@ -292,14 +328,20 @@ export class HomeComponent {
             this.loadSharedAccounts();
           },
           error: (err: any) => {
-            this.groupsError = err?.error?.message || err?.message || 'No se pudo unir al grupo';
+            this.groupsError =
+              err?.error?.message ||
+              err?.message ||
+              this.lang.t('failedJoinGroup');
             this.joinLoading = false;
             console.error('joinGroupFromForm error', err);
           },
         });
       },
       error: (err: any) => {
-        this.groupsError = err?.error?.message || err?.message || 'No se pudieron cargar los grupos';
+        this.groupsError =
+          err?.error?.message ||
+          err?.message ||
+          this.lang.t('failedLoadGroups');
         this.joinLoading = false;
       },
     });
@@ -316,44 +358,44 @@ export class HomeComponent {
 
   getCurrencySymbol(code: string): string {
     const symbols: { [key: string]: string } = {
-      'EUR': '€',
-      'USD': '$',
-      'GBP': '£',
-      'JPY': '¥',
-      'CHF': 'CHF',
-      'CAD': 'C$',
-      'AUD': 'A$',
-      'NZD': 'NZ$',
-      'CNY': '¥',
-      'INR': '₹',
-      'BRL': 'R$',
-      'MXN': '$',
-      'SEK': 'kr',
-      'NOK': 'kr',
-      'DKK': 'kr',
-      'PLN': 'zł',
-      'CZK': 'Kč',
-      'HUF': 'Ft',
-      'RON': 'lei',
-      'BGN': 'лв',
-      'HRK': 'kn',
-      'RUB': '₽',
-      'TRY': '₺',
-      'ZAR': 'R',
-      'SGD': 'S$',
-      'HKD': 'HK$',
-      'THB': '฿',
-      'MYR': 'RM',
-      'PHP': '₱',
-      'IDR': 'Rp',
-      'VND': '₫',
-      'KRW': '₩',
-      'TWD': 'NT$',
-      'AED': 'د.إ',
-      'SAR': '﷼',
-      'KWD': 'د.ك',
-      'QAR': 'ر.ق',
-      'ILS': '₪'
+      EUR: '€',
+      USD: '$',
+      GBP: '£',
+      JPY: '¥',
+      CHF: 'CHF',
+      CAD: 'C$',
+      AUD: 'A$',
+      NZD: 'NZ$',
+      CNY: '¥',
+      INR: '₹',
+      BRL: 'R$',
+      MXN: '$',
+      SEK: 'kr',
+      NOK: 'kr',
+      DKK: 'kr',
+      PLN: 'zł',
+      CZK: 'Kč',
+      HUF: 'Ft',
+      RON: 'lei',
+      BGN: 'лв',
+      HRK: 'kn',
+      RUB: '₽',
+      TRY: '₺',
+      ZAR: 'R',
+      SGD: 'S$',
+      HKD: 'HK$',
+      THB: '฿',
+      MYR: 'RM',
+      PHP: '₱',
+      IDR: 'Rp',
+      VND: '₫',
+      KRW: '₩',
+      TWD: 'NT$',
+      AED: 'د.إ',
+      SAR: '﷼',
+      KWD: 'د.ك',
+      QAR: 'ر.ق',
+      ILS: '₪',
     };
     return symbols[code] || code;
   }

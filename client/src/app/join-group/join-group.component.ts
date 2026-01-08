@@ -16,7 +16,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
   ],
   template: `
     <section style="max-width:600px; margin:4rem auto; padding:1.5rem">
@@ -27,45 +27,93 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
       </mat-card>
 
       <!-- Success State -->
-      <mat-card *ngIf="!loading && success" style="padding:3rem; text-align:center">
-        <mat-icon style="font-size:64px; width:64px; height:64px; color:#22c55e; margin-bottom:1rem">check_circle</mat-icon>
-        <h2 style="margin:0 0 1rem">{{ lang.t('joinSuccess') || '¡Te has unido al grupo!' }}</h2>
-        <p style="color:var(--text-muted); margin-bottom:2rem">{{ successMessage }}</p>
+      <mat-card
+        *ngIf="!loading && success"
+        style="padding:3rem; text-align:center"
+      >
+        <mat-icon
+          style="font-size:64px; width:64px; height:64px; color:#22c55e; margin-bottom:1rem"
+          >check_circle</mat-icon
+        >
+        <h2 style="margin:0 0 1rem">
+          {{ lang.t('joinSuccess') || '¡Te has unido al grupo!' }}
+        </h2>
+        <p style="color:var(--text-muted); margin-bottom:2rem">
+          {{ successMessage }}
+        </p>
         <div style="display:flex; gap:1rem; justify-content:center">
-          <button mat-button (click)="goToHome()">{{ lang.t('goToGroups') || 'Ver grupos' }}</button>
-          <button mat-flat-button color="primary" (click)="goToGroup()" *ngIf="groupId">{{ lang.t('goToGroup') || 'Ir al grupo' }}</button>
+          <button mat-button (click)="goToHome()">
+            {{ lang.t('goToGroups') || 'Ver grupos' }}
+          </button>
+          <button
+            mat-flat-button
+            color="primary"
+            (click)="goToGroup()"
+            *ngIf="groupId"
+          >
+            {{ lang.t('goToGroup') || 'Ir al grupo' }}
+          </button>
         </div>
       </mat-card>
 
       <!-- Error State -->
-      <mat-card *ngIf="!loading && error" style="padding:3rem; text-align:center">
-        <mat-icon style="font-size:64px; width:64px; height:64px; color:#ef4444; margin-bottom:1rem">error</mat-icon>
-        <h2 style="margin:0 0 1rem">{{ lang.t('joinError') || 'Error al unirse' }}</h2>
+      <mat-card
+        *ngIf="!loading && error"
+        style="padding:3rem; text-align:center"
+      >
+        <mat-icon
+          style="font-size:64px; width:64px; height:64px; color:#ef4444; margin-bottom:1rem"
+          >error</mat-icon
+        >
+        <h2 style="margin:0 0 1rem">
+          {{ lang.t('joinError') || 'Error al unirse' }}
+        </h2>
         <p style="color:var(--text-muted); margin-bottom:2rem">{{ error }}</p>
         <div style="display:flex; gap:1rem; justify-content:center">
-          <button mat-flat-button color="primary" (click)="goToHome()">{{ lang.t('goToHome') || 'Ir al inicio' }}</button>
+          <button mat-flat-button color="primary" (click)="goToHome()">
+            {{ lang.t('goToHome') || 'Ir al inicio' }}
+          </button>
         </div>
       </mat-card>
 
       <!-- Not Logged In -->
-      <mat-card *ngIf="!loading && !isLoggedIn" style="padding:3rem; text-align:center">
-        <mat-icon style="font-size:64px; width:64px; height:64px; color:#fbbf24; margin-bottom:1rem">info</mat-icon>
-        <h2 style="margin:0 0 1rem">{{ lang.t('loginRequired') || 'Inicia sesión para continuar' }}</h2>
-        <p style="color:var(--text-muted); margin-bottom:2rem">{{ lang.t('loginRequiredMessage') || 'Debes iniciar sesión para unirte a un grupo' }}</p>
+      <mat-card
+        *ngIf="!loading && !isLoggedIn"
+        style="padding:3rem; text-align:center"
+      >
+        <mat-icon
+          style="font-size:64px; width:64px; height:64px; color:#fbbf24; margin-bottom:1rem"
+          >info</mat-icon
+        >
+        <h2 style="margin:0 0 1rem">
+          {{ lang.t('loginRequired') || 'Inicia sesión para continuar' }}
+        </h2>
+        <p style="color:var(--text-muted); margin-bottom:2rem">
+          {{
+            lang.t('loginRequiredMessage') ||
+              'Debes iniciar sesión para unirte a un grupo'
+          }}
+        </p>
         <div style="display:flex; gap:1rem; justify-content:center">
-          <button mat-button (click)="goToRegister()">{{ lang.t('register') || 'Registrarse' }}</button>
-          <button mat-flat-button color="primary" (click)="goToLogin()">{{ lang.t('login') || 'Iniciar sesión' }}</button>
+          <button mat-button (click)="goToRegister()">
+            {{ lang.t('register') || 'Registrarse' }}
+          </button>
+          <button mat-flat-button color="primary" (click)="goToLogin()">
+            {{ lang.t('login') || 'Iniciar sesión' }}
+          </button>
         </div>
       </mat-card>
     </section>
   `,
-  styles: [`
-    :host {
-      display: block;
-      min-height: 100vh;
-      background: var(--main-bg);
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+        min-height: 100vh;
+        background: var(--main-bg);
+      }
+    `,
+  ],
 })
 export class JoinGroupComponent implements OnInit {
   token: string = '';
@@ -80,12 +128,12 @@ export class JoinGroupComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private auth: AuthService,
-    public lang: LanguageService
+    public lang: LanguageService,
   ) {}
 
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get('token') || '';
-    
+
     // Verificar si el usuario está logueado
     const user = this.auth.getUser();
     this.isLoggedIn = !!user;
@@ -101,16 +149,17 @@ export class JoinGroupComponent implements OnInit {
     if (this.token) {
       this.joinGroup();
     } else {
-      this.error = 'Enlace de invitación inválido';
+      this.error =
+        this.lang.t('invalidLink') || 'Enlace de invitación inválido';
     }
   }
 
   joinGroup(): void {
     const user = this.auth.getUser();
     const userId = user?._id || user?.id;
-    
+
     if (!userId) {
-      this.error = 'Usuario no autenticado';
+      this.error = this.lang.t('userNotFound') || 'Usuario no autenticado';
       return;
     }
 
@@ -122,28 +171,36 @@ export class JoinGroupComponent implements OnInit {
         this.loading = false;
         this.success = true;
         this.groupId = response.id_grupo;
-        this.successMessage = response.message || 'Te has unido al grupo exitosamente';
-        
+        this.successMessage =
+          response.message || 'Te has unido al grupo exitosamente';
+
         // Limpiar el token pendiente si existe
         sessionStorage.removeItem('pendingInviteToken');
       },
       error: (err: any) => {
         this.loading = false;
         this.success = false;
-        
-        const errorMsg = err?.error?.message || err?.message || 'Error desconocido';
-        
+
+        const errorMsg =
+          err?.error?.message || err?.message || 'Error desconocido';
+
         // Mensajes personalizados según el error
         if (errorMsg.includes('expirado')) {
-          this.error = 'Este enlace de invitación ha expirado';
+          this.error =
+            this.lang.t('linkExpired') ||
+            'Este enlace de invitación ha expirado';
         } else if (errorMsg.includes('máximo de usos')) {
-          this.error = 'Este enlace ha alcanzado el número máximo de usos';
+          this.error =
+            this.lang.t('linkMaxUses') ||
+            'Este enlace ha alcanzado el número máximo de usos';
         } else if (errorMsg.includes('inválido')) {
-          this.error = 'El enlace de invitación no es válido';
+          this.error =
+            this.lang.t('invalidLinkMessage') ||
+            'El enlace de invitación no es válido';
         } else {
           this.error = errorMsg;
         }
-      }
+      },
     });
   }
 

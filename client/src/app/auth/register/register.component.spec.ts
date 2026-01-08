@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -36,15 +41,22 @@ describe('RegisterComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [RegisterComponent, HttpClientTestingModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [
+        RegisterComponent,
+        HttpClientTestingModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+      ],
       providers: [
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => null } } },
+        },
         { provide: AuthService, useValue: authSpy },
         { provide: LanguageService, useValue: { t: (k: string) => k } },
-      ]
-    })
-    .compileComponents();
-    
+      ],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
@@ -63,7 +75,11 @@ describe('RegisterComponent', () => {
   });
 
   it('should submit valid form and navigate', () => {
-    component.registerForm.setValue({ username: 'User', email: 'user@example.com', password: '123456' });
+    component.registerForm.setValue({
+      username: 'User',
+      email: 'user@example.com',
+      password: '123456',
+    });
     component.onSubmit();
 
     expect(authSpy.signup).toHaveBeenCalledWith({

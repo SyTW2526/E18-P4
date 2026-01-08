@@ -3,35 +3,132 @@ import { AuthGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   // Al inicio mostramos la pantalla de presentación (landing)
-  { path: '', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent), title: 'Bienvenido' },
+  {
+    path: '',
+    loadComponent: () =>
+      import('./landing/landing.component').then((m) => m.LandingComponent),
+    title: 'Bienvenido',
+  },
 
   // Rutas de autenticación
-  { path: 'login', loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent), title: 'Iniciar Sesión' },
-  { path: 'register', loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent), title: 'Registrarse' },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./auth/login/login.component').then((m) => m.LoginComponent),
+    title: 'Iniciar Sesión',
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./auth/register/register.component').then(
+        (m) => m.RegisterComponent,
+      ),
+    title: 'Registrarse',
+  },
 
   // Join group by invitation link (public route)
-  { path: 'join-group/:token', loadComponent: () => import('./join-group/join-group.component').then(m => m.JoinGroupComponent), title: 'Unirse a grupo' },
+  {
+    path: 'join-group/:token',
+    loadComponent: () =>
+      import('./join-group/join-group.component').then(
+        (m) => m.JoinGroupComponent,
+      ),
+    title: 'Unirse a grupo',
+  },
 
   // Ruta principal de la app (accedida tras autenticarse)
-  { path: 'home', loadComponent: () => import('./paysplit/home/home.component').then(m => m.HomeComponent), title: 'Inicio', canActivate: [AuthGuard] },
-  // Place more specific group routes before the base detail route to avoid premature matching
-  { path: 'group/:id/settings', loadComponent: () => import('./paysplit/group-settings/group-settings.component').then(m => m.GroupSettingsComponent), title: 'Configuración del grupo', canActivate: [AuthGuard] },
-  { path: 'group/:id/create-gasto', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Crear Gasto', canActivate: [AuthGuard] },
-  { path: 'group/:id/gasto/:gastoId', loadComponent: () => import('./paysplit/create-gasto/create-gasto.component').then(m => m.CreateGastoComponent), title: 'Editar Gasto', canActivate: [AuthGuard] },
-  { path: 'group/:id/balance', loadComponent: () => import('./paysplit/balance/balance.component').then(m => m.BalanceComponent), title: 'Balances', canActivate: [AuthGuard] },
-  { path: 'group/:id', loadComponent: () => import('./paysplit/account-detail/account-detail.component').then(m => m.AccountDetailComponent), title: 'Cuenta', canActivate: [AuthGuard] },
-  { path: 'notifications', loadComponent: () => import('./notifications/notifications.component').then(m => m.NotificationsComponent), title: 'Notificaciones', canActivate: [AuthGuard] },
-  { 
-    path: 'friends', 
-    loadComponent: () => import('./paysplit/friends/friends.component').then(m => m.FriendsComponent), 
-    title: 'Amigos', 
-    canActivate: [AuthGuard] 
+  {
+    path: 'home',
+    loadComponent: () =>
+      import('./paysplit/home/home.component').then((m) => m.HomeComponent),
+    title: 'Inicio',
+    canActivate: [AuthGuard],
   },
-  { path: 'settings', loadComponent: () => import('./settings/user-settings.component').then(m => m.UserSettingsComponent), title: 'Configuración', canActivate: [AuthGuard] },
+  // Place more specific group routes before the base detail route to avoid premature matching
+  {
+    path: 'group/:id/settings',
+    loadComponent: () =>
+      import('./paysplit/group-settings/group-settings.component').then(
+        (m) => m.GroupSettingsComponent,
+      ),
+    title: 'Configuración del grupo',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'group/:id/create-gasto',
+    loadComponent: () =>
+      import('./paysplit/create-gasto/create-gasto.component').then(
+        (m) => m.CreateGastoComponent,
+      ),
+    title: 'Crear Gasto',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'group/:id/gasto/:gastoId',
+    loadComponent: () =>
+      import('./paysplit/create-gasto/create-gasto.component').then(
+        (m) => m.CreateGastoComponent,
+      ),
+    title: 'Editar Gasto',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'group/:id/balance',
+    loadComponent: () =>
+      import('./paysplit/balance/balance.component').then(
+        (m) => m.BalanceComponent,
+      ),
+    title: 'Balances',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'group/:id',
+    loadComponent: () =>
+      import('./paysplit/account-detail/account-detail.component').then(
+        (m) => m.AccountDetailComponent,
+      ),
+    title: 'Cuenta',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'notifications',
+    loadComponent: () =>
+      import('./notifications/notifications.component').then(
+        (m) => m.NotificationsComponent,
+      ),
+    title: 'Notificaciones',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'friends',
+    loadComponent: () =>
+      import('./paysplit/friends/friends.component').then(
+        (m) => m.FriendsComponent,
+      ),
+    title: 'Amigos',
+    canActivate: [AuthGuard],
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./settings/user-settings.component').then(
+        (m) => m.UserSettingsComponent,
+      ),
+    title: 'Configuración',
+    canActivate: [AuthGuard],
+  },
 
   // User profile route (friend links navigate here)
-  { path: 'users/:id', loadComponent: () => import('./users/user-profile.component').then(m => m.UserProfileComponent), title: 'Usuario', canActivate: [AuthGuard] },
+  {
+    path: 'users/:id',
+    loadComponent: () =>
+      import('./users/user-profile.component').then(
+        (m) => m.UserProfileComponent,
+      ),
+    title: 'Usuario',
+    canActivate: [AuthGuard],
+  },
 
   // Redirige cualquier otra ruta a landing
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

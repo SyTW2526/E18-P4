@@ -1,19 +1,28 @@
 <div class="home-viewport">
-  
   <div class="dashboard-shell" *ngIf="auth.isLoggedIn(); else guestView">
-    
     <header class="dashboard-header">
       <div class="header-left">
         <div class="welcome-text">
-          <span>Hola, <strong>{{ auth.getUser()?.nombre || 'Usuario' }}</strong></span>
+          <span
+            >{{ lang.t("helloUser") }},
+            <strong>{{
+              auth.getUser()?.nombre || lang.t("user")
+            }}</strong></span
+          >
         </div>
       </div>
 
       <div class="header-actions">
-        <button class="icon-btn" (click)="loadSharedAccounts()" title="Actualizar">
+        <button
+          class="icon-btn"
+          (click)="loadSharedAccounts()"
+          [title]="lang.t('refreshButton')"
+        >
           <mat-icon>refresh</mat-icon>
         </button>
-        <button class="outline-btn" (click)="logout()">Cerrar sesión</button>
+        <button class="outline-btn" (click)="logout()">
+          {{ lang.t("logout") }}
+        </button>
       </div>
     </header>
 
@@ -24,8 +33,11 @@
           <mat-icon>trending_up</mat-icon>
         </div>
         <div class="metric-content">
-          <span class="metric-label">Te deben</span>
-          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwedTo() | number:'1.2-2' }}</span>
+          <span class="metric-label">{{ lang.t("youAreOwedLabel") }}</span>
+          <span class="metric-value"
+            >{{ getCurrencySymbol(getUserPreferredCurrency())
+            }}{{ getAmountOwedTo() | number: "1.2-2" }}</span
+          >
         </div>
       </div>
 
@@ -34,21 +46,30 @@
           <mat-icon>trending_down</mat-icon>
         </div>
         <div class="metric-content">
-          <span class="metric-label">Debes</span>
-          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ getAmountOwed() | number:'1.2-2' }}</span>
+          <span class="metric-label">{{ lang.t("youOweLabel") }}</span>
+          <span class="metric-value"
+            >{{ getCurrencySymbol(getUserPreferredCurrency())
+            }}{{ getAmountOwed() | number: "1.2-2" }}</span
+          >
         </div>
       </div>
 
-      <div class="metric-card metric-balance" [ngClass]="{
-        'is-positive': (getAmountOwedTo() - getAmountOwed()) > 0,
-        'is-negative': (getAmountOwedTo() - getAmountOwed()) < 0
-      }">
+      <div
+        class="metric-card metric-balance"
+        [ngClass]="{
+          'is-positive': getAmountOwedTo() - getAmountOwed() > 0,
+          'is-negative': getAmountOwedTo() - getAmountOwed() < 0,
+        }"
+      >
         <div class="metric-icon">
           <mat-icon>account_balance_wallet</mat-icon>
         </div>
         <div class="metric-content">
-          <span class="metric-label">Balance Total</span>
-          <span class="metric-value">{{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ (getAmountOwedTo() - getAmountOwed()) | number:'1.2-2' }}</span>
+          <span class="metric-label">{{ lang.t("totalBalance") }}</span>
+          <span class="metric-value"
+            >{{ getCurrencySymbol(getUserPreferredCurrency())
+            }}{{ getAmountOwedTo() - getAmountOwed() | number: "1.2-2" }}</span
+          >
         </div>
       </div>
     </section>
@@ -60,16 +81,16 @@
         <div class="sidebar-card quick-actions">
           <h4 class="sidebar-title">
             <mat-icon>bolt</mat-icon>
-            Acciones Rápidas
+            {{ lang.t("quickActionsLabel") }}
           </h4>
           <div class="action-buttons">
             <button class="action-btn primary-action" (click)="createGroup()">
               <mat-icon>add_circle</mat-icon>
-              <span>Crear Grupo</span>
+              <span>{{ lang.t("createGroupLabel") }}</span>
             </button>
             <button class="action-btn secondary-action" (click)="joinGroup()">
               <mat-icon>group_add</mat-icon>
-              <span>Unirse a Grupo</span>
+              <span>{{ lang.t("joinGroupLabel") }}</span>
             </button>
           </div>
         </div>
@@ -78,14 +99,14 @@
         <div class="sidebar-card stats-widget">
           <h4 class="sidebar-title">
             <mat-icon>insights</mat-icon>
-            Estadísticas
+            {{ lang.t("stats") }}
           </h4>
           <div class="stat-row">
-            <span class="stat-label">Total de grupos:</span>
+            <span class="stat-label">{{ lang.t("totalGroups") }}</span>
             <span class="stat-number">{{ sharedAccounts.length }}</span>
           </div>
           <div class="stat-row">
-            <span class="stat-label">Grupos activos:</span>
+            <span class="stat-label">{{ lang.t("activeGroups") }}</span>
             <span class="stat-number">{{ sharedAccounts.length }}</span>
           </div>
         </div>
@@ -94,30 +115,63 @@
         <div class="sidebar-card balance-summary">
           <h4 class="sidebar-title">
             <mat-icon>pie_chart</mat-icon>
-            Resumen
+            {{ lang.t("summary") }}
           </h4>
           <div class="balance-circle">
             <svg viewBox="0 0 100 100" class="donut-chart">
-              <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(248, 113, 113, 0.2)" stroke-width="12"/>
-              <circle cx="50" cy="50" r="40" fill="none" stroke="#4ade80" stroke-width="12" 
-                      [attr.stroke-dasharray]="getAmountOwedTo() > 0 ? (getAmountOwedTo() / (getAmountOwedTo() + getAmountOwed()) * 251.2) + ' 251.2' : '0 251.2'"
-                      stroke-dashoffset="62.8" transform="rotate(-90 50 50)"/>
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="rgba(248, 113, 113, 0.2)"
+                stroke-width="12"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#4ade80"
+                stroke-width="12"
+                [attr.stroke-dasharray]="
+                  getAmountOwedTo() > 0
+                    ? (getAmountOwedTo() /
+                        (getAmountOwedTo() + getAmountOwed())) *
+                        251.2 +
+                      ' 251.2'
+                    : '0 251.2'
+                "
+                stroke-dashoffset="62.8"
+                transform="rotate(-90 50 50)"
+              />
             </svg>
             <div class="balance-center">
-              <div class="balance-label">Balance</div>
-              <div class="balance-value" [style.color]="(getAmountOwedTo() - getAmountOwed()) > 0 ? '#4ade80' : '#f87171'">
-                {{ getCurrencySymbol(getUserPreferredCurrency()) }}{{ Math.abs(getAmountOwedTo() - getAmountOwed()) | number:'1.0-0' }}
+              <div class="balance-label">{{ lang.t("netBalance") }}</div>
+              <div
+                class="balance-value"
+                [style.color]="
+                  getAmountOwedTo() - getAmountOwed() > 0
+                    ? '#4ade80'
+                    : '#f87171'
+                "
+              >
+                {{ getCurrencySymbol(getUserPreferredCurrency())
+                }}{{
+                  Math.abs(getAmountOwedTo() - getAmountOwed())
+                    | number: "1.0-0"
+                }}
               </div>
             </div>
           </div>
           <div class="balance-legend">
             <div class="legend-item">
               <span class="legend-dot positive"></span>
-              <span>Te deben</span>
+              <span>{{ lang.t("youAreOwedLabel") }}</span>
             </div>
             <div class="legend-item">
               <span class="legend-dot negative"></span>
-              <span>Debes</span>
+              <span>{{ lang.t("youOweLabel") }}</span>
             </div>
           </div>
         </div>
@@ -130,88 +184,136 @@
 
       <!-- Right Column: Groups -->
       <section class="main-column">
-      <div class="section-header">
-        <h3>
-          <mat-icon>groups</mat-icon>
-          Tus Grupos
-          <span class="badge">{{ sharedAccounts.length }}</span>
-        </h3>
-        <div class="filter-pills">
-          <button class="pill active">Todos</button>
-          <button class="pill">Activos</button>
-        </div>
-      </div>
-
-      <div *ngIf="groupsError" class="error-message">{{ groupsError }}</div>
-
-      <div *ngIf="loadingGroups" class="loading-grid">
-        <div class="skeleton-card" *ngFor="let i of [1,2,3]"></div>
-      </div>
-
-      <div class="groups-grid-modern" *ngIf="!loadingGroups">
-        <ng-container *ngIf="sharedAccounts.length > 0; else emptyState">
-          
-          <article class="expense-card" *ngFor="let group of sharedAccounts" (click)="openGroup(group)">
-            <div class="card-header">
-              <div class="expense-avatar">
-                <img *ngIf="group.foto_grupo" [src]="group.foto_grupo" [alt]="group.nombre" />
-                <span *ngIf="!group.foto_grupo">{{ getGroupInitial(group) }}</span>
-              </div>
-              <div class="expense-info">
-                <h4 class="expense-title">{{ group.nombre }}</h4>
-                <span class="expense-date">Actualizado recientemente</span>
-              </div>
-              <div class="expense-amount" [ngClass]="{
-                'amount-positive': (groupBalances[group._id || group.id] || 0) > 0,
-                'amount-negative': (groupBalances[group._id || group.id] || 0) < 0,
-                'amount-neutral': (groupBalances[group._id || group.id] || 0) === 0
-              }">
-                <span class="currency">{{ getCurrencySymbol(getUserPreferredCurrency()) }}</span>
-                <span class="amount">{{ Math.abs(groupBalances[group._id || group.id] || 0) | number:'1.2-2' }}</span>
-              </div>
-            </div>
-            
-            <div class="card-description">
-              <p>{{ group.descripcion || 'Sin descripción' }}</p>
-            </div>
-
-            <div class="card-status">
-              <span class="status-badge" [ngClass]="{
-                'status-positive': (groupBalances[group._id || group.id] || 0) > 0,
-                'status-negative': (groupBalances[group._id || group.id] || 0) < 0,
-                'status-neutral': (groupBalances[group._id || group.id] || 0) === 0
-              }">
-                <mat-icon>{{ (groupBalances[group._id || group.id] || 0) > 0 ? 'arrow_downward' : ((groupBalances[group._id || group.id] || 0) < 0 ? 'arrow_upward' : 'remove') }}</mat-icon>
-                <span *ngIf="(groupBalances[group._id || group.id] || 0) < 0">Debes</span>
-                <span *ngIf="(groupBalances[group._id || group.id] || 0) > 0">Te deben</span>
-                <span *ngIf="(groupBalances[group._id || group.id] || 0) === 0">Equilibrado</span>
-              </span>
-              <button class="card-action-btn" (click)="openGroup(group); $event.stopPropagation()">
-                <mat-icon>arrow_forward</mat-icon>
-              </button>
-            </div>
-          </article>
-
-        </ng-container>
-      </div>
-
-      <ng-template #emptyState>
-        <div class="empty-state-modern">
-          <img src="assets/images/ilustracion1.svg" alt="Empty" class="empty-img">
-          <h3>No tienes grupos activos</h3>
-          <p>Crea tu primer grupo o únete a uno existente para comenzar</p>
-          <div class="empty-actions">
-            <button class="primary-btn" (click)="createGroup()">
-              <mat-icon>add_circle</mat-icon>
-              Crear Grupo
-            </button>
-            <button class="secondary-btn" (click)="joinGroup()">
-              <mat-icon>group_add</mat-icon>
-              Unirse a Grupo
-            </button>
+        <div class="section-header">
+          <h3>
+            <mat-icon>groups</mat-icon>
+            {{ lang.t("myGroups") }}
+            <span class="badge">{{ sharedAccounts.length }}</span>
+          </h3>
+          <div class="filter-pills">
+            <button class="pill active">{{ lang.t("all") }}</button>
+            <button class="pill">{{ lang.t("active") }}</button>
           </div>
         </div>
-      </ng-template>
+
+        <div *ngIf="groupsError" class="error-message">{{ groupsError }}</div>
+
+        <div *ngIf="loadingGroups" class="loading-grid">
+          <div class="skeleton-card" *ngFor="let i of [1, 2, 3]"></div>
+        </div>
+
+        <div class="groups-grid-modern" *ngIf="!loadingGroups">
+          <ng-container *ngIf="sharedAccounts.length > 0; else emptyState">
+            <article
+              class="expense-card"
+              *ngFor="let group of sharedAccounts"
+              (click)="openGroup(group)"
+            >
+              <div class="card-header">
+                <div class="expense-avatar">
+                  <img
+                    *ngIf="group.foto_grupo"
+                    [src]="group.foto_grupo"
+                    [alt]="group.nombre"
+                  />
+                  <span *ngIf="!group.foto_grupo">{{
+                    getGroupInitial(group)
+                  }}</span>
+                </div>
+                <div class="expense-info">
+                  <h4 class="expense-title">{{ group.nombre }}</h4>
+                  <span class="expense-date">{{
+                    lang.t("recentlyUpdated")
+                  }}</span>
+                </div>
+                <div
+                  class="expense-amount"
+                  [ngClass]="{
+                    'amount-positive':
+                      (groupBalances[group._id || group.id] || 0) > 0,
+                    'amount-negative':
+                      (groupBalances[group._id || group.id] || 0) < 0,
+                    'amount-neutral':
+                      (groupBalances[group._id || group.id] || 0) === 0,
+                  }"
+                >
+                  <span class="currency">{{
+                    getCurrencySymbol(getUserPreferredCurrency())
+                  }}</span>
+                  <span class="amount">{{
+                    Math.abs(groupBalances[group._id || group.id] || 0)
+                      | number: "1.2-2"
+                  }}</span>
+                </div>
+              </div>
+
+              <div class="card-description">
+                <p>{{ group.descripcion || lang.t("noDescription") }}</p>
+              </div>
+
+              <div class="card-status">
+                <span
+                  class="status-badge"
+                  [ngClass]="{
+                    'status-positive':
+                      (groupBalances[group._id || group.id] || 0) > 0,
+                    'status-negative':
+                      (groupBalances[group._id || group.id] || 0) < 0,
+                    'status-neutral':
+                      (groupBalances[group._id || group.id] || 0) === 0,
+                  }"
+                >
+                  <mat-icon>{{
+                    (groupBalances[group._id || group.id] || 0) > 0
+                      ? "arrow_downward"
+                      : (groupBalances[group._id || group.id] || 0) < 0
+                        ? "arrow_upward"
+                        : "remove"
+                  }}</mat-icon>
+                  <span *ngIf="(groupBalances[group._id || group.id] || 0) < 0">
+                    {{ lang.t("youOweLabel") }}
+                  </span>
+                  <span *ngIf="(groupBalances[group._id || group.id] || 0) > 0">
+                    {{ lang.t("youAreOwedLabel") }}
+                  </span>
+                  <span
+                    *ngIf="(groupBalances[group._id || group.id] || 0) === 0"
+                  >
+                    {{ lang.t("balanced") }}
+                  </span>
+                </span>
+                <button
+                  class="card-action-btn"
+                  (click)="openGroup(group); $event.stopPropagation()"
+                >
+                  <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </article>
+          </ng-container>
+        </div>
+
+        <ng-template #emptyState>
+          <div class="empty-state-modern">
+            <img
+              src="assets/images/ilustracion1.svg"
+              alt="Empty"
+              class="empty-img"
+            />
+            <h3>{{ lang.t("noActiveGroups") }}</h3>
+            <p>{{ lang.t("createFirstGroupHelp") }}</p>
+            <div class="empty-actions">
+              <button class="primary-btn" (click)="createGroup()">
+                <mat-icon>add_circle</mat-icon>
+                {{ lang.t("createGroupLabel") }}
+              </button>
+              <button class="secondary-btn" (click)="joinGroup()">
+                <mat-icon>group_add</mat-icon>
+                {{ lang.t("joinGroupLabel") }}
+              </button>
+            </div>
+          </div>
+        </ng-template>
       </section>
     </section>
   </div>
@@ -219,22 +321,32 @@
   <ng-template #guestView>
     <div class="guest-shell">
       <div class="guest-content">
-        <img src="assets/images/logo_paysplit_def.svg" alt="Paysplit Logo" class="logo-large">
-        <h1>Controla tus gastos compartidos</h1>
-        <p>La forma más fácil de dividir cuentas con amigos y familia.</p>
+        <img
+          src="assets/images/logo_paysplit_def.svg"
+          alt="Paysplit Logo"
+          class="logo-large"
+        />
+        <h1>{{ lang.t("guestTitle") }}</h1>
+        <p>{{ lang.t("guestSubtitle") }}</p>
         <div class="cta-row">
-          <a class="primary-btn" routerLink="/login">Iniciar sesión</a>
-          <a class="secondary-btn" routerLink="/register">Crear cuenta</a>
+          <a class="primary-btn" routerLink="/login">{{ lang.t("login") }}</a>
+          <a class="secondary-btn" routerLink="/register">{{
+            lang.t("createAccount")
+          }}</a>
         </div>
       </div>
     </div>
   </ng-template>
 
   <!-- Create Group Modal -->
-  <div *ngIf="createFormVisible && auth.isLoggedIn()" class="modal-overlay" (click)="closeCreateForm()">
+  <div
+    *ngIf="createFormVisible && auth.isLoggedIn()"
+    class="modal-overlay"
+    (click)="closeCreateForm()"
+  >
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ lang.t('createGroup') }}</h3>
+        <h3>{{ lang.t("createGroup") }}</h3>
         <button class="close-btn" (click)="closeCreateForm()">
           <mat-icon>close</mat-icon>
         </button>
@@ -242,7 +354,12 @@
 
       <div class="modal-body">
         <mat-form-field appearance="fill" class="full-width">
-          <input matInput [(ngModel)]="createName" (keyup.enter)="createGroupFromForm()" [placeholder]="lang.t('groupName')">
+          <input
+            matInput
+            [(ngModel)]="createName"
+            (keyup.enter)="createGroupFromForm()"
+            [placeholder]="lang.t('groupName')"
+          />
         </mat-form-field>
 
         <div *ngIf="groupsError" class="error-message-inline">
@@ -252,21 +369,33 @@
       </div>
 
       <div class="modal-footer">
-        <button class="modal-btn cancel-btn" (click)="closeCreateForm()" [disabled]="createLoading">
-          {{ lang.t('cancel') }}
+        <button
+          class="modal-btn cancel-btn"
+          (click)="closeCreateForm()"
+          [disabled]="createLoading"
+        >
+          {{ lang.t("cancel") }}
         </button>
-        <button class="modal-btn confirm-btn" (click)="createGroupFromForm()" [disabled]="!createName.trim() || createLoading">
-          {{ createLoading ? lang.t('loading') : lang.t('create') }}
+        <button
+          class="modal-btn confirm-btn"
+          (click)="createGroupFromForm()"
+          [disabled]="!createName.trim() || createLoading"
+        >
+          {{ createLoading ? lang.t("loading") : lang.t("create") }}
         </button>
       </div>
     </div>
   </div>
 
   <!-- Join Group Modal -->
-  <div *ngIf="joinFormVisible && auth.isLoggedIn()" class="modal-overlay" (click)="closeJoinForm()">
+  <div
+    *ngIf="joinFormVisible && auth.isLoggedIn()"
+    class="modal-overlay"
+    (click)="closeJoinForm()"
+  >
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3>{{ lang.t('join') }} {{ lang.t('group') || 'Grupo' }}</h3>
+        <h3>{{ lang.t("join") }} {{ lang.t("group") || "Grupo" }}</h3>
         <button class="close-btn" (click)="closeJoinForm()">
           <mat-icon>close</mat-icon>
         </button>
@@ -274,7 +403,12 @@
 
       <div class="modal-body">
         <mat-form-field appearance="fill" class="full-width">
-          <input matInput [(ngModel)]="joinId" (keyup.enter)="joinGroupFromForm()" [placeholder]="lang.t('groupId')">
+          <input
+            matInput
+            [(ngModel)]="joinId"
+            (keyup.enter)="joinGroupFromForm()"
+            [placeholder]="lang.t('groupId')"
+          />
         </mat-form-field>
 
         <div *ngIf="groupsError" class="error-message-inline">
@@ -284,14 +418,21 @@
       </div>
 
       <div class="modal-footer">
-        <button class="modal-btn cancel-btn" (click)="closeJoinForm()" [disabled]="joinLoading">
-          {{ lang.t('cancel') }}
+        <button
+          class="modal-btn cancel-btn"
+          (click)="closeJoinForm()"
+          [disabled]="joinLoading"
+        >
+          {{ lang.t("cancel") }}
         </button>
-        <button class="modal-btn confirm-btn" (click)="joinGroupFromForm()" [disabled]="!joinId.trim() || joinLoading">
-          {{ joinLoading ? lang.t('loading') : lang.t('join') }}
+        <button
+          class="modal-btn confirm-btn"
+          (click)="joinGroupFromForm()"
+          [disabled]="!joinId.trim() || joinLoading"
+        >
+          {{ joinLoading ? lang.t("loading") : lang.t("join") }}
         </button>
       </div>
     </div>
   </div>
-
 </div>

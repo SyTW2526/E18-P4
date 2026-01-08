@@ -63,10 +63,20 @@ export async function connectToDatabase(uri: string) {
 
     try {
         await collections.groupInvitations?.createIndex({ id_invitado: 1, estado: 1 }, { background: true, sparse: true });
-        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { id_invitado: { $ne: null } } });
+    } catch (err) {
+        console.warn("Could not create index on group_invitations (id_invitado, estado)", err);
+    }
+    
+    try {
+        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { id_invitado: { $ne: null, $exists: true } } });
+    } catch (err) {
+        console.warn("Could not create index on group_invitations (id_grupo, id_invitado)", err);
+    }
+    
+    try {
         await collections.groupInvitations?.createIndex({ token: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { token: { $exists: true } } });
     } catch (err) {
-        console.warn("Could not create index on group_invitations", err);
+        console.warn("Could not create index on group_invitations (token)", err);
     }
 }
 
@@ -84,6 +94,21 @@ export async function closeDatabase() {
 }
 
 async function applySchemaValidation(db: mongodb.Db) {
+    // First, try to remove old validation from group_invitations
+    try {
+        const collections = await db.listCollections({ name: 'group_invitations' }).toArray();
+        if (collections.length > 0) {
+            console.log("Removing old group_invitations collection validator...");
+            try {
+                await db.command({ collMod: 'group_invitations', validator: {} });
+            } catch (e) {
+                console.log("Could not remove validator:", (e as any).message);
+            }
+        }
+    } catch (err) {
+        console.log("group_invitations not found or error listing collections");
+    }
+
     const jsonSchema = {
         $jsonSchema: {
             bsonType: "object",
@@ -391,6 +416,15 @@ async function applySchemaValidation(db: mongodb.Db) {
     }).catch(async (error: mongodb.MongoServerError) => {
         if (error.codeName === "NamespaceNotFound") {
             await db.createCollection("group_invitations", { validator: groupInvitationsJsonSchema });
+        } else if (error.codeName === "BadValue" || error.code === 121) {
+            // Si hay error de validación, intentar eliminar y recrear
+            try {
+                await db.collection("group_invitations").drop();
+                await db.createCollection("group_invitations", { validator: groupInvitationsJsonSchema });
+                console.log("Recreated group_invitations collection with new schema");
+            } catch (dropErr) {
+                console.error("Could not recreate group_invitations collection:", dropErr);
+            }
         }
     });
 }

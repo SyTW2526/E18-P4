@@ -1,6 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators, FormsModule } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  Validators,
+  FormsModule,
+} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -48,7 +53,13 @@ export class UserSettingsComponent implements OnInit {
     { code: 'GBP', label: 'British Pound', symbol: '£' },
   ];
 
-  constructor(private fb: FormBuilder, public auth: AuthService, private router: Router, private theme: ThemeService, public lang: LanguageService) {}
+  constructor(
+    private fb: FormBuilder,
+    public auth: AuthService,
+    private router: Router,
+    private theme: ThemeService,
+    public lang: LanguageService,
+  ) {}
 
   ngOnInit(): void {
     const u = this.auth.getUser();
@@ -62,8 +73,11 @@ export class UserSettingsComponent implements OnInit {
         moneda_preferida: u.moneda_preferida || 'EUR',
       });
       const img = u.photo || u.avatar || u.picture || u.foto_perfil;
-      this.profileImgSrc = (typeof img === 'string' && img.trim().length > 0) ? img : null;
-      this.fallbackInitials = this.computeInitials(u.nombre || u.name || u.email || '');
+      this.profileImgSrc =
+        typeof img === 'string' && img.trim().length > 0 ? img : null;
+      this.fallbackInitials = this.computeInitials(
+        u.nombre || u.name || u.email || '',
+      );
     } else {
       this.profileImgSrc = null;
       this.fallbackInitials = '?';
@@ -74,7 +88,11 @@ export class UserSettingsComponent implements OnInit {
     const value = (event.target as HTMLSelectElement).value as 'light' | 'dark';
     this.form.patchValue({ preferencia_tema: value });
     if (value === 'dark' || value === 'light') {
-      try { this.theme.applyTheme(value); } catch(e) { /* noop */ }
+      try {
+        this.theme.applyTheme(value);
+      } catch (e) {
+        /* noop */
+      }
     }
   }
 
@@ -94,21 +112,26 @@ export class UserSettingsComponent implements OnInit {
 
   onSubmit() {
     if (!this.userId) return;
-    const payload = { ...this.form.value, foto_perfil: this.profileImgSrc, preferencia_tema: 'dark' };
+    const payload = {
+      ...this.form.value,
+      foto_perfil: this.profileImgSrc,
+      preferencia_tema: 'dark',
+    };
     this.auth.updateUser(this.userId, payload).subscribe({
       next: () => {
         // Always apply dark theme
-        try { 
+        try {
           this.theme.applyTheme('dark');
-        } catch(e) {}
+        } catch (e) {}
         // persist updated avatar, theme and currency locally
         try {
           const current = this.auth.getUser() || {};
-          const updated = { 
-            ...current, 
-            foto_perfil: payload.foto_perfil, 
+          const updated = {
+            ...current,
+            foto_perfil: payload.foto_perfil,
             preferencia_tema: 'oscuro',
-            moneda_preferida: payload.moneda_preferida || current.moneda_preferida
+            moneda_preferida:
+              payload.moneda_preferida || current.moneda_preferida,
           };
           if (typeof window !== 'undefined' && window?.localStorage) {
             window.localStorage.setItem('auth_user', JSON.stringify(updated));
@@ -158,7 +181,11 @@ export class UserSettingsComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  private downscaleImage(dataUrl: string, maxSize: number, quality: number): Promise<string> {
+  private downscaleImage(
+    dataUrl: string,
+    maxSize: number,
+    quality: number,
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
@@ -181,7 +208,9 @@ export class UserSettingsComponent implements OnInit {
   }
 
   confirmDelete() {
-    const ok = window.confirm('¿Estás seguro? Esta acción eliminará tu cuenta permanentemente.');
+    const ok = window.confirm(
+      '¿Estás seguro? Esta acción eliminará tu cuenta permanentemente.',
+    );
     if (!ok) return;
     this.deleteAccount();
   }

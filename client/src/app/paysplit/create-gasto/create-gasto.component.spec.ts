@@ -9,16 +9,33 @@ import { of } from 'rxjs';
 import { NotificationService } from '../../core/notification.service';
 
 class MockAuthService {
-  getUser() { return { _id: 'u1', nombre: 'Me' }; }
-  getMembersForGroup(id: string) { return of([{ _id: 'u1', nombre: 'Me' }, { _id: 'u2', nombre: 'Other' }]); }
-  getUserById(id: string) { return of({ _id: id, nombre: `User ${id}` }); }
-  createGasto(payload: any) { return of({ id: 'g1' }); }
-  createParticipacion(body: any) { return of({}); }
-  updateGasto(id: string, payload: any) { return of({}); }
+  getUser() {
+    return { _id: 'u1', nombre: 'Me' };
+  }
+  getMembersForGroup(id: string) {
+    return of([
+      { _id: 'u1', nombre: 'Me' },
+      { _id: 'u2', nombre: 'Other' },
+    ]);
+  }
+  getUserById(id: string) {
+    return of({ _id: id, nombre: `User ${id}` });
+  }
+  createGasto(payload: any) {
+    return of({ id: 'g1' });
+  }
+  createParticipacion(body: any) {
+    return of({});
+  }
+  updateGasto(id: string, payload: any) {
+    return of({});
+  }
 }
 
 class MockNotificationService {
-  createNotification() { return of({}); }
+  createNotification() {
+    return of({});
+  }
 }
 
 describe('CreateGastoComponent', () => {
@@ -29,16 +46,30 @@ describe('CreateGastoComponent', () => {
     @Component({
       selector: 'test-dummy',
       standalone: true,
-      template: ''
+      template: '',
     })
     class DummyComponent {}
 
     await TestBed.configureTestingModule({
-      imports: [CreateGastoComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
+      imports: [
+        CreateGastoComponent,
+        NoopAnimationsModule,
+        RouterTestingModule.withRoutes([
+          { path: 'group/:id', component: DummyComponent },
+        ]),
+        DummyComponent,
+      ],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: NotificationService, useClass: MockNotificationService },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: (k: string) => (k === 'id' ? 'g1' : null) } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: { get: (k: string) => (k === 'id' ? 'g1' : null) },
+            },
+          },
+        },
       ],
     }).compileComponents();
 
@@ -49,7 +80,10 @@ describe('CreateGastoComponent', () => {
   it('should create and recalc split correctly', () => {
     fixture.detectChanges();
     component.monto = '100';
-    component.participaciones = [{ user: { _id: 'u1' }, selected: true, monto_asignado: 0 }, { user: { _id: 'u2' }, selected: true, monto_asignado: 0 } as any];
+    component.participaciones = [
+      { user: { _id: 'u1' }, selected: true, monto_asignado: 0 },
+      { user: { _id: 'u2' }, selected: true, monto_asignado: 0 } as any,
+    ];
     component.recalcSplit();
     expect(component.participaciones[0].monto_asignado).toBeCloseTo(50);
   });
@@ -59,7 +93,9 @@ describe('CreateGastoComponent', () => {
     component.descripcion = 'Test';
     component.monto = '20';
     component.pagador = 'u1';
-    component.participaciones = [{ user: { _id: 'u1' }, selected: true, monto_asignado: 20 } as any];
+    component.participaciones = [
+      { user: { _id: 'u1' }, selected: true, monto_asignado: 20 } as any,
+    ];
     component.createGasto();
     expect(component.creating).toBeFalsy();
   });

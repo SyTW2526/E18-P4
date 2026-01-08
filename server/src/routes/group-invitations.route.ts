@@ -4,6 +4,20 @@ import { collections } from "../database";
 
 export const groupInvitationsRouter = express.Router();
 
+// DEBUG: Endpoint para verificar el esquema de la colección
+groupInvitationsRouter.get("/debug/schema", async (req: express.Request, res: express.Response) => {
+  try {
+    const db = (req as any).app.locals.db;
+    if (!db) return res.status(500).send({ message: 'Database not available' });
+    
+    const validation = await db.getCollectionInfos({ name: 'group_invitations' });
+    return res.status(200).send(validation);
+  } catch (error: any) {
+    console.error('debug schema error', error);
+    return res.status(500).send({ message: 'Error al obtener esquema', error: error.message });
+  }
+});
+
 // Enviar invitación a un usuario para unirse a un grupo
 groupInvitationsRouter.post("/", async (req: express.Request, res: express.Response) => {
   try {
@@ -232,7 +246,10 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
     }
   } catch (error: any) {
     console.error('create invitation link error', error);
-    return res.status(500).send({ message: 'Error al crear el enlace', error });
+    return res.status(500).send({ 
+      message: 'Error al crear el enlace', 
+      details: error.message || error.toString()
+    });
   }
 });
 

@@ -1,43 +1,73 @@
 <div class="auth-container">
   <mat-card>
     <mat-card-header>
-      <mat-card-title>{{ lang.t('createAccount') }}</mat-card-title>
+      <mat-card-title>{{ lang.t("createAccount") }}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
       <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-
         <mat-form-field appearance="fill">
-          <mat-label>{{ lang.t('username') }}</mat-label>
-          <input matInput formControlName="username" type="text">
-          <mat-error *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">{{ lang.t('usernameError') }}</mat-error>
+          <mat-label>{{ lang.t("username") }}</mat-label>
+          <input matInput formControlName="username" type="text" />
+          <mat-error
+            *ngIf="
+              registerForm.get('username')?.invalid &&
+              registerForm.get('username')?.touched
+            "
+            >{{ lang.t("usernameError") }}</mat-error
+          >
         </mat-form-field>
 
         <mat-form-field appearance="fill">
-          <mat-label>{{ lang.t('email') }}</mat-label>
-          <input matInput formControlName="email" type="email">
-          <mat-error *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">{{ lang.t('emailError') }}</mat-error>
+          <mat-label>{{ lang.t("email") }}</mat-label>
+          <input matInput formControlName="email" type="email" />
+          <mat-error
+            *ngIf="
+              registerForm.get('email')?.invalid &&
+              registerForm.get('email')?.touched
+            "
+            >{{ lang.t("emailError") }}</mat-error
+          >
         </mat-form-field>
 
         <mat-form-field appearance="fill">
-          <mat-label>{{ lang.t('password') }}</mat-label>
-          <input matInput formControlName="password" type="password">
-          <mat-error *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">{{ lang.t('passwordMinError') }}</mat-error>
+          <mat-label>{{ lang.t("password") }}</mat-label>
+          <input matInput formControlName="password" type="password" />
+          <mat-error
+            *ngIf="
+              registerForm.get('password')?.invalid &&
+              registerForm.get('password')?.touched
+            "
+            >{{ lang.t("passwordMinError") }}</mat-error
+          >
         </mat-form-field>
 
-        <div *ngIf="error" style="color:#b00020;margin-bottom:8px">{{ error }}</div>
+        <div *ngIf="error" style="color: #b00020; margin-bottom: 8px">
+          {{ error }}
+        </div>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="registerForm.invalid || loading">
-          {{ loading ? lang.t('signingUp') : lang.t('signup') }}
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          [disabled]="registerForm.invalid || loading"
+        >
+          {{ loading ? lang.t("signingUp") : lang.t("signup") }}
         </button>
-
       </form>
 
-      <div style="margin-top: 16px; text-align: center; color: var(--text-muted);">O</div>
+      <div
+        style="margin-top: 16px; text-align: center; color: var(--text-muted)"
+      >
+        O
+      </div>
 
-      <div id="google-signin-button-register" style="margin-top: 16px; display: flex; justify-content: center;"></div>
+      <div
+        id="google-signin-button-register"
+        style="margin-top: 16px; display: flex; justify-content: center"
+      ></div>
     </mat-card-content>
     <mat-card-actions>
-      <a routerLink="/login">{{ lang.t('alreadyHaveAccountLogin') }}</a>
+      <a routerLink="/login">{{ lang.t("alreadyHaveAccountLogin") }}</a>
     </mat-card-actions>
   </mat-card>
 </div>

@@ -46,7 +46,11 @@ export class AccountDetailComponent implements OnInit {
   loading = false;
   error: string | null = null;
   miembros: any[] = [];
-  participantes: Array<{ userId: string; amount: number | null; included: boolean }> = [];
+  participantes: Array<{
+    userId: string;
+    amount: number | null;
+    included: boolean;
+  }> = [];
   splitEnabled = true;
   splitMode: 'equal' | 'custom' = 'equal';
 
@@ -54,7 +58,7 @@ export class AccountDetailComponent implements OnInit {
   selectedPayer: string | null = null;
   creating = false;
   createError: string | null = null;
-  
+
   // Add friend modal state
   showAddFriendModal = false;
   availableFriends: any[] = [];
@@ -74,15 +78,25 @@ export class AccountDetailComponent implements OnInit {
   chartPadding = 50;
   barWidth = 32;
   barGap = 8;
-  dailyExpenseData: Array<{ date: string; label: string; total: number; barHeight: number }> = [];
-  
+  dailyExpenseData: Array<{
+    date: string;
+    label: string;
+    total: number;
+    barHeight: number;
+  }> = [];
+
   // Balance properties
   userNetBalance: number = 0;
   loadingBalance = false;
   abs = Math.abs;
   Math = Math;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private auth: AuthService,
+    private router: Router,
+    public lang: LanguageService,
+  ) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
@@ -104,7 +118,8 @@ export class AccountDetailComponent implements OnInit {
         const processRaw = (list: any[]) => {
           const observables = list.map((m: any) => {
             if (!m) return of(null);
-            if (typeof m === 'object' && (m._id || m.id || m.email)) return of(m);
+            if (typeof m === 'object' && (m._id || m.id || m.email))
+              return of(m);
             // assume m is id string
             return this.auth.getUserById(String(m));
           });
@@ -122,27 +137,50 @@ export class AccountDetailComponent implements OnInit {
               // ensure current user is present among miembros
               const me = this.auth.getUser();
               const meId = me?._id || me?.id;
-              if (meId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meId)) {
+              if (
+                meId &&
+                !this.miembros.find((m: any) => (m && (m._id || m.id)) === meId)
+              ) {
                 this.miembros.unshift(me);
               }
               // default selected payer to current user if present
-              this.selectedPayer = meId || (this.miembros.length ? this.miembros[0]?._id || this.miembros[0] : null);
+              this.selectedPayer =
+                meId ||
+                (this.miembros.length
+                  ? this.miembros[0]?._id || this.miembros[0]
+                  : null);
               // initialize participantes for the form (include current user)
-              this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
+              this.participantes = this.miembros.map((m: any) => ({
+                userId: m._id || m.id || String(m),
+                amount: null,
+                included: true,
+              }));
               this.loadGastos();
             },
             () => {
               // fallback: use raw members as-is
-              this.miembros = list.map((m: any) => (typeof m === 'object' ? m : { _id: m }));
+              this.miembros = list.map((m: any) =>
+                typeof m === 'object' ? m : { _id: m },
+              );
               const meFav = this.auth.getUser();
               const meFavId = meFav?._id || meFav?.id;
-              if (meFavId && !this.miembros.find((m: any) => (m && (m._id || m.id)) === meFavId)) {
+              if (
+                meFavId &&
+                !this.miembros.find(
+                  (m: any) => (m && (m._id || m.id)) === meFavId,
+                )
+              ) {
                 this.miembros.unshift(meFav);
               }
-              this.selectedPayer = meFavId || (this.miembros.length ? this.miembros[0]._id : null);
-              this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
+              this.selectedPayer =
+                meFavId || (this.miembros.length ? this.miembros[0]._id : null);
+              this.participantes = this.miembros.map((m: any) => ({
+                userId: m._id || m.id || String(m),
+                amount: null,
+                included: true,
+              }));
               this.loadGastos();
-            }
+            },
           );
         };
 
@@ -176,26 +214,33 @@ export class AccountDetailComponent implements OnInit {
     this.loading = true;
     this.auth.getGastosForGroup(this.accountId).subscribe({
       next: (res: any) => {
-        const baseGastos = Array.isArray(res) ? res : (res?.data || []);
+        const baseGastos = Array.isArray(res) ? res : res?.data || [];
         // normalize fecha if it's a string
-        const normalized = baseGastos.map((g: any) => ({ ...g, fecha: g.fecha ? new Date(g.fecha) : null }));
+        const normalized = baseGastos.map((g: any) => ({
+          ...g,
+          fecha: g.fecha ? new Date(g.fecha) : null,
+        }));
 
         // fetch participaciones for each gasto and attach
-        const withParticipaciones$: Array<Observable<any>> = normalized.map((g: any) => {
-          const gid = g?._id?.toString ? g._id.toString() : (g?._id || g?.id);
-          if (!gid) return of(g);
-          return this.auth.getParticipacionesForGasto(String(gid)).pipe(
-            map((parts: any[]) => {
-              const normalizedParts = (parts || []).map((p: any) => {
-                const amount = Number(p.monto_asignado ?? p.monto ?? p.amount ?? 0);
-                const userId = p.id_usuario ?? p.userId ?? p.id;
-                return { ...p, amount, userId };
-              });
-              return { ...g, participacion: normalizedParts };
-            }),
-            catchError(() => of(g))
-          );
-        });
+        const withParticipaciones$: Array<Observable<any>> = normalized.map(
+          (g: any) => {
+            const gid = g?._id?.toString ? g._id.toString() : g?._id || g?.id;
+            if (!gid) return of(g);
+            return this.auth.getParticipacionesForGasto(String(gid)).pipe(
+              map((parts: any[]) => {
+                const normalizedParts = (parts || []).map((p: any) => {
+                  const amount = Number(
+                    p.monto_asignado ?? p.monto ?? p.amount ?? 0,
+                  );
+                  const userId = p.id_usuario ?? p.userId ?? p.id;
+                  return { ...p, amount, userId };
+                });
+                return { ...g, participacion: normalizedParts };
+              }),
+              catchError(() => of(g)),
+            );
+          },
+        );
 
         if (withParticipaciones$.length) {
           forkJoin(withParticipaciones$).subscribe({
@@ -209,7 +254,7 @@ export class AccountDetailComponent implements OnInit {
               this.gastos = normalized;
               this.calculateDailyExpenses();
               this.loading = false;
-            }
+            },
           });
         } else {
           this.gastos = normalized;
@@ -218,7 +263,10 @@ export class AccountDetailComponent implements OnInit {
         }
       },
       error: (err: any) => {
-        this.error = err?.error?.message || err?.message || 'No se pudieron cargar los gastos';
+        this.error =
+          err?.error?.message ||
+          err?.message ||
+          'No se pudieron cargar los gastos';
         this.loading = false;
       },
     });
@@ -227,7 +275,7 @@ export class AccountDetailComponent implements OnInit {
   calculateDailyExpenses() {
     // Group expenses by date
     const dailyTotals = new Map<string, number>();
-    
+
     this.gastos.forEach((g: any) => {
       if (g.fecha && g.monto) {
         const date = new Date(g.fecha);
@@ -243,19 +291,21 @@ export class AccountDetailComponent implements OnInit {
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // Calculate bar heights with fixed scale (200px max height)
-    const maxTotal = Math.max(...sortedDays.map(d => d.total), 1);
+    const maxTotal = Math.max(...sortedDays.map((d) => d.total), 1);
     const availableHeight = 200;
 
-    this.dailyExpenseData = sortedDays.map(day => {
+    this.dailyExpenseData = sortedDays.map((day) => {
       const parsedDate = new Date(day.date);
       const dayNum = parsedDate.getDate();
-      const monthShort = parsedDate.toLocaleDateString('es-ES', { month: 'short' });
-      
+      const monthShort = parsedDate.toLocaleDateString('es-ES', {
+        month: 'short',
+      });
+
       return {
         date: day.date,
         label: `${dayNum} ${monthShort}`,
         total: day.total,
-        barHeight: Math.max(10, (day.total / maxTotal) * availableHeight)
+        barHeight: Math.max(10, (day.total / maxTotal) * availableHeight),
       };
     });
   }
@@ -283,13 +333,15 @@ export class AccountDetailComponent implements OnInit {
 
     // build participacion only if splitting enabled
     if (this.splitEnabled) {
-      const participants = this.participantes.filter(p => p.included).map(p => ({ id_usuario: p.userId, monto: Number(p.amount || 0) }));
+      const participants = this.participantes
+        .filter((p) => p.included)
+        .map((p) => ({ id_usuario: p.userId, monto: Number(p.amount || 0) }));
       const includedCount = participants.length;
       if (includedCount > 0) {
         // if mode is equal or no individual amounts provided, auto-split equally
-        if (this.splitMode === 'equal' || participants.every(p => !p.monto)) {
+        if (this.splitMode === 'equal' || participants.every((p) => !p.monto)) {
           const equal = +(payload.monto / includedCount).toFixed(2);
-          participants.forEach(p => (p.monto = equal));
+          participants.forEach((p) => (p.monto = equal));
         }
       }
       payload.participacion = participants;
@@ -300,12 +352,18 @@ export class AccountDetailComponent implements OnInit {
     this.auth.createGasto(payload).subscribe({
       next: () => {
         this.creating = false;
-        this.newGasto = { descripcion: '', monto: null, categoria: '', fecha: '' };
+        this.newGasto = {
+          descripcion: '',
+          monto: null,
+          categoria: '',
+          fecha: '',
+        };
         this.loadGastos();
       },
       error: (err: any) => {
         this.creating = false;
-        this.createError = err?.error?.message || err?.message || 'No se pudo crear el gasto';
+        this.createError =
+          err?.error?.message || err?.message || 'No se pudo crear el gasto';
       },
     });
   }
@@ -317,12 +375,16 @@ export class AccountDetailComponent implements OnInit {
   userTotal() {
     const me = this.auth.getUser();
     const meId = me?._id || me?.id;
-    return this.gastos.reduce((s, g) => s + ((String(g.id_pagador) === String(meId) ? Number(g.monto) || 0 : 0)), 0);
+    return this.gastos.reduce(
+      (s, g) =>
+        s + (String(g.id_pagador) === String(meId) ? Number(g.monto) || 0 : 0),
+      0,
+    );
   }
 
   gastosCurrency() {
     // try to pick currency from first gasto or fallback to EUR
-    return this.gastos.length ? (this.gastos[0].moneda || 'EUR') : 'EUR';
+    return this.gastos.length ? this.gastos[0].moneda || 'EUR' : 'EUR';
   }
 
   loadUserBalance() {
@@ -335,12 +397,18 @@ export class AccountDetailComponent implements OnInit {
         if (me && Array.isArray(detailed)) {
           const myBalance = detailed.find((d: any) => {
             const userId = d?.userId || d?.user?._id || d?.user?.id;
-            return userId && (userId === myId);
+            return userId && userId === myId;
           });
           if (myBalance) {
             // Calculate net balance: what others owe me (positive) minus what I owe others (negative)
-            const iOwe = (myBalance.owes || []).reduce((sum: number, debt: any) => sum + (Number(debt.amount) || 0), 0);
-            const owedToMe = (myBalance.owesMoney || []).reduce((sum: number, debt: any) => sum + (Number(debt.amount) || 0), 0);
+            const iOwe = (myBalance.owes || []).reduce(
+              (sum: number, debt: any) => sum + (Number(debt.amount) || 0),
+              0,
+            );
+            const owedToMe = (myBalance.owesMoney || []).reduce(
+              (sum: number, debt: any) => sum + (Number(debt.amount) || 0),
+              0,
+            );
             // Net = what I'm owed minus what I owe (positive means they owe me, negative means I owe)
             this.userNetBalance = owedToMe - iOwe;
           } else {
@@ -352,7 +420,7 @@ export class AccountDetailComponent implements OnInit {
       },
       error: () => {
         this.loadingBalance = false;
-      }
+      },
     });
   }
 
@@ -390,7 +458,9 @@ export class AccountDetailComponent implements OnInit {
       },
       error: (err: any) => {
         this.deletingGasto = false;
-        this.error = 'No se pudo eliminar el gasto: ' + (err?.error?.message || err?.message || 'Error');
+        this.error =
+          'No se pudo eliminar el gasto: ' +
+          (err?.error?.message || err?.message || 'Error');
       },
     });
   }
@@ -401,7 +471,12 @@ export class AccountDetailComponent implements OnInit {
   }
 
   deleteGroup() {
-    if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
+    if (
+      !confirm(
+        '¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.',
+      )
+    )
+      return;
     const me = this.auth.getUser();
     const myId = me?._id || me?.id;
     if (!myId) {
@@ -414,7 +489,10 @@ export class AccountDetailComponent implements OnInit {
         this.router.navigate(['/home']);
       },
       error: (err: any) => {
-        alert('No se pudo eliminar el grupo: ' + (err?.error?.message || err?.message || 'Error'));
+        alert(
+          'No se pudo eliminar el grupo: ' +
+            (err?.error?.message || err?.message || 'Error'),
+        );
         console.error('deleteGroup error', err);
       },
     });
@@ -427,27 +505,36 @@ export class AccountDetailComponent implements OnInit {
   resetForm() {
     this.newGasto = { descripcion: '', monto: null, categoria: '', fecha: '' };
     const me = this.auth.getUser();
-    this.selectedPayer = me?._id || me?.id || (this.miembros.length ? this.miembros[0] : null);
+    this.selectedPayer =
+      me?._id || me?.id || (this.miembros.length ? this.miembros[0] : null);
     this.createError = null;
-    this.participantes = this.miembros.map((m: any) => ({ userId: m._id || m.id || String(m), amount: null, included: true }));
+    this.participantes = this.miembros.map((m: any) => ({
+      userId: m._id || m.id || String(m),
+      amount: null,
+      included: true,
+    }));
   }
 
   autoSplit() {
     const total = Number(this.newGasto.monto) || 0;
-    const included = this.participantes.filter(p => p.included);
+    const included = this.participantes.filter((p) => p.included);
     if (!included.length || !total) return;
     const share = +(total / included.length).toFixed(2);
-    this.participantes = this.participantes.map(p => (p.included ? { ...p, amount: share } : { ...p, amount: 0 }));
+    this.participantes = this.participantes.map((p) =>
+      p.included ? { ...p, amount: share } : { ...p, amount: 0 },
+    );
   }
 
   displayMember(m: any) {
     const me = this.auth.getUser();
     if (!m) return '—';
-    const id = typeof m === 'object' ? (m._id || m.id) : m;
-    
+    const id = typeof m === 'object' ? m._id || m.id : m;
+
     // Try to find the member in miembros array
-    const member = this.miembros.find((mem: any) => String(mem._id || mem.id) === String(id));
-    
+    const member = this.miembros.find(
+      (mem: any) => String(mem._id || mem.id) === String(id),
+    );
+
     // determine base label
     let label = '';
     if (member) {
@@ -479,7 +566,7 @@ export class AccountDetailComponent implements OnInit {
     this.addFriendError = null;
     const me = this.auth.getUser();
     const myId = me?._id || me?.id;
-    
+
     if (!myId) {
       this.addFriendError = 'No autenticado';
       this.loadingFriends = false;
@@ -501,7 +588,7 @@ export class AccountDetailComponent implements OnInit {
       error: (err: any) => {
         this.addFriendError = 'No se pudieron cargar los amigos';
         this.loadingFriends = false;
-      }
+      },
     });
   }
 
@@ -511,7 +598,7 @@ export class AccountDetailComponent implements OnInit {
 
   addFriendToGroup() {
     if (!this.selectedFriendToAdd) return;
-    
+
     this.addingFriend = true;
     this.addFriendError = null;
 
@@ -519,7 +606,7 @@ export class AccountDetailComponent implements OnInit {
     const payload = {
       id_usuario: this.selectedFriendToAdd,
       id_grupo: this.accountId,
-      rol: 'miembro'
+      rol: 'miembro',
     };
 
     this.auth.createUserGroup(payload).subscribe({
@@ -531,8 +618,9 @@ export class AccountDetailComponent implements OnInit {
       },
       error: (err: any) => {
         this.addingFriend = false;
-        this.addFriendError = err?.error?.message || 'No se pudo añadir el amigo al grupo';
-      }
+        this.addFriendError =
+          err?.error?.message || 'No se pudo añadir el amigo al grupo';
+      },
     });
   }
 
@@ -543,10 +631,11 @@ export class AccountDetailComponent implements OnInit {
 
     const isUserPayer = gasto.id_pagador === myId;
     const totalAmount = Number(gasto.monto) || 0;
-    
+
     // Get participantes - try different possible field names
-    const participantes = gasto.participacion || gasto.participants || gasto.shares || [];
-    
+    const participantes =
+      gasto.participacion || gasto.participants || gasto.shares || [];
+
     // Use participacion if present
     const participantCount = participantes?.length || 0;
 
@@ -566,7 +655,11 @@ export class AccountDetailComponent implements OnInit {
     });
 
     // If we have an explicit amount, use it; otherwise treat as unknown (0) to avoid forced equal split
-    const rawShare = Number(userParticipation?.amount ?? userParticipation?.monto_asignado ?? userParticipation?.monto);
+    const rawShare = Number(
+      userParticipation?.amount ??
+        userParticipation?.monto_asignado ??
+        userParticipation?.monto,
+    );
     const userShare = Number.isFinite(rawShare) && rawShare > 0 ? rawShare : 0;
 
     if (!userParticipation) {

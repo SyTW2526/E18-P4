@@ -23,10 +23,25 @@ import { ClickOutsideDirective } from '../../shared/click-outside.directive';
 @Component({
   selector: 'app-create-gasto',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatCardModule, MatDatepickerModule, MatNativeDateModule, MatIconModule, MatCheckboxModule, MatListModule, MatDividerModule, MatSelectModule, ClickOutsideDirective],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCardModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatIconModule,
+    MatCheckboxModule,
+    MatListModule,
+    MatDividerModule,
+    MatSelectModule,
+    ClickOutsideDirective,
+  ],
   templateUrl: './create-gasto.component.html',
   styleUrls: ['./create-gasto.component.css'],
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
 })
 export class CreateGastoComponent implements OnInit {
   accountId = '';
@@ -36,21 +51,27 @@ export class CreateGastoComponent implements OnInit {
   fecha: any = new Date();
   pagador: string | null = null;
   miembros: any[] = [];
-  participaciones: Array<{ user: any; selected: boolean; monto_asignado: number }> = [];
+  participaciones: Array<{
+    user: any;
+    selected: boolean;
+    monto_asignado: number;
+  }> = [];
   creating = false;
   editMode = false;
   gastoId: string | null = null;
   currencyMenuOpen = false;
   pagadorMenuOpen = false;
   private membersReadyResolve: (() => void) | null = null;
-  private membersReady: Promise<void> = new Promise((r) => (this.membersReadyResolve = r));
+  private membersReady: Promise<void> = new Promise(
+    (r) => (this.membersReadyResolve = r),
+  );
 
   constructor(
-    private route: ActivatedRoute, 
-    private auth: AuthService, 
-    private router: Router, 
+    private route: ActivatedRoute,
+    private auth: AuthService,
+    private router: Router,
     public lang: LanguageService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
   ) {}
 
   ngOnInit(): void {
@@ -70,7 +91,9 @@ export class CreateGastoComponent implements OnInit {
           this.moneda = g.moneda || 'EUR';
           this.pagador = g.id_pagador || this.pagador;
           // date parsing
-          try { this.fecha = g.fecha ? new Date(g.fecha) : this.fecha; } catch(e) {}
+          try {
+            this.fecha = g.fecha ? new Date(g.fecha) : this.fecha;
+          } catch (e) {}
           // wait for members to be ready, then load participaciones for this gasto
           if (this.membersReady) {
             this.membersReady.then(() => {
@@ -80,7 +103,7 @@ export class CreateGastoComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('Failed to load gasto for edit', err);
-        }
+        },
       });
     }
   }
@@ -88,12 +111,12 @@ export class CreateGastoComponent implements OnInit {
   loadMembers() {
     this.auth.getMembersForGroup(this.accountId).subscribe({
       next: (res: any) => {
-        const raw = Array.isArray(res) ? res : (res?.data || []);
+        const raw = Array.isArray(res) ? res : res?.data || [];
         if (!raw.length) {
           // ensure current user is present even if no members returned
           const me = this.auth.getUser();
           this.miembros = me ? [me] : [];
-          this.pagador = this.pagador || (me?._id || me?.id || null);
+          this.pagador = this.pagador || me?._id || me?.id || null;
           return;
         }
 
@@ -102,53 +125,104 @@ export class CreateGastoComponent implements OnInit {
           // if we already have a full user object, keep it
           if (typeof m === 'object' && (m.nombre || m.email)) return of(m);
           // if it's an object with only _id, try to resolve full user
-          if (typeof m === 'object' && (m._id || m.id)) return this.auth.getUserById(String(m._id || m.id)).pipe(catchError(() => of(m)));
+          if (typeof m === 'object' && (m._id || m.id))
+            return this.auth
+              .getUserById(String(m._id || m.id))
+              .pipe(catchError(() => of(m)));
           // otherwise assume it's an id string
-          return this.auth.getUserById(String(m)).pipe(catchError(() => of({ _id: String(m) })));
+          return this.auth
+            .getUserById(String(m))
+            .pipe(catchError(() => of({ _id: String(m) })));
         });
 
-        (forkJoin(observables) as any).subscribe((resolved: any[]) => {
-          this.miembros = resolved.map((r: any, i: number) => {
-            if (!r) {
-              const id = raw[i];
-              return { _id: id };
+        (forkJoin(observables) as any).subscribe(
+          (resolved: any[]) => {
+            this.miembros = resolved.map((r: any, i: number) => {
+              if (!r) {
+                const id = raw[i];
+                return { _id: id };
+              }
+              return r;
+            });
+            // ensure current user is included
+            const me = this.auth.getUser();
+            const meId = me?._id || me?.id;
+            if (
+              meId &&
+              !this.miembros.find(
+                (x: any) => String(x._id || x.id) === String(meId),
+              )
+            ) {
+              this.miembros.unshift(me);
             }
-            return r;
-          });
-          // ensure current user is included
-          const me = this.auth.getUser();
-          const meId = me?._id || me?.id;
-          if (meId && !this.miembros.find((x: any) => String(x._id || x.id) === String(meId))) {
-            this.miembros.unshift(me);
-          }
-          // default selected payer is current user if not set
-          this.pagador = this.pagador || meId || (this.miembros.length ? this.miembros[0]._id || this.miembros[0].id : null);
-          // build participaciones array defaulting to all members selected
-          this.participaciones = this.miembros.map((u: any) => ({ user: u, selected: true, monto_asignado: 0 }));
-          // compute initial split if monto available
-          setTimeout(() => this.recalcSplit());
-          // signal members ready for consumers (e.g., edit mode)
-          if (this.membersReadyResolve) { this.membersReadyResolve(); this.membersReadyResolve = null; }
-        }, () => {
-          // fallback: use raw as minimal objects
-          this.miembros = raw.map((m: any) => (typeof m === 'object' ? m : { _id: m }));
-          const me = this.auth.getUser();
-          const meId = me?._id || me?.id;
-          if (meId && !this.miembros.find((x: any) => String(x._id || x.id) === String(meId))) {
-            this.miembros.unshift(me);
-          }
-          this.pagador = this.pagador || meId || (this.miembros.length ? this.miembros[0]._id || this.miembros[0].id : null);
-          this.participaciones = this.miembros.map((u: any) => ({ user: u, selected: true, monto_asignado: 0 }));
-          setTimeout(() => this.recalcSplit());
-          if (this.membersReadyResolve) { this.membersReadyResolve(); this.membersReadyResolve = null; }
-        });
+            // default selected payer is current user if not set
+            this.pagador =
+              this.pagador ||
+              meId ||
+              (this.miembros.length
+                ? this.miembros[0]._id || this.miembros[0].id
+                : null);
+            // build participaciones array defaulting to all members selected
+            this.participaciones = this.miembros.map((u: any) => ({
+              user: u,
+              selected: true,
+              monto_asignado: 0,
+            }));
+            // compute initial split if monto available
+            setTimeout(() => this.recalcSplit());
+            // signal members ready for consumers (e.g., edit mode)
+            if (this.membersReadyResolve) {
+              this.membersReadyResolve();
+              this.membersReadyResolve = null;
+            }
+          },
+          () => {
+            // fallback: use raw as minimal objects
+            this.miembros = raw.map((m: any) =>
+              typeof m === 'object' ? m : { _id: m },
+            );
+            const me = this.auth.getUser();
+            const meId = me?._id || me?.id;
+            if (
+              meId &&
+              !this.miembros.find(
+                (x: any) => String(x._id || x.id) === String(meId),
+              )
+            ) {
+              this.miembros.unshift(me);
+            }
+            this.pagador =
+              this.pagador ||
+              meId ||
+              (this.miembros.length
+                ? this.miembros[0]._id || this.miembros[0].id
+                : null);
+            this.participaciones = this.miembros.map((u: any) => ({
+              user: u,
+              selected: true,
+              monto_asignado: 0,
+            }));
+            setTimeout(() => this.recalcSplit());
+            if (this.membersReadyResolve) {
+              this.membersReadyResolve();
+              this.membersReadyResolve = null;
+            }
+          },
+        );
       },
       error: () => {
         const me = this.auth.getUser();
         this.miembros = me ? [me] : [];
-        this.pagador = this.pagador || (me?._id || me?.id || null);
-        this.participaciones = this.miembros.map((u: any) => ({ user: u, selected: true, monto_asignado: 0 }));
-        if (this.membersReadyResolve) { this.membersReadyResolve(); this.membersReadyResolve = null; }
+        this.pagador = this.pagador || me?._id || me?.id || null;
+        this.participaciones = this.miembros.map((u: any) => ({
+          user: u,
+          selected: true,
+          monto_asignado: 0,
+        }));
+        if (this.membersReadyResolve) {
+          this.membersReadyResolve();
+          this.membersReadyResolve = null;
+        }
       },
     });
   }
@@ -161,19 +235,25 @@ export class CreateGastoComponent implements OnInit {
         parts.forEach((p) => {
           // find matching participant entry
           const uid = String(p.id_usuario || p.id_usuario);
-          const found = this.participaciones.find((x) => String(x.user?._id || x.user?.id || x.user) === String(uid));
+          const found = this.participaciones.find(
+            (x) => String(x.user?._id || x.user?.id || x.user) === String(uid),
+          );
           if (found) {
             found.monto_asignado = Number(p.monto_asignado || 0);
-            found.selected = (Number(p.monto_asignado || 0) > 0) || true;
+            found.selected = Number(p.monto_asignado || 0) > 0 || true;
           } else {
             // if user not in miembros, add it
-            this.participaciones.push({ user: { _id: uid }, selected: true, monto_asignado: Number(p.monto_asignado || 0) });
+            this.participaciones.push({
+              user: { _id: uid },
+              selected: true,
+              monto_asignado: Number(p.monto_asignado || 0),
+            });
           }
         });
       },
       error: (err) => {
         console.warn('Failed to load participaciones for gasto', err);
-      }
+      },
     });
   }
 
@@ -194,16 +274,22 @@ export class CreateGastoComponent implements OnInit {
     this.participaciones.forEach((p) => (p.monto_asignado = 0));
     selected.forEach((p) => (p.monto_asignado = per));
     // adjust rounding difference on first participant
-    const assignedSum = this.participaciones.reduce((s, p) => s + Number(p.monto_asignado || 0), 0);
+    const assignedSum = this.participaciones.reduce(
+      (s, p) => s + Number(p.monto_asignado || 0),
+      0,
+    );
     const diff = +(total - assignedSum).toFixed(2);
     if (Math.abs(diff) >= 0.01 && selected.length > 0) {
-      selected[0].monto_asignado = +(Number(selected[0].monto_asignado || 0) + diff).toFixed(2);
+      selected[0].monto_asignado = +(
+        Number(selected[0].monto_asignado || 0) + diff
+      ).toFixed(2);
     }
   }
 
   displayMember(m: any) {
     if (!m) return '—';
-    if (typeof m === 'object') return m.nombre || m.email || m._id || JSON.stringify(m);
+    if (typeof m === 'object')
+      return m.nombre || m.email || m._id || JSON.stringify(m);
     return String(m).slice(0, 12);
   }
 
@@ -232,44 +318,88 @@ export class CreateGastoComponent implements OnInit {
           const gastoId = this.gastoId as string;
           this.auth.getParticipacionesForGasto(gastoId).subscribe({
             next: (existing: any[]) => {
-              const deletes = (existing || []).map((p) => this.auth.deleteParticipacion(String(p._id || p.id))).concat();
+              const deletes = (existing || [])
+                .map((p) =>
+                  this.auth.deleteParticipacion(String(p._id || p.id)),
+                )
+                .concat();
               // run deletes first
-              (forkJoin(deletes.length ? deletes : [of(null)]) as any).subscribe({
+              (
+                forkJoin(deletes.length ? deletes : [of(null)]) as any
+              ).subscribe({
                 next: () => {
                   // create new participaciones from current form
-                  const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
-                  const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
-                  (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                    next: () => { 
-                      this.sendEditNotificationsToParticipants(gastoId, selectedParts);
-                      this.creating = false; 
-                      this.router.navigate(['/group', this.accountId]); 
+                  const selectedParts = this.participaciones.filter(
+                    (p) =>
+                      p.selected &&
+                      (Number(p.monto_asignado) > 0 ||
+                        Number(this.monto) === 0),
+                  );
+                  const calls = selectedParts.map((p) =>
+                    this.auth.createParticipacion({
+                      id_usuario: String(p.user._id || p.user.id),
+                      id_gasto: gastoId,
+                      monto_asignado: Number(p.monto_asignado),
+                    }),
+                  );
+                  (
+                    forkJoin(calls.length ? calls : [of(null)]) as any
+                  ).subscribe({
+                    next: () => {
+                      this.sendEditNotificationsToParticipants(
+                        gastoId,
+                        selectedParts,
+                      );
+                      this.creating = false;
+                      this.router.navigate(['/group', this.accountId]);
                     },
-                    error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
+                    error: (err2: any) => {
+                      this.creating = false;
+                      console.error('createParticipaciones error', err2);
+                    },
                   });
                 },
-                error: (errDel: any) => { this.creating = false; console.error('deleteParticipaciones error', errDel); }
+                error: (errDel: any) => {
+                  this.creating = false;
+                  console.error('deleteParticipaciones error', errDel);
+                },
               });
             },
             error: (errGet: any) => {
               // cannot fetch existing, still attempt to create from current form
-              const selectedParts = this.participaciones.filter((p) => p.selected && (Number(p.monto_asignado) > 0 || Number(this.monto) === 0));
-              const calls = selectedParts.map((p) => this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: gastoId, monto_asignado: Number(p.monto_asignado) }));
+              const selectedParts = this.participaciones.filter(
+                (p) =>
+                  p.selected &&
+                  (Number(p.monto_asignado) > 0 || Number(this.monto) === 0),
+              );
+              const calls = selectedParts.map((p) =>
+                this.auth.createParticipacion({
+                  id_usuario: String(p.user._id || p.user.id),
+                  id_gasto: gastoId,
+                  monto_asignado: Number(p.monto_asignado),
+                }),
+              );
               (forkJoin(calls.length ? calls : [of(null)]) as any).subscribe({
-                next: () => { 
-                  this.sendEditNotificationsToParticipants(gastoId, selectedParts);
-                  this.creating = false; 
-                  this.router.navigate(['/group', this.accountId]); 
+                next: () => {
+                  this.sendEditNotificationsToParticipants(
+                    gastoId,
+                    selectedParts,
+                  );
+                  this.creating = false;
+                  this.router.navigate(['/group', this.accountId]);
                 },
-                error: (err2: any) => { this.creating = false; console.error('createParticipaciones error', err2); }
+                error: (err2: any) => {
+                  this.creating = false;
+                  console.error('createParticipaciones error', err2);
+                },
               });
-            }
+            },
           });
         },
         error: (err: any) => {
           this.creating = false;
           console.error('updateGasto error', err);
-        }
+        },
       });
       return;
     }
@@ -285,10 +415,17 @@ export class CreateGastoComponent implements OnInit {
         }
 
         // build participaciones payloads for selected participants
-        const selectedParts = this.participaciones.filter((p) => p.selected && (p.monto_asignado > 0 || Number(this.monto) === 0));
+        const selectedParts = this.participaciones.filter(
+          (p) =>
+            p.selected && (p.monto_asignado > 0 || Number(this.monto) === 0),
+        );
         if (!selectedParts.length) {
           // fallback: create a single participacion for pagador with full amount
-          const body = { id_usuario: String(this.pagador), id_gasto: String(gastoId), monto_asignado: Number(this.monto) };
+          const body = {
+            id_usuario: String(this.pagador),
+            id_gasto: String(gastoId),
+            monto_asignado: Number(this.monto),
+          };
           this.auth.createParticipacion(body).subscribe({
             next: () => {
               this.creating = false;
@@ -303,7 +440,11 @@ export class CreateGastoComponent implements OnInit {
         }
 
         const calls = selectedParts.map((p) => {
-          return this.auth.createParticipacion({ id_usuario: String(p.user._id || p.user.id), id_gasto: String(gastoId), monto_asignado: Number(p.monto_asignado) });
+          return this.auth.createParticipacion({
+            id_usuario: String(p.user._id || p.user.id),
+            id_gasto: String(gastoId),
+            monto_asignado: Number(p.monto_asignado),
+          });
         });
 
         (forkJoin(calls) as any).subscribe({
@@ -326,14 +467,21 @@ export class CreateGastoComponent implements OnInit {
     });
   }
 
-  sendNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+  sendNotificationsToParticipants(
+    gastoId: string,
+    selectedParts: Array<{
+      user: any;
+      selected: boolean;
+      monto_asignado: number;
+    }>,
+  ) {
     const me = this.auth.getUser();
     if (!me || !me._id) return;
 
     const creatorName = me.nombre || me.name || me.email || 'Alguien';
-    
+
     // Enviar notificación a cada participante excepto el creador
-    selectedParts.forEach(part => {
+    selectedParts.forEach((part) => {
       const userId = String(part.user._id || part.user.id);
       if (userId === me._id) return; // No notificar al creador
 
@@ -343,7 +491,7 @@ export class CreateGastoComponent implements OnInit {
         para_usuario: userId,
         id_grupo: this.accountId,
         id_gasto: gastoId,
-        mensaje: `${creatorName} creó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+        mensaje: `${creatorName} creó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`,
       };
 
       this.notificationService.createNotification(notification).subscribe({
@@ -352,19 +500,26 @@ export class CreateGastoComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('Error enviando notificación:', err);
-        }
+        },
       });
     });
   }
 
-  sendEditNotificationsToParticipants(gastoId: string, selectedParts: Array<{ user: any; selected: boolean; monto_asignado: number }>) {
+  sendEditNotificationsToParticipants(
+    gastoId: string,
+    selectedParts: Array<{
+      user: any;
+      selected: boolean;
+      monto_asignado: number;
+    }>,
+  ) {
     const me = this.auth.getUser();
     if (!me || !me._id) return;
 
     const editorName = me.nombre || me.name || me.email || 'Alguien';
-    
+
     // Enviar notificación a cada participante excepto el editor
-    selectedParts.forEach(part => {
+    selectedParts.forEach((part) => {
       const userId = String(part.user._id || part.user.id);
       if (userId === me._id) return; // No notificar al editor
 
@@ -374,7 +529,7 @@ export class CreateGastoComponent implements OnInit {
         para_usuario: userId,
         id_grupo: this.accountId,
         id_gasto: gastoId,
-        mensaje: `${editorName} editó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`
+        mensaje: `${editorName} editó un gasto: ${this.descripcion} (${Number(this.monto).toFixed(2)} ${this.moneda})`,
       };
 
       this.notificationService.createNotification(notification).subscribe({
@@ -383,7 +538,7 @@ export class CreateGastoComponent implements OnInit {
         },
         error: (err: any) => {
           console.error('Error enviando notificación de edición:', err);
-        }
+        },
       });
     });
   }

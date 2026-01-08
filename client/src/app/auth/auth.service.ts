@@ -15,22 +15,29 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  signup(payload: { nombre: string; email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/users/signup`, payload).pipe(
-      tap((res) => this.saveAuth(res))
-    );
+  signup(payload: {
+    nombre: string;
+    email: string;
+    password: string;
+  }): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${this.baseUrl}/users/signup`, payload)
+      .pipe(tap((res) => this.saveAuth(res)));
   }
 
-  signin(payload: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/users/signin`, payload).pipe(
-      tap((res) => this.saveAuth(res))
-    );
+  signin(payload: {
+    email: string;
+    password: string;
+  }): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${this.baseUrl}/users/signin`, payload)
+      .pipe(tap((res) => this.saveAuth(res)));
   }
 
   signinGoogle(token: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/users/signin-google`, { token }).pipe(
-      tap((res) => this.saveAuth(res))
-    );
+    return this.http
+      .post<AuthResponse>(`${this.baseUrl}/users/signin-google`, { token })
+      .pipe(tap((res) => this.saveAuth(res)));
   }
 
   private saveAuth(res: AuthResponse) {
@@ -92,88 +99,163 @@ export class AuthService {
   }
 
   createSharedAccount(payload: any) {
-    return this.http.post<any>(`${this.baseUrl}/user-group/shared-accounts`, payload);
+    return this.http.post<any>(
+      `${this.baseUrl}/user-group/shared-accounts`,
+      payload,
+    );
   }
 
   updateSharedAccount(id: string, payload: any) {
-    return this.http.put<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`, payload);
+    return this.http.put<any>(
+      `${this.baseUrl}/user-group/shared-accounts/${id}`,
+      payload,
+    );
   }
 
   getSharedAccountById(id: string) {
-    return this.http.get<any>(`${this.baseUrl}/user-group/shared-accounts/${id}`);
+    return this.http.get<any>(
+      `${this.baseUrl}/user-group/shared-accounts/${id}`,
+    );
   }
 
   deleteSharedAccount(id: string, requesterId: string) {
-    return this.http.request<any>('delete', `${this.baseUrl}/user-group/shared-accounts/${id}`, { body: { requesterId } });
+    return this.http.request<any>(
+      'delete',
+      `${this.baseUrl}/user-group/shared-accounts/${id}`,
+      { body: { requesterId } },
+    );
   }
 
   getMembersForGroup(id: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/members`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/user-group/shared-accounts/${id}/members`,
+    );
   }
 
   // Get groups (shared account documents) for a given user
   getGroupsForUser(userId: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/user-group/user-groups/user/${userId}`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/user-group/user-groups/user/${userId}`,
+    );
   }
 
   getBalancesForGroup(id: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/user-group/shared-accounts/${id}/balances`,
+    );
   }
 
   getDetailedBalancesForGroup(id: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/user-group/shared-accounts/${id}/balances-detailed`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/user-group/shared-accounts/${id}/balances-detailed`,
+    );
   }
 
   // User-group relations (join a group)
-  createUserGroup(payload: { id_usuario: string; id_grupo: string; rol?: string }) {
-    return this.http.post<any>(`${this.baseUrl}/user-group/user-groups`, payload);
+  createUserGroup(payload: {
+    id_usuario: string;
+    id_grupo: string;
+    rol?: string;
+  }) {
+    return this.http.post<any>(
+      `${this.baseUrl}/user-group/user-groups`,
+      payload,
+    );
   }
 
-  updateUserGroupRole(groupId: string, requesterId: string, targetUserId: string, role: 'admin' | 'miembro') {
-    return this.http.put<any>(`${this.baseUrl}/user-group/user-groups/${groupId}/role`, { requesterId, targetUserId, role });
+  updateUserGroupRole(
+    groupId: string,
+    requesterId: string,
+    targetUserId: string,
+    role: 'admin' | 'miembro',
+  ) {
+    return this.http.put<any>(
+      `${this.baseUrl}/user-group/user-groups/${groupId}/role`,
+      { requesterId, targetUserId, role },
+    );
   }
 
-  removeUserFromGroup(groupId: string, requesterId: string, targetUserId: string) {
-    return this.http.request<any>('delete', `${this.baseUrl}/user-group/user-groups`, { body: { requesterId, targetUserId, groupId } });
+  removeUserFromGroup(
+    groupId: string,
+    requesterId: string,
+    targetUserId: string,
+  ) {
+    return this.http.request<any>(
+      'delete',
+      `${this.baseUrl}/user-group/user-groups`,
+      { body: { requesterId, targetUserId, groupId } },
+    );
   }
 
   // Group invitations
-  sendGroupInvitation(id_grupo: string, id_invitado: string, id_invitador: string) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations`, { id_grupo, id_invitado, id_invitador });
-  }
-
-  getGroupInvitationsForUser(userId: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/group-invitations/user/${userId}`);
-  }
-
-  acceptGroupInvitation(invitationId: string, userId: string) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/accept`, { userId });
-  }
-
-  rejectGroupInvitation(invitationId: string, userId: string) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations/${invitationId}/reject`, { userId });
-  }
-
-  // Invitation links
-  createInvitationLink(id_grupo: string, id_invitador: string, usos_maximos?: number, dias_expiracion?: number) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/create`, { 
-      id_grupo, 
-      id_invitador, 
-      usos_maximos, 
-      dias_expiracion 
+  sendGroupInvitation(
+    id_grupo: string,
+    id_invitado: string,
+    id_invitador: string,
+  ) {
+    return this.http.post<any>(`${this.baseUrl}/group-invitations`, {
+      id_grupo,
+      id_invitado,
+      id_invitador,
     });
   }
 
+  getGroupInvitationsForUser(userId: string) {
+    return this.http.get<any[]>(
+      `${this.baseUrl}/group-invitations/user/${userId}`,
+    );
+  }
+
+  acceptGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(
+      `${this.baseUrl}/group-invitations/${invitationId}/accept`,
+      { userId },
+    );
+  }
+
+  rejectGroupInvitation(invitationId: string, userId: string) {
+    return this.http.post<any>(
+      `${this.baseUrl}/group-invitations/${invitationId}/reject`,
+      { userId },
+    );
+  }
+
+  // Invitation links
+  createInvitationLink(
+    id_grupo: string,
+    id_invitador: string,
+    usos_maximos?: number,
+    dias_expiracion?: number,
+  ) {
+    return this.http.post<any>(
+      `${this.baseUrl}/group-invitations/link/create`,
+      {
+        id_grupo,
+        id_invitador,
+        usos_maximos,
+        dias_expiracion,
+      },
+    );
+  }
+
   getGroupInvitationLinks(groupId: string, id_invitador: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/group-invitations/group/${groupId}/links?id_invitador=${id_invitador}`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/group-invitations/group/${groupId}/links?id_invitador=${id_invitador}`,
+    );
   }
 
   joinGroupWithLink(token: string, userId: string) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/${token}/join`, { userId });
+    return this.http.post<any>(
+      `${this.baseUrl}/group-invitations/link/${token}/join`,
+      { userId },
+    );
   }
 
   revokeInvitationLink(linkId: string, id_usuario: string) {
-    return this.http.post<any>(`${this.baseUrl}/group-invitations/link/${linkId}/revoke`, { id_usuario });
+    return this.http.post<any>(
+      `${this.baseUrl}/group-invitations/link/${linkId}/revoke`,
+      { id_usuario },
+    );
   }
 
   getUserById(id: string) {
@@ -191,33 +273,50 @@ export class AuthService {
 
   // Get incoming friend requests (peticiones_amistad)
   getPeticiones(userId: string) {
-    return this.http.get<any>(`${this.baseUrl}/users/${userId}/peticiones-amistad`);
+    return this.http.get<any>(
+      `${this.baseUrl}/users/${userId}/peticiones-amistad`,
+    );
   }
 
   // Send a friend request (add senderId to receiver's peticiones_amistad)
   addAmigo(receiverId: string, senderId: string) {
-    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/add-amigo`, { senderId });
+    return this.http.post<any>(
+      `${this.baseUrl}/users/${receiverId}/add-amigo`,
+      { senderId },
+    );
   }
 
   // Accept a friend request (current user accepts senderId)
   acceptAmigo(receiverId: string, senderId: string) {
-    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/accept-amigo`, { senderId });
+    return this.http.post<any>(
+      `${this.baseUrl}/users/${receiverId}/accept-amigo`,
+      { senderId },
+    );
   }
 
   // Reject a friend request (current user rejects senderId)
   rejectAmigo(receiverId: string, senderId: string) {
-    return this.http.post<any>(`${this.baseUrl}/users/${receiverId}/reject-amigo`, { senderId });
+    return this.http.post<any>(
+      `${this.baseUrl}/users/${receiverId}/reject-amigo`,
+      { senderId },
+    );
   }
 
   // Remove a friend (delete) - requests server to remove amigoId from user's amigos list
   removeAmigo(userId: string, amigoId: string) {
     // Use HTTP request to send a DELETE with a body (some Angular versions require request() helper)
-    return this.http.request('delete', `${this.baseUrl}/users/${userId}/remove-amigo`, { body: { amigoId } });
+    return this.http.request(
+      'delete',
+      `${this.baseUrl}/users/${userId}/remove-amigo`,
+      { body: { amigoId } },
+    );
   }
 
   // Search users by nombre
   searchUsers(query: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/users/search?q=${encodeURIComponent(query)}`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/users/search?q=${encodeURIComponent(query)}`,
+    );
   }
 
   // Get basic user info (for friend lists, etc)
@@ -227,15 +326,19 @@ export class AuthService {
 
   // Helper: find a user by username (server-side lookup)
   findUserByUsername(username: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/users/lookup?username=${encodeURIComponent(String(username))}`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/users/lookup?username=${encodeURIComponent(String(username))}`,
+    );
   }
 
   updateUser(id: string, payload: any) {
     // map client theme values to server schema ('light'/'dark' -> 'claro'/'oscuro')
     const payloadToSend = { ...payload };
     if (payloadToSend?.preferencia_tema) {
-      if (payloadToSend.preferencia_tema === 'light') payloadToSend.preferencia_tema = 'claro';
-      else if (payloadToSend.preferencia_tema === 'dark') payloadToSend.preferencia_tema = 'oscuro';
+      if (payloadToSend.preferencia_tema === 'light')
+        payloadToSend.preferencia_tema = 'claro';
+      else if (payloadToSend.preferencia_tema === 'dark')
+        payloadToSend.preferencia_tema = 'oscuro';
     }
 
     const token = this.getToken();
@@ -245,19 +348,25 @@ export class AuthService {
     }
 
     // After updating, update localStorage with the updated data
-    return this.http.put<any>(`${this.baseUrl}/users/${id}`, payloadToSend, options).pipe(
-      tap((updatedUser) => {
-        try {
-          if (typeof window !== 'undefined' && window?.localStorage) {
-            const currentUser = this.getUser() || {};
-            const merged = { ...currentUser, ...updatedUser, preferencia_tema: payloadToSend.preferencia_tema };
-            window.localStorage.setItem('auth_user', JSON.stringify(merged));
+    return this.http
+      .put<any>(`${this.baseUrl}/users/${id}`, payloadToSend, options)
+      .pipe(
+        tap((updatedUser) => {
+          try {
+            if (typeof window !== 'undefined' && window?.localStorage) {
+              const currentUser = this.getUser() || {};
+              const merged = {
+                ...currentUser,
+                ...updatedUser,
+                preferencia_tema: payloadToSend.preferencia_tema,
+              };
+              window.localStorage.setItem('auth_user', JSON.stringify(merged));
+            }
+          } catch (e) {
+            console.warn('Failed to update auth_user in localStorage', e);
           }
-        } catch (e) {
-          console.warn('Failed to update auth_user in localStorage', e);
-        }
-      })
-    );
+        }),
+      );
   }
 
   deleteUser(id: string) {
@@ -283,12 +392,18 @@ export class AuthService {
   }
 
   // Participaciones endpoints
-  createParticipacion(payload: { id_usuario: string; id_gasto: string; monto_asignado: number }) {
+  createParticipacion(payload: {
+    id_usuario: string;
+    id_gasto: string;
+    monto_asignado: number;
+  }) {
     return this.http.post<any>(`${this.baseUrl}/participacion`, payload);
   }
 
   getParticipacionesForGasto(id_gasto: string) {
-    return this.http.get<any[]>(`${this.baseUrl}/participacion/gasto/${id_gasto}`);
+    return this.http.get<any[]>(
+      `${this.baseUrl}/participacion/gasto/${id_gasto}`,
+    );
   }
 
   deleteParticipacion(id: string) {

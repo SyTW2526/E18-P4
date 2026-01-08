@@ -1,40 +1,44 @@
 <div class="landing-container">
-  
   <nav class="landing-nav">
     <!-- nav actions removed; header toolbar provides login/register on this page -->
   </nav>
 
   <header class="hero">
-    
     <div class="hero-content">
-      <img class="brand-logo" src="/assets/images/logo_paysplit_def.svg" alt="PaySplit">
+      <img
+        class="brand-logo"
+        src="/assets/images/logo_paysplit_def.svg"
+        alt="PaySplit"
+      />
       <h2 class="tagline">
-        {{ lang.t('landingHeading') }}<br>
-        <span class="text-gradient">{{ lang.t('landingHeadingGradient') }}</span>
+        {{ lang.t("landingHeading") }}<br />
+        <span class="text-gradient">{{
+          lang.t("landingHeadingGradient")
+        }}</span>
       </h2>
-      
+
       <p class="subtitle">
-        {{ lang.t('landingDescription') }}
+        {{ lang.t("landingDescription") }}
       </p>
 
       <div class="cta-group">
         <a routerLink="/register" class="btn-primary lg">
-          {{ lang.t('startFree') }} <span class="arrow">→</span>
+          {{ lang.t("startFree") }} <span class="arrow">→</span>
         </a>
         <a routerLink="/login" class="btn-secondary lg">
-          {{ lang.t('alreadyHaveAccount') }}
+          {{ lang.t("alreadyHaveAccount") }}
         </a>
       </div>
 
       <div class="stats">
         <div class="stat-item">
           <strong>+10k</strong>
-          <span>{{ lang.t('users') }}</span>
+          <span>{{ lang.t("users") }}</span>
         </div>
         <div class="divider"></div>
         <div class="stat-item">
           <strong>4.8/5</strong>
-          <span>{{ lang.t('rating') }}</span>
+          <span>{{ lang.t("rating") }}</span>
         </div>
       </div>
     </div>
@@ -46,28 +50,28 @@
             <i class="material-icons">analytics</i>
           </div>
           <div class="feature-content">
-            <h3>{{ lang.t('featureEqualSplit') }}</h3>
-            <p>{{ lang.t('featureEqualSplitDesc') }}</p>
+            <h3>{{ lang.t("featureEqualSplit") }}</h3>
+            <p>{{ lang.t("featureEqualSplitDesc") }}</p>
           </div>
         </div>
-        
+
         <div class="feature-card card-2">
           <div class="feature-icon">
             <i class="material-icons">account_balance_wallet</i>
           </div>
           <div class="feature-content">
-            <h3>{{ lang.t('featureTrackDebts') }}</h3>
-            <p>{{ lang.t('featureTrackDebtsDesc') }}</p>
+            <h3>{{ lang.t("featureTrackDebts") }}</h3>
+            <p>{{ lang.t("featureTrackDebtsDesc") }}</p>
           </div>
         </div>
-        
+
         <div class="feature-card card-3">
           <div class="feature-icon">
             <i class="material-icons">check_circle</i>
           </div>
           <div class="feature-content">
-            <h3>{{ lang.t('featureSettleUp') }}</h3>
-            <p>{{ lang.t('featureSettleUpDesc') }}</p>
+            <h3>{{ lang.t("featureSettleUp") }}</h3>
+            <p>{{ lang.t("featureSettleUpDesc") }}</p>
           </div>
         </div>
       </div>
@@ -75,21 +79,20 @@
   </header>
 
   <section class="trust-section">
-    <p>{{ lang.t('simplifySharedFinances') }}</p>
+    <p>{{ lang.t("simplifySharedFinances") }}</p>
     <div class="features-grid">
       <div class="feature">
         <i class="material-icons">group</i>
-        <span>{{ lang.t('unlimitedGroups') }}</span>
+        <span>{{ lang.t("unlimitedGroups") }}</span>
       </div>
       <div class="feature">
         <i class="material-icons">sync</i>
-        <span>{{ lang.t('realTimeSync') }}</span>
+        <span>{{ lang.t("realTimeSync") }}</span>
       </div>
       <div class="feature">
         <i class="material-icons">pie_chart</i>
-        <span>{{ lang.t('clearBalances') }}</span>
+        <span>{{ lang.t("clearBalances") }}</span>
       </div>
     </div>
   </section>
-
 </div>

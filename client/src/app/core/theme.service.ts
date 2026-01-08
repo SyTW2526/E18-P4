@@ -23,7 +23,7 @@ export class ThemeService {
   getStoredTheme(): 'dark' | 'light' | null {
     try {
       const v = localStorage.getItem(this.storageKey);
-      return (v === 'dark' || v === 'light') ? v : null;
+      return v === 'dark' || v === 'light' ? v : null;
     } catch (e) {
       return null;
     }

@@ -9,14 +9,27 @@ import { of } from 'rxjs';
 import { NotificationService } from '../../core/notification.service';
 
 class MockAuthService {
-  getUser() { return { _id: 'u1', nombre: 'Me' }; }
-  getMembersForGroup(id: string) { return of([{ _id: 'u1', nombre: 'Me' }, { _id: 'u2', nombre: 'Other' }]); }
-  getBalancesForGroup(id: string) { return of([{ userId: 'u1', paid: 10, share: 5, balance: 5 }]); }
-  getDetailedBalancesForGroup(id: string) { return of([{ userId: 'u1', paid: 10, share: 5, balance: 5 }]); }
+  getUser() {
+    return { _id: 'u1', nombre: 'Me' };
+  }
+  getMembersForGroup(id: string) {
+    return of([
+      { _id: 'u1', nombre: 'Me' },
+      { _id: 'u2', nombre: 'Other' },
+    ]);
+  }
+  getBalancesForGroup(id: string) {
+    return of([{ userId: 'u1', paid: 10, share: 5, balance: 5 }]);
+  }
+  getDetailedBalancesForGroup(id: string) {
+    return of([{ userId: 'u1', paid: 10, share: 5, balance: 5 }]);
+  }
 }
 
 class MockNotificationService {
-  createNotification() { return of({}); }
+  createNotification() {
+    return of({});
+  }
 }
 
 describe('BalanceComponent', () => {
@@ -27,17 +40,27 @@ describe('BalanceComponent', () => {
     @Component({
       selector: 'test-dummy',
       standalone: true,
-      template: ''
+      template: '',
     })
     class DummyComponent {}
 
     await TestBed.configureTestingModule({
-      imports: [BalanceComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
+      imports: [
+        BalanceComponent,
+        NoopAnimationsModule,
+        RouterTestingModule.withRoutes([
+          { path: 'group/:id', component: DummyComponent },
+        ]),
+        DummyComponent,
+      ],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
         { provide: NotificationService, useClass: MockNotificationService },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'g1' } } } }
-      ]
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'g1' } } },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BalanceComponent);

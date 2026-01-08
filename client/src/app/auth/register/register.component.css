@@ -29,7 +29,9 @@ mat-card {
   border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 16px !important;
   padding: 40px 30px !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important; /* Sombra profunda con borde interno */
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset !important; /* Sombra profunda con borde interno */
   display: block !important;
   margin: 0 auto !important;
   box-sizing: border-box !important;
@@ -51,7 +53,7 @@ mat-card-title {
 /* Color del texto de los inputs */
 ::ng-deep .mat-mdc-input-element {
   color: var(--text-main, #ffffff) !important;
-  caret-color: var(--primary-color, #B8F12D) !important; /* Cursor verde */
+  caret-color: var(--primary-color, #b8f12d) !important; /* Cursor verde */
 }
 
 /* Color de las etiquetas (labels) */
@@ -102,11 +104,11 @@ mat-card-title {
 
 /* Línea inferior / Borde al enfocar (Verde Lima) */
 ::ng-deep .mat-mdc-form-field.mat-focused .mat-mdc-form-field-ripple {
-  background-color: var(--primary-color, #B8F12D) !important;
+  background-color: var(--primary-color, #b8f12d) !important;
 }
 
 ::ng-deep .mat-mdc-form-field.mat-focused .mdc-floating-label {
-  color: var(--primary-color, #B8F12D) !important;
+  color: var(--primary-color, #b8f12d) !important;
 }
 
 /* Iconos (ojo de contraseña) */
@@ -119,13 +121,15 @@ button[type="submit"] {
   width: 100%;
   margin-top: 15px;
   padding: 8px !important; /* Ajuste de altura */
-  background-color: var(--primary-color, #B8F12D) !important;
+  background-color: var(--primary-color, #b8f12d) !important;
   color: #000000 !important; /* Texto negro para contraste */
   border-radius: 30px !important;
   font-weight: 600;
   font-size: 1.1rem;
   box-shadow: none !important;
-  transition: transform 0.2s, background-color 0.2s;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
 }
 
 button[type="submit"]:hover:not([disabled]) {
@@ -154,7 +158,7 @@ mat-card-actions a {
 }
 
 mat-card-actions a:hover {
-  color: var(--primary-color, #B8F12D);
+  color: var(--primary-color, #b8f12d);
 }
 
 /* Mensajes de error */

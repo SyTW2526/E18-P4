@@ -20,7 +20,11 @@
   align-items: flex-start;
   gap: 2rem;
   width: 780px;
-  background: linear-gradient(135deg, rgba(30, 30, 30, 0.85), rgba(20, 20, 20, 0.8));
+  background: linear-gradient(
+    135deg,
+    rgba(30, 30, 30, 0.85),
+    rgba(20, 20, 20, 0.8)
+  );
   backdrop-filter: blur(12px);
   border: 1px solid rgba(122, 229, 130, 0.15);
   border-radius: 18px;
@@ -30,13 +34,18 @@
 }
 
 .settings-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(122, 229, 130, 0.5), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(122, 229, 130, 0.5),
+    transparent
+  );
   opacity: 0.4;
 }
 
@@ -224,7 +233,9 @@
   box-sizing: border-box;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
 }
 
 .custom-select:focus {
@@ -346,4 +357,3 @@
 .button-row-left button.danger-btn:active {
   transform: translateY(0);
 }
-

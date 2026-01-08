@@ -1,4 +1,9 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  tick,
+} from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,14 +42,22 @@ describe('LoginComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [LoginComponent, HttpClientTestingModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [
+        LoginComponent,
+        HttpClientTestingModule,
+        NoopAnimationsModule,
+        RouterTestingModule,
+      ],
       providers: [
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => null } } },
+        },
         { provide: AuthService, useValue: authSpy },
         { provide: LanguageService, useValue: { t: (k: string) => k } },
       ],
     }).compileComponents();
-    
+
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
@@ -63,10 +76,16 @@ describe('LoginComponent', () => {
   });
 
   it('should submit valid form and navigate', () => {
-    component.loginForm.setValue({ email: 'test@example.com', password: 'secret' });
+    component.loginForm.setValue({
+      email: 'test@example.com',
+      password: 'secret',
+    });
     component.onSubmit();
 
-    expect(authSpy.signin).toHaveBeenCalledWith({ email: 'test@example.com', password: 'secret' });
+    expect(authSpy.signin).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'secret',
+    });
     expect(navigateSpy).toHaveBeenCalledWith(['/home']);
   });
 

@@ -7,36 +7,75 @@ import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { LanguageService } from '../core/language.service';
 
 @Component({
   selector: 'app-add-friend-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, FormsModule, MatSnackBarModule],
+  imports: [
+    CommonModule,
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    FormsModule,
+    MatSnackBarModule,
+  ],
   template: `
     <ng-container *ngIf="!success; else successTpl">
-      <h2 mat-dialog-title>Añadir amigo</h2>
+      <h2 mat-dialog-title>{{ lang.t('addFriend') || 'Añadir amigo' }}</h2>
       <mat-dialog-content>
         <mat-form-field appearance="fill" style="width:100%">
-          <mat-label>Nombre de usuario</mat-label>
-          <input matInput [(ngModel)]="username" placeholder="username" autofocus />
+          <mat-label>{{ lang.t('username') || 'Nombre de usuario' }}</mat-label>
+          <input
+            matInput
+            [(ngModel)]="username"
+            [placeholder]="lang.t('username') || 'username'"
+            autofocus
+          />
         </mat-form-field>
-        <div *ngIf="errorMsg" style="color:var(--primary-color); font-weight:600; margin-top:8px">{{ errorMsg }}</div>
+        <div
+          *ngIf="errorMsg"
+          style="color:var(--primary-color); font-weight:600; margin-top:8px"
+        >
+          {{ errorMsg }}
+        </div>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button (click)="onCancel()" [disabled]="loading">Cancelar</button>
-        <button mat-flat-button color="primary" (click)="onAdd()" [disabled]="loading || !username || !username.trim()">{{ loading ? 'Enviando...' : 'Añadir' }}</button>
+        <button mat-button (click)="onCancel()" [disabled]="loading">
+          {{ lang.t('cancel') || 'Cancelar' }}
+        </button>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="onAdd()"
+          [disabled]="loading || !username || !username.trim()"
+        >
+          {{ loading ? lang.t('sending') + '...' : lang.t('add') || 'Añadir' }}
+        </button>
       </mat-dialog-actions>
     </ng-container>
     <ng-template #successTpl>
       <div style="padding:24px; text-align:center; min-width:240px;">
-        <h3 style="color:var(--primary-color)">Solicitud enviada</h3>
-        <p style="color:var(--text-main)">La solicitud de amistad se ha enviado correctamente.</p>
-        <div style="margin-top:16px; display:flex; gap:8px; justify-content:center">
-          <button mat-button (click)="onClose()">Cerrar</button>
+        <h3 style="color:var(--primary-color)">
+          {{ lang.t('requestSent') || 'Solicitud enviada' }}
+        </h3>
+        <p style="color:var(--text-main)">
+          {{
+            lang.t('friendRequestSent') ||
+              'La solicitud de amistad se ha enviado correctamente.'
+          }}
+        </p>
+        <div
+          style="margin-top:16px; display:flex; gap:8px; justify-content:center"
+        >
+          <button mat-button (click)="onClose()">
+            {{ lang.t('close') || 'Cerrar' }}
+          </button>
         </div>
       </div>
     </ng-template>
-  `
+  `,
 })
 export class AddFriendDialogComponent {
   username = '';
@@ -47,7 +86,8 @@ export class AddFriendDialogComponent {
   constructor(
     private dialogRef: MatDialogRef<AddFriendDialogComponent>,
     private auth: AuthService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    public lang: LanguageService,
   ) {}
 
   onCancel() {
@@ -67,7 +107,11 @@ export class AddFriendDialogComponent {
 
     this.auth.findUserByUsername(v).subscribe({
       next: (users: any[]) => {
-        const match = (users || []).find(u => String(u.nombre || u.username || u.email).toLowerCase() === String(v).toLowerCase());
+        const match = (users || []).find(
+          (u) =>
+            String(u.nombre || u.username || u.email).toLowerCase() ===
+            String(v).toLowerCase(),
+        );
         if (!match) {
           this.errorMsg = 'Usuario no encontrado';
           this.loading = false;
@@ -89,16 +133,20 @@ export class AddFriendDialogComponent {
           },
           error: (err) => {
             console.error(err);
-            this.errorMsg = err?.error?.message || err?.message || 'Error al enviar la solicitud';
+            this.errorMsg =
+              err?.error?.message ||
+              err?.message ||
+              'Error al enviar la solicitud';
             this.loading = false;
-          }
+          },
         });
       },
       error: (err) => {
         console.error(err);
-        this.errorMsg = err?.error?.message || err?.message || 'Error buscando usuario';
+        this.errorMsg =
+          err?.error?.message || err?.message || 'Error buscando usuario';
         this.loading = false;
-      }
+      },
     });
   }
 }

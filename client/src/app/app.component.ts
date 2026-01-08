@@ -1,4 +1,10 @@
-import { Component, OnInit, AfterViewInit, PLATFORM_ID, Inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  PLATFORM_ID,
+  Inject,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterModule } from '@angular/router'; // Importar RouterModule
 import { CommonModule } from '@angular/common';
@@ -23,8 +29,8 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet, 
-    RouterModule, 
+    RouterOutlet,
+    RouterModule,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
@@ -51,7 +57,7 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
       .spacer {
         flex: 1 1 auto;
       }
-      
+
       /* Navbar styles */
       .navbar-container {
         display: flex;
@@ -70,7 +76,9 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
 
       .navbar-logo img {
         height: 40px;
-        transition: transform 0.3s ease, filter 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          filter 0.3s ease;
       }
 
       .navbar-logo:hover img {
@@ -235,20 +243,35 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
     <mat-toolbar color="primary">
       <div class="navbar-container">
         <!-- Logo -->
-        <a [routerLink]="showAuthenticatedControls ? '/home' : '/'" class="navbar-logo">
+        <a
+          [routerLink]="showAuthenticatedControls ? '/home' : '/'"
+          class="navbar-logo"
+        >
           <img [src]="currentLogo" alt="PlaySplit" />
         </a>
 
         <!-- Acciones derecha -->
         <div class="navbar-actions">
           <!-- Botones de autenticación (sin sesión) -->
-          <ng-container *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls">
+          <ng-container
+            *ngIf="!authService.isLoggedIn() || !showAuthenticatedControls"
+          >
             <a routerLink="/login" class="nav-button">{{ lang.t('login') }}</a>
-            <a routerLink="/register" class="nav-button nav-button-filled">{{ lang.t('register') }}</a>
-            <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
+            <a routerLink="/register" class="nav-button nav-button-filled">{{
+              lang.t('register')
+            }}</a>
+            <button
+              class="lang-button"
+              (click)="toggleLang()"
+              aria-label="Toggle language"
+            >
               <img
                 class="lang-flag"
-                [src]="lang.current === 'es' ? 'https://hatscripts.github.io/circle-flags/flags/es.svg' : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'"
+                [src]="
+                  lang.current === 'es'
+                    ? 'https://hatscripts.github.io/circle-flags/flags/es.svg'
+                    : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'
+                "
                 [alt]="lang.current === 'es' ? 'Español' : 'English'"
               />
               <span>{{ lang.current === 'es' ? 'ES' : 'EN' }}</span>
@@ -256,12 +279,22 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
           </ng-container>
 
           <!-- Acciones autenticadas -->
-          <ng-container *ngIf="authService.isLoggedIn() && showAuthenticatedControls">
+          <ng-container
+            *ngIf="authService.isLoggedIn() && showAuthenticatedControls"
+          >
             <!-- Idioma -->
-            <button class="lang-button" (click)="toggleLang()" aria-label="Toggle language">
+            <button
+              class="lang-button"
+              (click)="toggleLang()"
+              aria-label="Toggle language"
+            >
               <img
                 class="lang-flag"
-                [src]="lang.current === 'es' ? 'https://hatscripts.github.io/circle-flags/flags/es.svg' : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'"
+                [src]="
+                  lang.current === 'es'
+                    ? 'https://hatscripts.github.io/circle-flags/flags/es.svg'
+                    : 'https://hatscripts.github.io/circle-flags/flags/gb.svg'
+                "
                 [alt]="lang.current === 'es' ? 'Español' : 'English'"
               />
               <span>{{ lang.current === 'es' ? 'ES' : 'EN' }}</span>
@@ -289,18 +322,35 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
             </button>
 
             <!-- Perfil dropdown -->
-            <div class="profile-dropdown-container" [appClickOutsideEnabled]="profileMenuOpen" (appClickOutside)="closeProfileMenu()">
+            <div
+              class="profile-dropdown-container"
+              [appClickOutsideEnabled]="profileMenuOpen"
+              (appClickOutside)="closeProfileMenu()"
+            >
               <button
                 class="icon-button"
                 (click)="toggleProfileMenu()"
                 aria-label="Perfil"
                 title="Perfil"
               >
-                <ng-container *ngIf="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil; else defaultUserIcon">
-                  <img 
-                    [src]="authService.getUser()?.photo || authService.getUser()?.avatar || authService.getUser()?.picture || authService.getUser()?.foto_perfil" 
-                    alt="avatar" 
-                    class="profile-avatar" 
+                <ng-container
+                  *ngIf="
+                    authService.getUser()?.photo ||
+                      authService.getUser()?.avatar ||
+                      authService.getUser()?.picture ||
+                      authService.getUser()?.foto_perfil;
+                    else defaultUserIcon
+                  "
+                >
+                  <img
+                    [src]="
+                      authService.getUser()?.photo ||
+                      authService.getUser()?.avatar ||
+                      authService.getUser()?.picture ||
+                      authService.getUser()?.foto_perfil
+                    "
+                    alt="avatar"
+                    class="profile-avatar"
                   />
                 </ng-container>
                 <ng-template #defaultUserIcon>
@@ -309,13 +359,24 @@ import { ClickOutsideDirective } from './shared/click-outside.directive';
               </button>
               <div class="profile-menu-dropdown" *ngIf="profileMenuOpen">
                 <div class="menu-header">
-                  {{ authService.getUser()?.nombre || authService.getUser()?.email }}
+                  {{
+                    authService.getUser()?.nombre ||
+                      authService.getUser()?.email
+                  }}
                 </div>
-                <button class="menu-item" routerLink="/friends" (click)="closeProfileMenu()">
+                <button
+                  class="menu-item"
+                  routerLink="/friends"
+                  (click)="closeProfileMenu()"
+                >
                   <mat-icon>people</mat-icon>
                   <span>{{ lang.t('friends') }}</span>
                 </button>
-                <button class="menu-item" routerLink="/settings" (click)="closeProfileMenu()">
+                <button
+                  class="menu-item"
+                  routerLink="/settings"
+                  (click)="closeProfileMenu()"
+                >
                   <mat-icon>settings</mat-icon>
                   <span>{{ lang.t('settings') }}</span>
                 </button>
@@ -353,15 +414,13 @@ export class AppComponent implements OnInit, AfterViewInit {
   addFriendError = '';
   addFriendSuccess = false;
   constructor(
-    public authService: AuthService, 
-    private router: Router, 
-    private theme: ThemeService, 
-    public lang: LanguageService, 
+    public authService: AuthService,
+    private router: Router,
+    private theme: ThemeService,
+    public lang: LanguageService,
     private snackBar: MatSnackBar,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
-
-  
 
   ngOnInit(): void {
     // priority: user preference from server -> stored local preference -> default 'light'
@@ -375,7 +434,10 @@ export class AppComponent implements OnInit, AfterViewInit {
       return null;
     })();
     const stored = this.theme.getStoredTheme();
-    const themeToApply = (normalizedUserPref === 'dark' || normalizedUserPref === 'light') ? normalizedUserPref : (stored || 'light');
+    const themeToApply =
+      normalizedUserPref === 'dark' || normalizedUserPref === 'light'
+        ? normalizedUserPref
+        : stored || 'light';
     this.theme.applyTheme(themeToApply as 'dark' | 'light');
     // hide settings/logout on the landing (root) route
     this.updateHeaderVisibility();
@@ -401,7 +463,12 @@ export class AppComponent implements OnInit, AfterViewInit {
   private updateHeaderVisibility() {
     const url = this.router.url || '/';
     // hide authenticated-only controls on landing and on auth pages
-    this.showAuthenticatedControls = !(url === '/' || url === '' || url.startsWith('/login') || url.startsWith('/register'));
+    this.showAuthenticatedControls = !(
+      url === '/' ||
+      url === '' ||
+      url.startsWith('/login') ||
+      url.startsWith('/register')
+    );
   }
 
   logout() {
@@ -431,7 +498,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   startOverlayGuard() {
     // Only run in browser, not during SSR
     if (!isPlatformBrowser(this.platformId)) return;
-    
+
     const container = document.querySelector('.cdk-overlay-container');
     if (!container) {
       setTimeout(() => this.startOverlayGuard(), 100);
@@ -446,12 +513,18 @@ export class AppComponent implements OnInit, AfterViewInit {
       if (pane.style.position !== 'absolute') {
         pane.style.setProperty('position', 'absolute', 'important');
       }
-      
+
       // Check if pane has positioning coordinates - if not, it will render in flow
-      const hasCoords = pane.style.top || pane.style.left || pane.style.right || pane.style.bottom;
+      const hasCoords =
+        pane.style.top ||
+        pane.style.left ||
+        pane.style.right ||
+        pane.style.bottom;
       if (!hasCoords) {
         // Find the parent bounding box to understand the positioning context
-        const boundingBox = pane.closest('.cdk-overlay-connected-position-bounding-box') as HTMLElement;
+        const boundingBox = pane.closest(
+          '.cdk-overlay-connected-position-bounding-box',
+        ) as HTMLElement;
         if (boundingBox) {
           // Profile menu uses xPosition="before", so it should be right-aligned
           // Position at top of bounding box (Angular Material should handle correct top offset)
@@ -465,35 +538,43 @@ export class AppComponent implements OnInit, AfterViewInit {
           pane.style.setProperty('left', '0', 'important');
         }
       }
-      
+
       // If already patched, we're done
       if (patchedPanes.has(pane)) {
         return;
       }
-      
+
       // Intercept setAttribute to catch style attribute changes
       const originalSetAttribute = pane.setAttribute.bind(pane);
-      pane.setAttribute = function(name: string, value: string) {
+      pane.setAttribute = function (name: string, value: string) {
         if (name === 'style' && /position:\s*static/i.test(value)) {
-          value = value.replace(/position:\s*static;?/gi, '') + '; position: absolute !important;';
+          value =
+            value.replace(/position:\s*static;?/gi, '') +
+            '; position: absolute !important;';
         }
         return originalSetAttribute(name, value);
       };
-      
+
       // Intercept direct style.position setter
-      const styleDesc = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'style');
+      const styleDesc = Object.getOwnPropertyDescriptor(
+        HTMLElement.prototype,
+        'style',
+      );
       if (styleDesc && styleDesc.get) {
         const originalStyle = styleDesc.get.call(pane);
-        const positionDesc = Object.getOwnPropertyDescriptor(CSSStyleDeclaration.prototype, 'position');
-        
+        const positionDesc = Object.getOwnPropertyDescriptor(
+          CSSStyleDeclaration.prototype,
+          'position',
+        );
+
         if (positionDesc && positionDesc.set) {
           const originalPositionSetter = positionDesc.set;
-          
+
           Object.defineProperty(originalStyle, 'position', {
-            get: function() {
+            get: function () {
               return this.getPropertyValue('position') || 'absolute';
             },
-            set: function(value: string) {
+            set: function (value: string) {
               if (value === 'static') {
                 console.log('🚫 Blocked attempt to set position:static');
                 this.setProperty('position', 'absolute', 'important');
@@ -502,14 +583,14 @@ export class AppComponent implements OnInit, AfterViewInit {
               }
             },
             configurable: true,
-            enumerable: true
+            enumerable: true,
           });
         }
       }
-      
+
       // Force it right now
       pane.style.setProperty('position', 'absolute', 'important');
-      
+
       patchedPanes.add(pane);
     };
 
@@ -518,11 +599,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       if (!box.style.position || box.style.position === 'static') {
         box.style.setProperty('position', 'absolute', 'important');
       }
-      
+
       // Force flex alignment with !important
       box.style.setProperty('align-items', 'flex-start', 'important');
       box.style.setProperty('justify-content', 'flex-start', 'important');
-      
+
       // IMPORTANT: Reset height and width to auto so backdrop clicks work
       // Don't let the bounding box cover the entire viewport
       box.style.setProperty('height', 'auto', 'important');
@@ -534,41 +615,55 @@ export class AppComponent implements OnInit, AfterViewInit {
       if (node.classList.contains('cdk-overlay-pane')) {
         fixPane(node);
       }
-      if (node.classList.contains('cdk-overlay-connected-position-bounding-box')) {
+      if (
+        node.classList.contains('cdk-overlay-connected-position-bounding-box')
+      ) {
         fixBox(node);
       }
     };
 
     const deepScan = () => {
-      container.querySelectorAll('.cdk-overlay-pane').forEach(pane => fixPane(pane as HTMLElement));
-      container.querySelectorAll('.cdk-overlay-connected-position-bounding-box').forEach(box => fixBox(box as HTMLElement));
+      container
+        .querySelectorAll('.cdk-overlay-pane')
+        .forEach((pane) => fixPane(pane as HTMLElement));
+      container
+        .querySelectorAll('.cdk-overlay-connected-position-bounding-box')
+        .forEach((box) => fixBox(box as HTMLElement));
     };
 
     // Initial pass
     deepScan();
 
     const obs = new MutationObserver((mutations) => {
-      mutations.forEach(m => {
+      mutations.forEach((m) => {
         // Check added nodes
         m.addedNodes.forEach(scan);
-        
+
         // Check if style attribute changed on overlay elements
-        if (m.type === 'attributes' && m.attributeName === 'style' && m.target instanceof HTMLElement) {
+        if (
+          m.type === 'attributes' &&
+          m.attributeName === 'style' &&
+          m.target instanceof HTMLElement
+        ) {
           if (m.target.classList.contains('cdk-overlay-pane')) {
             fixPane(m.target);
           }
-          if (m.target.classList.contains('cdk-overlay-connected-position-bounding-box')) {
+          if (
+            m.target.classList.contains(
+              'cdk-overlay-connected-position-bounding-box',
+            )
+          ) {
             fixBox(m.target);
           }
         }
       });
     });
-    
-    obs.observe(container, { 
-      childList: true, 
-      subtree: true, 
-      attributes: true, 
-      attributeFilter: ['style']
+
+    obs.observe(container, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style'],
     });
 
     // Run periodic checks to catch any missed changes
@@ -607,7 +702,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.authService.findUserByUsername(v).subscribe({
       next: (users: any[]) => {
-        const match = (users || []).find(u => String(u.nombre || u.username || u.email).toLowerCase() === String(v).toLowerCase());
+        const match = (users || []).find(
+          (u) =>
+            String(u.nombre || u.username || u.email).toLowerCase() ===
+            String(v).toLowerCase(),
+        );
         if (!match) {
           this.addFriendError = 'Usuario no encontrado';
           this.addFriendLoading = false;
@@ -622,62 +721,82 @@ export class AppComponent implements OnInit, AfterViewInit {
           return;
         }
 
-        this.authService.addAmigo(String(receiverId), String(senderId)).subscribe({
-          next: (response) => {
-            console.log('Friend request SUCCESS response:', response);
-            this.addFriendLoading = false;
-            // show inline success feedback, then auto-close shortly after
-            this.addFriendSuccess = true;
-            this.snackBar.open('Solicitud de amistad enviada', 'Cerrar', { duration: 3000 });
-            // refresh lists after a short delay
-            setTimeout(() => {
-              this.loadPeticiones();
-              this.loadFriends();
-              this.closeAddFriend();
-              this.addFriendSuccess = false;
-            }, 1400);
-          },
-          error: (err) => {
-            console.error('Friend request ERROR:', err);
-            console.error('Error status:', err.status);
-            console.error('Error message:', err?.error?.message || err?.message);
-            
-            // Map English error messages to translation keys
-            const errorMsg = err?.error?.message || err?.message || '';
-            if (errorMsg.includes('Already friends')) {
-              this.addFriendError = this.lang.t('alreadyFriends');
-            } else if (errorMsg.includes('Friend request already sent')) {
-              this.addFriendError = this.lang.t('friendRequestExists');
-            } else {
-              this.addFriendError = errorMsg || 'Error al enviar la solicitud';
-            }
-            this.addFriendLoading = false;
-          }
-        });
+        this.authService
+          .addAmigo(String(receiverId), String(senderId))
+          .subscribe({
+            next: (response) => {
+              console.log('Friend request SUCCESS response:', response);
+              this.addFriendLoading = false;
+              // show inline success feedback, then auto-close shortly after
+              this.addFriendSuccess = true;
+              this.snackBar.open('Solicitud de amistad enviada', 'Cerrar', {
+                duration: 3000,
+              });
+              // refresh lists after a short delay
+              setTimeout(() => {
+                this.loadPeticiones();
+                this.loadFriends();
+                this.closeAddFriend();
+                this.addFriendSuccess = false;
+              }, 1400);
+            },
+            error: (err) => {
+              console.error('Friend request ERROR:', err);
+              console.error('Error status:', err.status);
+              console.error(
+                'Error message:',
+                err?.error?.message || err?.message,
+              );
+
+              // Map English error messages to translation keys
+              const errorMsg = err?.error?.message || err?.message || '';
+              if (errorMsg.includes('Already friends')) {
+                this.addFriendError = this.lang.t('alreadyFriends');
+              } else if (errorMsg.includes('Friend request already sent')) {
+                this.addFriendError = this.lang.t('friendRequestExists');
+              } else {
+                this.addFriendError =
+                  errorMsg || 'Error al enviar la solicitud';
+              }
+              this.addFriendLoading = false;
+            },
+          });
       },
       error: (err) => {
         console.error(err);
-        this.addFriendError = err?.error?.message || err?.message || 'Error buscando usuario';
+        this.addFriendError =
+          err?.error?.message || err?.message || 'Error buscando usuario';
         this.addFriendLoading = false;
-      }
+      },
     });
   }
 
   private loadFriends() {
     // prefer fetching the latest amigos from the server
     try {
-      if (!this.authService.isLoggedIn()) { this.friends = []; return; }
+      if (!this.authService.isLoggedIn()) {
+        this.friends = [];
+        return;
+      }
       const user = this.authService.getUser();
       const userId = user?._id || user?.id;
-      if (!userId) { this.friends = []; return; }
+      if (!userId) {
+        this.friends = [];
+        return;
+      }
 
       this.authService.getAmigos(String(userId)).subscribe({
         next: (res: any) => {
           const idsOrObjs: any[] = res?.amigos || res || [];
-          if (!Array.isArray(idsOrObjs) || idsOrObjs.length === 0) { this.friends = []; return; }
+          if (!Array.isArray(idsOrObjs) || idsOrObjs.length === 0) {
+            this.friends = [];
+            return;
+          }
 
           // If server already returned full friend objects (with nombre/email), use them directly.
-          const looksLikeUserObjects = idsOrObjs.every(item => item && (item.nombre || item.email || item._id));
+          const looksLikeUserObjects = idsOrObjs.every(
+            (item) => item && (item.nombre || item.email || item._id),
+          );
           if (looksLikeUserObjects) {
             this.friends = idsOrObjs.map((u: any) => {
               // normalize id field
@@ -688,15 +807,24 @@ export class AppComponent implements OnInit, AfterViewInit {
 
           // Otherwise treat them as ids (strings/ObjectId-like) and fetch each profile.
           const calls = idsOrObjs.map((fid: any) => {
-            try { return this.authService.getUserById(String(fid)); }
-            catch { return of(null); }
+            try {
+              return this.authService.getUserById(String(fid));
+            } catch {
+              return of(null);
+            }
           });
           forkJoin(calls).subscribe({
-            next: (arr: any[]) => { this.friends = (arr || []).filter(Boolean); },
-            error: () => { this.friends = []; }
+            next: (arr: any[]) => {
+              this.friends = (arr || []).filter(Boolean);
+            },
+            error: () => {
+              this.friends = [];
+            },
           });
         },
-        error: () => { this.friends = []; }
+        error: () => {
+          this.friends = [];
+        },
       });
     } catch (e) {
       this.friends = [];
@@ -705,25 +833,43 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   private loadPeticiones() {
     try {
-      if (!this.authService.isLoggedIn()) { this.peticiones = []; return; }
+      if (!this.authService.isLoggedIn()) {
+        this.peticiones = [];
+        return;
+      }
       const user = this.authService.getUser();
       const userId = user?._id || user?.id;
-      if (!userId) { this.peticiones = []; return; }
+      if (!userId) {
+        this.peticiones = [];
+        return;
+      }
 
       this.authService.getPeticiones(String(userId)).subscribe({
         next: (res: any) => {
           const ids: any[] = res?.peticiones_amistad || res || [];
-          if (!Array.isArray(ids) || ids.length === 0) { this.peticiones = []; return; }
+          if (!Array.isArray(ids) || ids.length === 0) {
+            this.peticiones = [];
+            return;
+          }
           const calls = ids.map((fid: any) => {
-            try { return this.authService.getUserBasicInfo(String(fid)); }
-            catch { return of(null); }
+            try {
+              return this.authService.getUserBasicInfo(String(fid));
+            } catch {
+              return of(null);
+            }
           });
           forkJoin(calls).subscribe({
-            next: (arr: any[]) => { this.peticiones = (arr || []).filter(Boolean); },
-            error: () => { this.peticiones = []; }
+            next: (arr: any[]) => {
+              this.peticiones = (arr || []).filter(Boolean);
+            },
+            error: () => {
+              this.peticiones = [];
+            },
           });
         },
-        error: () => { this.peticiones = []; }
+        error: () => {
+          this.peticiones = [];
+        },
       });
     } catch (e) {
       this.peticiones = [];
@@ -736,7 +882,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       p.processing = true;
       const me = this.authService.getUser();
       const myId = me?._id || me?.id;
-      if (!myId) { this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 }); p.processing = false; return; }
+      if (!myId) {
+        this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 });
+        p.processing = false;
+        return;
+      }
       const senderId = p._id || p.id;
       this.authService.acceptAmigo(String(myId), String(senderId)).subscribe({
         next: () => {
@@ -744,10 +894,17 @@ export class AppComponent implements OnInit, AfterViewInit {
           this.loadPeticiones();
           this.loadFriends();
         },
-        error: (err) => { console.error(err); this.snackBar.open('Error aceptando solicitud', 'Cerrar', { duration: 3000 }); p.processing = false; }
+        error: (err) => {
+          console.error(err);
+          this.snackBar.open('Error aceptando solicitud', 'Cerrar', {
+            duration: 3000,
+          });
+          p.processing = false;
+        },
       });
     } catch (e) {
-      console.error(e); p.processing = false;
+      console.error(e);
+      p.processing = false;
     }
   }
 
@@ -757,17 +914,30 @@ export class AppComponent implements OnInit, AfterViewInit {
       p.processing = true;
       const me = this.authService.getUser();
       const myId = me?._id || me?.id;
-      if (!myId) { this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 }); p.processing = false; return; }
+      if (!myId) {
+        this.snackBar.open('No autenticado', 'Cerrar', { duration: 3000 });
+        p.processing = false;
+        return;
+      }
       const senderId = p._id || p.id;
       this.authService.rejectAmigo(String(myId), String(senderId)).subscribe({
         next: () => {
-          this.snackBar.open('Solicitud rechazada', 'Cerrar', { duration: 3000 });
+          this.snackBar.open('Solicitud rechazada', 'Cerrar', {
+            duration: 3000,
+          });
           this.loadPeticiones();
         },
-        error: (err) => { console.error(err); this.snackBar.open('Error rechazando solicitud', 'Cerrar', { duration: 3000 }); p.processing = false; }
+        error: (err) => {
+          console.error(err);
+          this.snackBar.open('Error rechazando solicitud', 'Cerrar', {
+            duration: 3000,
+          });
+          p.processing = false;
+        },
       });
     } catch (e) {
-      console.error(e); p.processing = false;
+      console.error(e);
+      p.processing = false;
     }
   }
 

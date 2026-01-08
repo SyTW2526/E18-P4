@@ -1,4 +1,11 @@
-import { Component, OnInit, AfterViewInit, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  NgZone,
+  PLATFORM_ID,
+  Inject,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -23,17 +30,17 @@ import { CommonModule } from '@angular/common';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
-    , MatIconModule
+    MatButtonModule,
+    MatIconModule,
   ],
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./login.component.css'],
 })
 export class LoginComponent implements OnInit, AfterViewInit {
   showPassword = false;
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
   });
   loading = false;
   error: string | null = null;
@@ -45,7 +52,7 @@ export class LoginComponent implements OnInit, AfterViewInit {
     private auth: AuthService,
     public lang: LanguageService,
     private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
   ngOnInit() {
@@ -65,7 +72,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
 
     if ((window as any).google && (window as any).google.accounts) {
       (window as any).google.accounts.id.initialize({
-        client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+        client_id:
+          '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
         callback: this.handleGoogleSignIn.bind(this),
       });
       this.googleReady = true;
@@ -82,7 +90,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
     script.onload = () => {
       if ((window as any).google && (window as any).google.accounts) {
         (window as any).google.accounts.id.initialize({
-          client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+          client_id:
+            '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
           callback: this.handleGoogleSignIn.bind(this),
         });
         this.googleReady = true;
@@ -98,12 +107,17 @@ export class LoginComponent implements OnInit, AfterViewInit {
     }
 
     const buttonDiv = document.getElementById('google-signin-button');
-    if (buttonDiv && (window as any).google && (window as any).google.accounts) {
+    if (
+      buttonDiv &&
+      (window as any).google &&
+      (window as any).google.accounts
+    ) {
       try {
-        (window as any).google.accounts.id.renderButton(
-          buttonDiv,
-          { theme: 'outline', size: 'large', text: 'signin_with' }
-        );
+        (window as any).google.accounts.id.renderButton(buttonDiv, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signin_with',
+        });
       } catch (e) {
         console.error('Error rendering Google button:', e);
       }
@@ -129,7 +143,8 @@ export class LoginComponent implements OnInit, AfterViewInit {
           },
           error: (e) => {
             this.loading = false;
-            this.error = e?.error?.message || 'Error al iniciar sesión con Google';
+            this.error =
+              e?.error?.message || 'Error al iniciar sesión con Google';
           },
         });
       });
@@ -163,10 +178,11 @@ export class LoginComponent implements OnInit, AfterViewInit {
           } else if (typeof e?.error === 'string' && e?.error.length) {
             this.error = e.error;
           } else {
-            this.error = e?.error?.message || e?.message || 'Error al iniciar sesión';
+            this.error =
+              e?.error?.message || e?.message || 'Error al iniciar sesión';
           }
           console.error('signin error', e);
-        }
+        },
       });
     }
   }

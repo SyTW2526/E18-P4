@@ -7,7 +7,7 @@
       </button>
       <h2 class="balance-title">
         <mat-icon class="title-icon">account_balance_wallet</mat-icon>
-        {{ lang.t('balances') }}
+        {{ lang.t("balances") }}
       </h2>
     </header>
 
@@ -22,7 +22,7 @@
 
         <div *ngIf="loading" class="loading-state">
           <mat-icon>hourglass_empty</mat-icon>
-          <span>{{ lang.t('loadingBalances') }}</span>
+          <span>{{ lang.t("loadingBalances") }}</span>
         </div>
 
         <div *ngIf="error" class="error-state">
@@ -31,36 +31,66 @@
         </div>
 
         <!-- Detailed Balances List -->
-        <div *ngIf="!loading && !error && detailedBalances && detailedBalances.length > 0" class="balances-list">
+        <div
+          *ngIf="
+            !loading &&
+            !error &&
+            detailedBalances &&
+            detailedBalances.length > 0
+          "
+          class="balances-list"
+        >
           <div *ngFor="let b of detailedBalances" class="balance-item">
             <div class="balance-item-main">
               <div class="user-info">
                 <mat-icon class="user-icon">person</mat-icon>
                 <div class="user-details">
-                  <div class="user-name">{{ b.userName || b.userEmail || '—' }}</div>
+                  <div class="user-name">
+                    {{ b.userName || b.userEmail || "—" }}
+                  </div>
                   <div class="user-stats">
                     <span class="stat-label">Pagó:</span>
-                    <span class="stat-value">{{ b.paid | number:'1.2-2' }}</span>
+                    <span class="stat-value">{{
+                      b.paid | number: "1.2-2"
+                    }}</span>
                     <span class="stat-separator">•</span>
                     <span class="stat-label">Su parte:</span>
-                    <span class="stat-value">{{ b.share | number:'1.2-2' }}</span>
+                    <span class="stat-value">{{
+                      b.share | number: "1.2-2"
+                    }}</span>
                   </div>
                 </div>
               </div>
-              <div class="balance-amount" [ngClass]="{
-                'positive': b.balance > 0,
-                'negative': b.balance < 0,
-                'zero': b.balance === 0
-              }">
-                <mat-icon class="balance-icon">{{ b.balance >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-                <span class="amount">{{ b.balance >= 0 ? '+' : '' }}{{ (b.balance | number:'1.2-2') }}</span>
+              <div
+                class="balance-amount"
+                [ngClass]="{
+                  positive: b.balance > 0,
+                  negative: b.balance < 0,
+                  zero: b.balance === 0,
+                }"
+              >
+                <mat-icon class="balance-icon">{{
+                  b.balance >= 0 ? "trending_up" : "trending_down"
+                }}</mat-icon>
+                <span class="amount"
+                  >{{ b.balance >= 0 ? "+" : ""
+                  }}{{ b.balance | number: "1.2-2" }}</span
+                >
               </div>
             </div>
           </div>
         </div>
 
         <!-- Fallback: Simple Balances -->
-        <div *ngIf="!loading && !error && (!detailedBalances || detailedBalances.length === 0) && balances.length > 0" class="balances-list">
+        <div
+          *ngIf="
+            !loading &&
+            !error &&
+            (!detailedBalances || detailedBalances.length === 0) &&
+            balances.length > 0
+          "
+          class="balances-list"
+        >
           <div *ngFor="let b of balances" class="balance-item">
             <div class="balance-item-main">
               <div class="user-info">
@@ -69,20 +99,32 @@
                   <div class="user-name">{{ displayMember(b.user) }}</div>
                   <div class="user-stats">
                     <span class="stat-label">Pagó:</span>
-                    <span class="stat-value">{{ b.paid | number:'1.2-2' }}</span>
+                    <span class="stat-value">{{
+                      b.paid | number: "1.2-2"
+                    }}</span>
                     <span class="stat-separator">•</span>
                     <span class="stat-label">Su parte:</span>
-                    <span class="stat-value">{{ b.share | number:'1.2-2' }}</span>
+                    <span class="stat-value">{{
+                      b.share | number: "1.2-2"
+                    }}</span>
                   </div>
                 </div>
               </div>
-              <div class="balance-amount" [ngClass]="{
-                'positive': b.balance > 0,
-                'negative': b.balance < 0,
-                'zero': b.balance === 0
-              }">
-                <mat-icon class="balance-icon">{{ b.balance >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-                <span class="amount">{{ b.balance >= 0 ? '+' : '' }}{{ (b.balance | number:'1.2-2') }}</span>
+              <div
+                class="balance-amount"
+                [ngClass]="{
+                  positive: b.balance > 0,
+                  negative: b.balance < 0,
+                  zero: b.balance === 0,
+                }"
+              >
+                <mat-icon class="balance-icon">{{
+                  b.balance >= 0 ? "trending_up" : "trending_down"
+                }}</mat-icon>
+                <span class="amount"
+                  >{{ b.balance >= 0 ? "+" : ""
+                  }}{{ b.balance | number: "1.2-2" }}</span
+                >
               </div>
             </div>
           </div>
@@ -103,76 +145,114 @@
 
         <div *ngIf="meDetailed" class="personal-balance">
           <!-- User Balance Summary -->
-          <div class="balance-summary" [ngClass]="{
-            'positive': meDetailed.balance > 0,
-            'negative': meDetailed.balance < 0,
-            'zero': meDetailed.balance === 0
-          }">
+          <div
+            class="balance-summary"
+            [ngClass]="{
+              positive: meDetailed.balance > 0,
+              negative: meDetailed.balance < 0,
+              zero: meDetailed.balance === 0,
+            }"
+          >
             <mat-icon>account_balance_wallet</mat-icon>
             <div class="summary-content">
               <span class="summary-label">Tu balance:</span>
               <span class="summary-amount">
-                {{ meDetailed.balance >= 0 ? '+' : '-' }}{{ (abs(meDetailed.balance) | number:'1.2-2') }}
+                {{ meDetailed.balance >= 0 ? "+" : "-"
+                }}{{ abs(meDetailed.balance) | number: "1.2-2" }}
               </span>
             </div>
           </div>
 
           <!-- Credits (Te deben) -->
-          <div *ngIf="myCredits && myCredits.length > 0" class="transactions-section credits-section">
+          <div
+            *ngIf="myCredits && myCredits.length > 0"
+            class="transactions-section credits-section"
+          >
             <div class="section-title">
               <mat-icon>arrow_downward</mat-icon>
               <span>Te deben</span>
             </div>
             <div class="transactions-list">
-              <div *ngFor="let owe of myCredits" class="transaction-item credit-item">
+              <div
+                *ngFor="let owe of myCredits"
+                class="transaction-item credit-item"
+              >
                 <div class="transaction-info">
                   <mat-icon class="transaction-icon">person</mat-icon>
                   <div class="transaction-details">
                     <span class="transaction-text">
                       <strong>{{ displayMember(owe) }}</strong> te debe
                     </span>
-                    <span class="transaction-amount positive">{{ owe.amount | number:'1.2-2' }}</span>
+                    <span class="transaction-amount positive">{{
+                      owe.amount | number: "1.2-2"
+                    }}</span>
                   </div>
                 </div>
-                <button class="action-btn credit-btn"
+                <button
+                  class="action-btn credit-btn"
                   (click)="requestPayment(owe)"
-                  [disabled]="isRequesting(owe) || owe.amount <= 0">
+                  [disabled]="isRequesting(owe) || owe.amount <= 0"
+                >
                   <mat-icon>notifications</mat-icon>
-                  <span>{{ isRequesting(owe) ? 'Enviando...' : 'Reclamar' }}</span>
+                  <span>{{
+                    isRequesting(owe) ? "Enviando..." : "Reclamar"
+                  }}</span>
                 </button>
               </div>
             </div>
           </div>
 
           <!-- Debts (Tú debes) -->
-          <div *ngIf="myDebts && myDebts.length > 0" class="transactions-section debts-section">
+          <div
+            *ngIf="myDebts && myDebts.length > 0"
+            class="transactions-section debts-section"
+          >
             <div class="section-title">
               <mat-icon>arrow_upward</mat-icon>
               <span>Tú debes</span>
             </div>
             <div class="transactions-list">
-              <div *ngFor="let ow of myDebts" class="transaction-item debt-item">
+              <div
+                *ngFor="let ow of myDebts"
+                class="transaction-item debt-item"
+              >
                 <div class="transaction-info">
                   <mat-icon class="transaction-icon">person</mat-icon>
                   <div class="transaction-details">
                     <span class="transaction-text">
                       Debes a <strong>{{ displayMember(ow) }}</strong>
                     </span>
-                    <span class="transaction-amount negative">{{ ow.amount | number:'1.2-2' }}</span>
+                    <span class="transaction-amount negative">{{
+                      ow.amount | number: "1.2-2"
+                    }}</span>
                   </div>
                 </div>
-                <button class="action-btn debt-btn"
+                <button
+                  class="action-btn debt-btn"
                   (click)="payDebt(meDetailed, ow)"
-                  [disabled]="isPaying(meDetailed, ow) || meDetailed.balance >= 0 || ow.amount <= 0">
+                  [disabled]="
+                    isPaying(meDetailed, ow) ||
+                    meDetailed.balance >= 0 ||
+                    ow.amount <= 0
+                  "
+                >
                   <mat-icon>payment</mat-icon>
-                  <span>{{ isPaying(meDetailed, ow) ? 'Pagando...' : 'Pagar' }}</span>
+                  <span>{{
+                    isPaying(meDetailed, ow) ? "Pagando..." : "Pagar"
+                  }}</span>
                 </button>
               </div>
             </div>
           </div>
 
           <!-- No transactions state -->
-          <div *ngIf="(!myDebts || myDebts.length === 0) && (!myCredits || myCredits.length === 0)" class="no-transactions">
+          <div
+            *ngIf="
+              (!myDebts || myDebts.length === 0) &&
+              (!myCredits || myCredits.length === 0)
+            "
+            class="no-transactions"
+          >
             <mat-icon>check_circle_outline</mat-icon>
             <p>No tienes deudas ni cobros pendientes.</p>
           </div>

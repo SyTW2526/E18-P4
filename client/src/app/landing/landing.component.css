@@ -6,7 +6,7 @@
   overflow-x: hidden;
   position: relative;
   width: 100%;
-  padding: 0 2vw 0 0; 
+  padding: 0 2vw 0 0;
   box-sizing: border-box;
   background: transparent;
 }
@@ -17,13 +17,13 @@
 }
 
 .landing-container::after {
-  content: '';
+  content: "";
   position: fixed;
   right: -10%;
   bottom: -40px;
   width: 800px;
   height: 800px;
-  background-image: url('/assets/images/ilustracion1.svg');
+  background-image: url("/assets/images/ilustracion1.svg");
   background-size: contain;
   background-repeat: no-repeat;
   opacity: 0.85;
@@ -143,7 +143,11 @@
 }
 
 .text-gradient {
-  background: linear-gradient(90deg, var(--text-gradient-start), var(--text-gradient-end));
+  background: linear-gradient(
+    90deg,
+    var(--text-gradient-start),
+    var(--text-gradient-end)
+  );
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -170,7 +174,9 @@
   border-radius: 30px;
   font-weight: 600;
   text-decoration: none;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -201,7 +207,10 @@
   padding: 12px 28px;
   font-weight: 600;
   text-decoration: none;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .btn-secondary:hover {
@@ -269,7 +278,11 @@
 }
 
 .feature-card {
-  background: linear-gradient(135deg, var(--glass-start) 0%, var(--glass-end) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--glass-start) 0%,
+    var(--glass-end) 100%
+  );
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   padding: 24px;
@@ -277,7 +290,10 @@
   align-items: flex-start;
   gap: 20px;
   backdrop-filter: blur(10px);
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
   opacity: 0;
   animation: slideInRight 0.6s ease forwards;
 }
@@ -315,7 +331,11 @@
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--feature-icon-end) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-color) 0%,
+    var(--feature-icon-end) 100%
+  );
   border-radius: 12px;
   display: flex;
   align-items: center;

@@ -1,4 +1,13 @@
-import { Directive, ElementRef, EventEmitter, Output, Input, Inject, PLATFORM_ID, HostListener } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  EventEmitter,
+  Output,
+  Input,
+  Inject,
+  PLATFORM_ID,
+  HostListener,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
 @Directive({
@@ -7,11 +16,12 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class ClickOutsideDirective {
   @Input() appClickOutsideEnabled = true;
-  @Output('appClickOutside') readonly clickedOutside = new EventEmitter<Event>();
+  @Output('appClickOutside') readonly clickedOutside =
+    new EventEmitter<Event>();
 
   constructor(
     private hostRef: ElementRef<HTMLElement>,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
   private handleEvent(ev: Event) {

@@ -66,7 +66,12 @@ export class GroupSettingsComponent implements OnInit {
   linkError: string | null = null;
   revokingLink: string | null = null;
 
-  constructor(private route: ActivatedRoute, private auth: AuthService, private router: Router, public lang: LanguageService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private auth: AuthService,
+    private router: Router,
+    public lang: LanguageService,
+  ) {}
 
   ngOnInit(): void {
     this.accountId = this.route.snapshot.paramMap.get('id') || '';
@@ -74,7 +79,12 @@ export class GroupSettingsComponent implements OnInit {
   }
 
   deleteGroup() {
-    if (!confirm('¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.')) return;
+    if (
+      !confirm(
+        '¿Eliminar esta cuenta/grupo compartido? Esta acción no se puede deshacer.',
+      )
+    )
+      return;
     const me = this.auth.getUser();
     const myId = me?._id || me?.id;
     if (!myId) {
@@ -86,7 +96,10 @@ export class GroupSettingsComponent implements OnInit {
         this.router.navigate(['/home']);
       },
       error: (err: any) => {
-        alert('No se pudo eliminar el grupo: ' + (err?.error?.message || err?.message || 'Error'));
+        alert(
+          'No se pudo eliminar el grupo: ' +
+            (err?.error?.message || err?.message || 'Error'),
+        );
         console.error('deleteGroup error', err);
       },
     });
@@ -114,13 +127,16 @@ export class GroupSettingsComponent implements OnInit {
   loadMembers() {
     this.auth.getMembersForGroup(this.accountId).subscribe({
       next: (members: any[]) => {
-        this.miembros = (members || []).map((m: any) => ({ ...m, _id: m._id || m.id }));
+        this.miembros = (members || []).map((m: any) => ({
+          ...m,
+          _id: m._id || m.id,
+        }));
         const me = this.auth.getUser();
         const myId = me?._id || me?.id;
-        const mine = this.miembros.find(m => String(m._id) === String(myId));
+        const mine = this.miembros.find((m) => String(m._id) === String(myId));
         this.myRole = (mine?.rol as any) || 'miembro';
         this.loading = false;
-        
+
         // Cargar enlaces de invitación si es admin u owner
         if (this.myRole === 'owner' || this.myRole === 'admin') {
           this.loadInvitationLinks();
@@ -143,7 +159,7 @@ export class GroupSettingsComponent implements OnInit {
       descripcion: this.account.descripcion,
       moneda: this.account.moneda || 'EUR',
     };
-    
+
     if (this.account.foto_grupo) {
       payload.foto_grupo = this.account.foto_grupo;
     }
@@ -243,18 +259,23 @@ export class GroupSettingsComponent implements OnInit {
       return;
     }
 
-    this.auth.sendGroupInvitation(this.accountId, this.selectedFriendToAdd, myId).subscribe({
-      next: () => {
-        this.addingFriend = false;
-        this.closeAddFriendModal();
-        this.addFriendSuccess = true;
-        setTimeout(() => { this.addFriendSuccess = false; }, 2000);
-      },
-      error: (err: any) => {
-        this.addingFriend = false;
-        this.addFriendError = err?.error?.message || 'No se pudo enviar la invitación';
-      },
-    });
+    this.auth
+      .sendGroupInvitation(this.accountId, this.selectedFriendToAdd, myId)
+      .subscribe({
+        next: () => {
+          this.addingFriend = false;
+          this.closeAddFriendModal();
+          this.addFriendSuccess = true;
+          setTimeout(() => {
+            this.addFriendSuccess = false;
+          }, 2000);
+        },
+        error: (err: any) => {
+          this.addingFriend = false;
+          this.addFriendError =
+            err?.error?.message || 'No se pudo enviar la invitación';
+        },
+      });
   }
 
   private myId(): string | null {
@@ -262,8 +283,12 @@ export class GroupSettingsComponent implements OnInit {
     return me?._id || me?.id || null;
   }
 
-  isOwner() { return this.myRole === 'owner'; }
-  isAdmin() { return this.myRole === 'owner' || this.myRole === 'admin'; }
+  isOwner() {
+    return this.myRole === 'owner';
+  }
+  isAdmin() {
+    return this.myRole === 'owner' || this.myRole === 'admin';
+  }
 
   canPromote(member: any) {
     if (!member) return false;
@@ -295,10 +320,24 @@ export class GroupSettingsComponent implements OnInit {
     if (!myId || !targetId) return;
     this.actionError = null;
     this.actionLoading = String(targetId) + ':promote';
-    this.auth.updateUserGroupRole(this.accountId, String(myId), String(targetId), 'admin').subscribe({
-      next: () => { this.actionLoading = null; this.loadMembers(); },
-      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo actualizar el rol'; }
-    });
+    this.auth
+      .updateUserGroupRole(
+        this.accountId,
+        String(myId),
+        String(targetId),
+        'admin',
+      )
+      .subscribe({
+        next: () => {
+          this.actionLoading = null;
+          this.loadMembers();
+        },
+        error: (err) => {
+          this.actionLoading = null;
+          this.actionError =
+            err?.error?.message || 'No se pudo actualizar el rol';
+        },
+      });
   }
 
   demoteToMember(member: any) {
@@ -308,10 +347,24 @@ export class GroupSettingsComponent implements OnInit {
     if (!myId || !targetId) return;
     this.actionError = null;
     this.actionLoading = String(targetId) + ':demote';
-    this.auth.updateUserGroupRole(this.accountId, String(myId), String(targetId), 'miembro').subscribe({
-      next: () => { this.actionLoading = null; this.loadMembers(); },
-      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo actualizar el rol'; }
-    });
+    this.auth
+      .updateUserGroupRole(
+        this.accountId,
+        String(myId),
+        String(targetId),
+        'miembro',
+      )
+      .subscribe({
+        next: () => {
+          this.actionLoading = null;
+          this.loadMembers();
+        },
+        error: (err) => {
+          this.actionLoading = null;
+          this.actionError =
+            err?.error?.message || 'No se pudo actualizar el rol';
+        },
+      });
   }
 
   removeMember(member: any) {
@@ -321,23 +374,39 @@ export class GroupSettingsComponent implements OnInit {
     if (!myId || !targetId) return;
     this.actionError = null;
     this.actionLoading = String(targetId) + ':remove';
-    this.auth.removeUserFromGroup(this.accountId, String(myId), String(targetId)).subscribe({
-      next: () => { this.actionLoading = null; this.loadMembers(); },
-      error: (err) => { this.actionLoading = null; this.actionError = err?.error?.message || 'No se pudo eliminar el miembro'; }
-    });
+    this.auth
+      .removeUserFromGroup(this.accountId, String(myId), String(targetId))
+      .subscribe({
+        next: () => {
+          this.actionLoading = null;
+          this.loadMembers();
+        },
+        error: (err) => {
+          this.actionLoading = null;
+          this.actionError =
+            err?.error?.message || 'No se pudo eliminar el miembro';
+        },
+      });
   }
 
   copyGroupId() {
     const groupId = this.account?._id || this.account?.id;
     if (!groupId) return;
-    
-    navigator.clipboard.writeText(groupId).then(() => {
-      this.saveMessage = this.lang.t('copied') || 'ID copiado';
-      setTimeout(() => { this.saveMessage = null; }, 2000);
-    }).catch(() => {
-      this.error = 'No se pudo copiar el ID';
-      setTimeout(() => { this.error = null; }, 2000);
-    });
+
+    navigator.clipboard
+      .writeText(groupId)
+      .then(() => {
+        this.saveMessage = this.lang.t('copied') || 'ID copiado';
+        setTimeout(() => {
+          this.saveMessage = null;
+        }, 2000);
+      })
+      .catch(() => {
+        this.error = 'No se pudo copiar el ID';
+        setTimeout(() => {
+          this.error = null;
+        }, 2000);
+      });
   }
 
   onGroupImageSelected(event: Event): void {
@@ -398,7 +467,7 @@ export class GroupSettingsComponent implements OnInit {
         console.error('Error loading invitation links:', err);
         this.invitationLinks = [];
         this.loadingLinks = false;
-      }
+      },
     });
   }
 
@@ -422,31 +491,48 @@ export class GroupSettingsComponent implements OnInit {
     this.creatingLink = true;
     this.linkError = null;
 
-    this.auth.createInvitationLink(
-      this.accountId,
-      String(myId),
-      this.newLinkMaxUses || undefined,
-      this.newLinkExpirationDays || undefined
-    ).subscribe({
-      next: (response: any) => {
-        this.creatingLink = false;
-        this.showCreateLinkForm = false;
-        this.newLinkMaxUses = null;
-        this.newLinkExpirationDays = null;
-        this.loadInvitationLinks();
-        
-        // Copiar enlace automáticamente
-        if (response.enlace) {
-          navigator.clipboard.writeText(response.enlace);
-          alert('Enlace creado y copiado al portapapeles: ' + response.enlace);
-        }
-      },
-      error: (err: any) => {
-        console.error('Error creating invitation link:', err);
-        this.linkError = err?.error?.message || 'Error al crear el enlace';
-        this.creatingLink = false;
-      }
-    });
+    // Convertir valores vacíos a null/undefined correctamente
+    const maxUses =
+      this.newLinkMaxUses && Number(this.newLinkMaxUses) > 0
+        ? Number(this.newLinkMaxUses)
+        : undefined;
+    const expirationDays =
+      this.newLinkExpirationDays && Number(this.newLinkExpirationDays) > 0
+        ? Number(this.newLinkExpirationDays)
+        : undefined;
+
+    this.auth
+      .createInvitationLink(
+        this.accountId,
+        String(myId),
+        maxUses,
+        expirationDays,
+      )
+      .subscribe({
+        next: (response: any) => {
+          this.creatingLink = false;
+          this.showCreateLinkForm = false;
+          this.newLinkMaxUses = null;
+          this.newLinkExpirationDays = null;
+          this.loadInvitationLinks();
+
+          // Copiar enlace automáticamente
+          if (response.enlace) {
+            navigator.clipboard.writeText(response.enlace);
+            alert(
+              'Enlace creado y copiado al portapapeles: ' + response.enlace,
+            );
+          }
+        },
+        error: (err: any) => {
+          console.error('Error creating invitation link:', err);
+          this.linkError =
+            err?.error?.message ||
+            err?.error?.details ||
+            'Error al crear el enlace';
+          this.creatingLink = false;
+        },
+      });
   }
 
   getLinkUrl(token: string): string {
@@ -456,15 +542,22 @@ export class GroupSettingsComponent implements OnInit {
 
   copyLink(token: string) {
     const url = this.getLinkUrl(token);
-    navigator.clipboard.writeText(url).then(() => {
-      alert('Enlace copiado al portapapeles');
-    }).catch(err => {
-      console.error('Error copying link:', err);
-    });
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        alert('Enlace copiado al portapapeles');
+      })
+      .catch((err) => {
+        console.error('Error copying link:', err);
+      });
   }
 
   revokeLink(link: any) {
-    if (!confirm('¿Revocar este enlace de invitación? Los usuarios ya no podrán unirse con este enlace.')) {
+    if (
+      !confirm(
+        '¿Revocar este enlace de invitación? Los usuarios ya no podrán unirse con este enlace.',
+      )
+    ) {
       return;
     }
 
@@ -480,9 +573,12 @@ export class GroupSettingsComponent implements OnInit {
       },
       error: (err: any) => {
         console.error('Error revoking link:', err);
-        alert('Error al revocar el enlace: ' + (err?.error?.message || 'Error desconocido'));
+        alert(
+          'Error al revocar el enlace: ' +
+            (err?.error?.message || 'Error desconocido'),
+        );
         this.revokingLink = null;
-      }
+      },
     });
   }
 }

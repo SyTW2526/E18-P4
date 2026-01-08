@@ -4,9 +4,15 @@ import { AuthService } from '../../auth/auth.service';
 import { of } from 'rxjs';
 
 class MockAuthService {
-  isLoggedIn() { return true; }
-  getUser() { return { _id: 'u1', nombre: 'Test' }; }
-  getGroupsForUser(userId: string) { return of([{ _id: 'g1', nombre: 'G1' }]); }
+  isLoggedIn() {
+    return true;
+  }
+  getUser() {
+    return { _id: 'u1', nombre: 'Test' };
+  }
+  getGroupsForUser(userId: string) {
+    return of([{ _id: 'g1', nombre: 'G1' }]);
+  }
 }
 
 describe('HomeComponent', () => {
@@ -16,7 +22,7 @@ describe('HomeComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [ { provide: AuthService, useClass: MockAuthService } ]
+      providers: [{ provide: AuthService, useClass: MockAuthService }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(HomeComponent);

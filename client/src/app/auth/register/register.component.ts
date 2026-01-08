@@ -1,4 +1,11 @@
-import { Component, OnInit, AfterViewInit, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  NgZone,
+  PLATFORM_ID,
+  Inject,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -24,16 +31,16 @@ import { CommonModule } from '@angular/common';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
   ],
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css'] // Puedes reusar el CSS de login
+  styleUrls: ['./register.component.css'], // Puedes reusar el CSS de login
 })
 export class RegisterComponent implements OnInit, AfterViewInit {
   registerForm = this.fb.group({
     username: ['', [Validators.required, Validators.minLength(3)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]]
+    password: ['', [Validators.required, Validators.minLength(6)]],
   });
   loading = false;
   error: string | null = null;
@@ -45,7 +52,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     private auth: AuthService,
     public lang: LanguageService,
     private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
   ngOnInit() {
@@ -65,7 +72,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     if ((window as any).google && (window as any).google.accounts) {
       (window as any).google.accounts.id.initialize({
-        client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+        client_id:
+          '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
         callback: this.handleGoogleSignIn.bind(this),
       });
       this.googleReady = true;
@@ -82,7 +90,8 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     script.onload = () => {
       if ((window as any).google && (window as any).google.accounts) {
         (window as any).google.accounts.id.initialize({
-          client_id: '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
+          client_id:
+            '642232939098-94193hhr1jgcduddpujmhfq4snomrruk.apps.googleusercontent.com',
           callback: this.handleGoogleSignIn.bind(this),
         });
         this.googleReady = true;
@@ -98,12 +107,17 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     const buttonDiv = document.getElementById('google-signin-button-register');
-    if (buttonDiv && (window as any).google && (window as any).google.accounts) {
+    if (
+      buttonDiv &&
+      (window as any).google &&
+      (window as any).google.accounts
+    ) {
       try {
-        (window as any).google.accounts.id.renderButton(
-          buttonDiv,
-          { theme: 'outline', size: 'large', text: 'signup_with' }
-        );
+        (window as any).google.accounts.id.renderButton(buttonDiv, {
+          theme: 'outline',
+          size: 'large',
+          text: 'signup_with',
+        });
       } catch (e) {
         console.error('Error rendering Google button:', e);
       }
@@ -137,7 +151,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
       const payload = {
         nombre: this.registerForm.value.username,
         email: this.registerForm.value.email,
-        password: this.registerForm.value.password
+        password: this.registerForm.value.password,
       };
       this.auth.signup(payload as any).subscribe({
         next: () => {
@@ -158,10 +172,11 @@ export class RegisterComponent implements OnInit, AfterViewInit {
           } else if (typeof e?.error === 'string' && e?.error.length) {
             this.error = e.error;
           } else {
-            this.error = e?.error?.message || e?.message || 'Error al registrarse';
+            this.error =
+              e?.error?.message || e?.message || 'Error al registrarse';
           }
           console.error('signup error', e);
-        }
+        },
       });
     }
   }

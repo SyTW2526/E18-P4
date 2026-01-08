@@ -8,14 +8,48 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 class MockAuthService {
-  getUser() { return { _id: 'u1', nombre: 'Me' }; }
-  getSharedAccountById(id: string) { return of({ _id: id, nombre: 'Group X', miembros: [{ _id: 'u1', nombre: 'Me' }, { _id: 'u2', nombre: 'Other' }] }); }
-  getMembersForGroup(id: string) { return of([{ _id: 'u1', nombre: 'Me' }, { _id: 'u2', nombre: 'Other' }]); }
-  getUserById(id: string) { return of({ _id: id, nombre: `User ${id}` }); }
-  getGastosForGroup(id: string) { return of([{ descripcion: 'Lunch', monto: 10, id_pagador: 'u1', fecha: new Date().toISOString(), moneda: 'EUR' }]); }
-  createGasto(payload: any) { return of({ id: 'g1' }); }
-  deleteGasto(id: string) { return of({}); }
-  deleteSharedAccount(id: string) { return of({}); }
+  getUser() {
+    return { _id: 'u1', nombre: 'Me' };
+  }
+  getSharedAccountById(id: string) {
+    return of({
+      _id: id,
+      nombre: 'Group X',
+      miembros: [
+        { _id: 'u1', nombre: 'Me' },
+        { _id: 'u2', nombre: 'Other' },
+      ],
+    });
+  }
+  getMembersForGroup(id: string) {
+    return of([
+      { _id: 'u1', nombre: 'Me' },
+      { _id: 'u2', nombre: 'Other' },
+    ]);
+  }
+  getUserById(id: string) {
+    return of({ _id: id, nombre: `User ${id}` });
+  }
+  getGastosForGroup(id: string) {
+    return of([
+      {
+        descripcion: 'Lunch',
+        monto: 10,
+        id_pagador: 'u1',
+        fecha: new Date().toISOString(),
+        moneda: 'EUR',
+      },
+    ]);
+  }
+  createGasto(payload: any) {
+    return of({ id: 'g1' });
+  }
+  deleteGasto(id: string) {
+    return of({});
+  }
+  deleteSharedAccount(id: string) {
+    return of({});
+  }
 }
 
 describe('AccountDetailComponent', () => {
@@ -26,15 +60,25 @@ describe('AccountDetailComponent', () => {
     @Component({
       selector: 'test-dummy',
       standalone: true,
-      template: ''
+      template: '',
     })
     class DummyComponent {}
 
     await TestBed.configureTestingModule({
-      imports: [AccountDetailComponent, NoopAnimationsModule, RouterTestingModule.withRoutes([{ path: 'group/:id', component: DummyComponent }]), DummyComponent],
+      imports: [
+        AccountDetailComponent,
+        NoopAnimationsModule,
+        RouterTestingModule.withRoutes([
+          { path: 'group/:id', component: DummyComponent },
+        ]),
+        DummyComponent,
+      ],
       providers: [
         { provide: AuthService, useClass: MockAuthService },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'g1' } } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'g1' } } },
+        },
       ],
     }).compileComponents();
 
@@ -52,9 +96,17 @@ describe('AccountDetailComponent', () => {
 
   it('createGastoFromForm validates and calls createGasto', () => {
     fixture.detectChanges();
-    component.newGasto = { descripcion: 'X', monto: 12, categoria: '', fecha: new Date().toISOString() } as any;
+    component.newGasto = {
+      descripcion: 'X',
+      monto: 12,
+      categoria: '',
+      fecha: new Date().toISOString(),
+    } as any;
     component.selectedPayer = 'u1';
-    component.participantes = [{ userId: 'u1', amount: 6, included: true }, { userId: 'u2', amount: 6, included: true }];
+    component.participantes = [
+      { userId: 'u1', amount: 6, included: true },
+      { userId: 'u2', amount: 6, included: true },
+    ];
     component.splitEnabled = true;
     component.createGastoFromForm();
     // creating flag will be set during request; since mock returns synchronously it should be false after

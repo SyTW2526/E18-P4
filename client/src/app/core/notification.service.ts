@@ -4,7 +4,12 @@ import { Observable } from 'rxjs';
 
 export interface Notification {
   _id?: string;
-  tipo: 'solicitud_pago' | 'pago_confirmado' | 'gasto_creado' | 'grupo_invitacion' | 'solicitud_amistad';
+  tipo:
+    | 'solicitud_pago'
+    | 'pago_confirmado'
+    | 'gasto_creado'
+    | 'grupo_invitacion'
+    | 'solicitud_amistad';
   de_usuario: string;
   para_usuario: string;
   id_grupo?: string; // opcional para solicitudes de amistad
@@ -21,7 +26,7 @@ export interface Notification {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class NotificationService {
   private apiUrl = 'http://localhost:5200/notifications';
@@ -49,14 +54,22 @@ export class NotificationService {
   }
 
   markAsRead(notificationId: string): Observable<{ success: boolean }> {
-    return this.http.patch<{ success: boolean }>(`${this.apiUrl}/${notificationId}/read`, {});
+    return this.http.patch<{ success: boolean }>(
+      `${this.apiUrl}/${notificationId}/read`,
+      {},
+    );
   }
 
   markAsResponded(notificationId: string): Observable<{ success: boolean }> {
-    return this.http.patch<{ success: boolean }>(`${this.apiUrl}/${notificationId}/respond`, {});
+    return this.http.patch<{ success: boolean }>(
+      `${this.apiUrl}/${notificationId}/respond`,
+      {},
+    );
   }
 
   deleteNotification(notificationId: string): Observable<{ success: boolean }> {
-    return this.http.delete<{ success: boolean }>(`${this.apiUrl}/${notificationId}`);
+    return this.http.delete<{ success: boolean }>(
+      `${this.apiUrl}/${notificationId}`,
+    );
   }
 }
