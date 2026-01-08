@@ -67,10 +67,33 @@ export async function connectToDatabase(uri: string) {
         console.warn("Could not create index on group_invitations (id_invitado, estado)", err);
     }
     
+    // Drop old problematic index if it exists
     try {
-        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { id_invitado: { $ne: null, $exists: true } } });
+        console.log("Attempting to drop old group_invitations index...");
+        await collections.groupInvitations?.dropIndex("id_grupo_1_id_invitado_1");
+        console.log("Dropped old index id_grupo_1_id_invitado_1");
+    } catch (err: any) {
+        if (err.code !== 27) { // 27 = index not found
+            console.warn("Error dropping index:", err.message);
+        }
+    }
+    
+    try {
+        // Create new index with partialFilterExpression to only apply to non-null id_invitado
+        await collections.groupInvitations?.createIndex(
+            { id_grupo: 1, id_invitado: 1 }, 
+            { 
+                unique: true, 
+                background: true, 
+                sparse: true, 
+                partialFilterExpression: { 
+                    id_invitado: { $type: "string", $ne: null } 
+                } 
+            }
+        );
+        console.log("Created partial unique index on group_invitations (id_grupo, id_invitado)");
     } catch (err) {
-        console.warn("Could not create index on group_invitations (id_grupo, id_invitado)", err);
+        console.warn("Could not create partial index on group_invitations (id_grupo, id_invitado)", err);
     }
     
     try {

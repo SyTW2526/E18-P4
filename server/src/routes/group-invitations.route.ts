@@ -196,6 +196,8 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
   try {
     const { id_grupo, id_invitador, usos_maximos, dias_expiracion } = req.body || {};
 
+    console.log('[LINK CREATE] Recibido:', { id_grupo, id_invitador, usos_maximos, dias_expiracion });
+
     if (!id_grupo || !id_invitador) {
       return res.status(400).send({ message: 'id_grupo e id_invitador son requeridos' });
     }
@@ -206,8 +208,14 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
       id_grupo: String(id_grupo) 
     }) as any;
     
-    if (!inviter || (inviter.rol !== 'owner' && inviter.rol !== 'admin')) {
-      return res.status(403).send({ message: 'No autorizado para crear enlaces de invitación' });
+    console.log('[LINK CREATE] Invitador encontrado:', inviter);
+
+    if (!inviter) {
+      return res.status(403).send({ message: 'Usuario no es miembro del grupo' });
+    }
+    
+    if (inviter.rol !== 'owner' && inviter.rol !== 'admin') {
+      return res.status(403).send({ message: `No autorizado. Tu rol es: ${inviter.rol}. Se requiere owner o admin` });
     }
 
     // Generar token único
@@ -234,6 +242,8 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
     };
 
     const result = await collections.groupInvitations!.insertOne(invitation);
+    console.log('[LINK CREATE] Documento insertado:', result.insertedId);
+    
     if (result && result.insertedId) {
       return res.status(201).send({ 
         message: 'Enlace de invitación creado',
@@ -245,7 +255,7 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
       return res.status(500).send({ message: 'No se pudo crear el enlace' });
     }
   } catch (error: any) {
-    console.error('create invitation link error', error);
+    console.error('[LINK CREATE] Error:', error);
     return res.status(500).send({ 
       message: 'Error al crear el enlace', 
       details: error.message || error.toString()

@@ -252,9 +252,7 @@
 
           <div *ngIf="showCreateLinkForm" class="form-box">
             <div class="field">
-              <label class="label">{{
-                lang.t("maxUses") || "Usos máximos"
-              }}</label>
+              <label class="label">{{ lang.t("maxUses") }}</label>
               <input
                 class="text-input"
                 type="number"
@@ -264,9 +262,7 @@
               />
             </div>
             <div class="field">
-              <label class="label">{{
-                lang.t("expirationDays") || "Días hasta expirar"
-              }}</label>
+              <label class="label">{{ lang.t("expirationDays") }}</label>
               <input
                 class="text-input"
                 type="number"
@@ -302,7 +298,7 @@
             *ngIf="!loadingLinks && invitationLinks.length === 0"
             class="muted"
           >
-            {{ lang.t("noActiveLinks") || "No hay enlaces activos" }}
+            {{ lang.t("noActiveLinks") }}
           </div>
 
           <div

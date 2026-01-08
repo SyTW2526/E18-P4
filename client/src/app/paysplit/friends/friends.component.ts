@@ -26,7 +26,12 @@ import { LanguageService } from '../../core/language.service';
   ],
   template: `
     <div class="friends-container">
-      <h1>{{ lang.t('friends') }}</h1>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem">
+        <button mat-icon-button (click)="goBack()" class="back-button">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1 style="margin:0">{{ lang.t('friends') }}</h1>
+      </div>
 
       <!-- TABS para cambiar entre vistas -->
       <div
@@ -164,7 +169,7 @@ import { LanguageService } from '../../core/language.service';
               <p
                 style="margin:1rem 0 0 0;color:var(--text-muted);font-size:0.9rem;flex:1"
               >
-                Te ha enviado una solicitud de amistad
+                {{ lang.t('youHaveSent') }}
               </p>
             </div>
 
@@ -230,7 +235,7 @@ import { LanguageService } from '../../core/language.service';
         </div>
         <ng-template #noFriends>
           <p class="no-data">
-            {{ lang.t('noFriends') || 'No tienes amigos aún' }}
+            {{ lang.t('noFriendsList') || 'No tienes amigos aún' }}
           </p>
         </ng-template>
       </div>
@@ -247,7 +252,7 @@ import { LanguageService } from '../../core/language.service';
               type="text"
               [(ngModel)]="searchQuery"
               (input)="buscar()"
-              placeholder="Escribe el nombre..."
+              [placeholder]="lang.t('typeUserName')"
               style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.2);border-radius:4px;background:var(--secondary-bg);color:var(--text-main);font-size:0.95rem"
             />
             <button
@@ -346,7 +351,7 @@ import { LanguageService } from '../../core/language.service';
               <div
                 style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem"
               >
-                Email
+                {{ lang.t('email') }}
               </div>
               <div style="font-size:0.95rem">{{ selectedUser.email }}</div>
             </div>
@@ -357,7 +362,7 @@ import { LanguageService } from '../../core/language.service';
             style="padding:1rem;background:rgba(34, 197, 94, 0.1);border-radius:6px;margin-bottom:1rem;color:#22c55e;display:flex;align-items:center;gap:0.5rem"
           >
             <mat-icon>check_circle</mat-icon>
-            <span>Ya son amigos</span>
+            <span>{{ lang.t('youAreFriends') }}</span>
           </div>
 
           <div
@@ -365,7 +370,7 @@ import { LanguageService } from '../../core/language.service';
             style="padding:1rem;background:rgba(59, 130, 246, 0.1);border-radius:6px;margin-bottom:1rem;color:#3b82f6;display:flex;align-items:center;gap:0.5rem"
           >
             <mat-icon>pending</mat-icon>
-            <span>Solicitud de amistad enviada</span>
+            <span>{{ lang.t('friendRequestSentMsg') }}</span>
           </div>
 
           <div
@@ -509,12 +514,48 @@ import { LanguageService } from '../../core/language.service';
         font-weight: 700;
         color: var(--text-main);
       }
+
+      .back-button {
+        background: rgba(103, 58, 183, 0.2);
+        color: var(--primary-color);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .back-button:hover {
+        background: rgba(103, 58, 183, 0.4);
+      }
+
+      .scroll-to-top-btn {
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 100;
+        background: rgba(103, 58, 183, 0.9);
+        color: white;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .scroll-to-top-btn:hover {
+        background: var(--primary-color);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
     `,
   ],
 })
 export class FriendsComponent implements OnInit {
   // Tabs
   currentTab: 'requests' | 'friends' | 'add' = 'requests';
+
+  // Scroll to top
+  showScrollButton = false;
 
   // Friends & Requests
   amigos: any[] = [];
@@ -548,11 +589,26 @@ export class FriendsComponent implements OnInit {
   ngOnInit() {
     this.currentUser = this.authService.getUser();
     this.loadAll();
+    this.setupScrollListener();
+  }
+
+  setupScrollListener() {
+    window.addEventListener('scroll', () => {
+      this.showScrollButton = window.scrollY > 0;
+    });
+  }
+
+  scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   loadAll() {
     this.loadFriends();
     this.loadRequests();
+  }
+
+  goBack() {
+    this.router.navigate(['/home']);
   }
 
   // ===== FRIENDS TAB =====
@@ -568,7 +624,8 @@ export class FriendsComponent implements OnInit {
   }
 
   eliminarAmigo(friend: any) {
-    if (!confirm(`¿Eliminar amigo ${friend.nombre}?`)) return;
+    if (!confirm(`${this.lang.t('removeFriendConfirm')} ${friend.nombre}?`))
+      return;
 
     const friendId = friend._id || friend.id;
     if (!friendId) return;
@@ -577,11 +634,14 @@ export class FriendsComponent implements OnInit {
       .removeAmigo(this.currentUser._id, String(friendId))
       .subscribe({
         next: () => {
-          alert('Amigo eliminado');
+          alert(this.lang.t('friendDeletedMsg'));
           this.loadFriends();
         },
         error: (err: any) => {
-          alert('Error: ' + (err.error?.message || 'No se pudo eliminar'));
+          alert(
+            this.lang.t('errorDelete') +
+              (err.error?.message || this.lang.t('errorSendRequest')),
+          );
         },
       });
   }
@@ -634,7 +694,7 @@ export class FriendsComponent implements OnInit {
       .subscribe({
         next: () => {
           request.loading = false;
-          alert(`¡Ahora eres amigo de ${request.nombre}!`);
+          alert(`${this.lang.t('friendRequestSuccess')} ${request.nombre}!`);
           this.peticiones = this.peticiones.filter(
             (r) => (r._id || r.id) !== userId,
           );
@@ -643,8 +703,8 @@ export class FriendsComponent implements OnInit {
         error: (err: any) => {
           request.loading = false;
           alert(
-            'Error: ' +
-              (err.error?.message || 'No se pudo aceptar la solicitud'),
+            this.lang.t('errorDelete') +
+              (err.error?.message || this.lang.t('errorAccept')),
           );
         },
       });
@@ -654,7 +714,7 @@ export class FriendsComponent implements OnInit {
     const userId = request._id || request.id;
     if (!userId || !this.currentUser) return;
 
-    if (!confirm(`¿Rechazar solicitud de ${request.nombre}?`)) return;
+    if (!confirm(`${this.lang.t('rejectConfirm')} ${request.nombre}?`)) return;
 
     request.loading = true;
     this.authService
@@ -669,8 +729,8 @@ export class FriendsComponent implements OnInit {
         error: (err: any) => {
           request.loading = false;
           alert(
-            'Error: ' +
-              (err.error?.message || 'No se pudo rechazar la solicitud'),
+            this.lang.t('errorDelete') +
+              (err.error?.message || this.lang.t('errorReject')),
           );
         },
       });
@@ -707,7 +767,7 @@ export class FriendsComponent implements OnInit {
       error: (err: any) => {
         console.error('[Search] Error:', err);
         this.searchResults = [];
-        this.errorAdd = 'Error al buscar usuarios';
+        this.errorAdd = this.lang.t('errorSearch');
         this.loadingSearch = false;
       },
     });
@@ -731,13 +791,13 @@ export class FriendsComponent implements OnInit {
 
   enviarSolicitud() {
     if (!this.selectedUser || !this.currentUser) {
-      this.errorAdd = 'Error: Usuario no seleccionado';
+      this.errorAdd = this.lang.t('errorInvalidUser');
       return;
     }
 
     const userId = this.selectedUser._id || this.selectedUser.id;
     if (!userId) {
-      this.errorAdd = 'Error: ID de usuario inválido';
+      this.errorAdd = this.lang.t('errorInvalidId');
       return;
     }
 
@@ -753,7 +813,7 @@ export class FriendsComponent implements OnInit {
         console.log('[Friend Request] Usuario verificado:', user);
         if (!user || !user._id) {
           this.sending = false;
-          this.errorAdd = 'El usuario no existe en el sistema';
+          this.errorAdd = this.lang.t('errorUserNotExists');
           return;
         }
 
@@ -772,21 +832,24 @@ export class FriendsComponent implements OnInit {
             );
             this.sending = false;
             this.hasPendingRequest = true;
-            alert('Solicitud de amistad enviada a ' + this.selectedUser.nombre);
+            alert(
+              this.lang.t('friendRequestSentTo') +
+                ' ' +
+                this.selectedUser.nombre,
+            );
           },
           error: (err: any) => {
             console.error('[Friend Request] Error al enviar solicitud:', err);
             this.sending = false;
             this.errorAdd =
-              err.error?.message || 'No se pudo enviar la solicitud';
+              err.error?.message || this.lang.t('errorSendRequest');
           },
         });
       },
       error: (err: any) => {
         console.error('[Friend Request] Error verificando usuario:', err);
         this.sending = false;
-        this.errorAdd =
-          'El usuario no existe o no se puede acceder a su perfil';
+        this.errorAdd = this.lang.t('errorUserNotFound');
       },
     });
   }
