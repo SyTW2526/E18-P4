@@ -33,10 +33,10 @@ import { MatIconModule } from '@angular/material/icon';
 export class UserSettingsComponent implements OnInit {
   profileImgSrc: string | null = null;
   fallbackInitials = '?';
-  selectedTheme: 'light' | 'dark' = 'light';
+  selectedTheme: 'light' | 'dark' = 'dark';
   form = this.fb.group({
     nombre: ['', Validators.required],
-    preferencia_tema: ['light'],
+    preferencia_tema: ['dark'],
     moneda_preferida: ['EUR'],
   });
 
@@ -54,12 +54,11 @@ export class UserSettingsComponent implements OnInit {
     const u = this.auth.getUser();
     if (u && u._id) {
       this.userId = u._id;
-      // Use local storage data directly to avoid 401 error
-      const ut = u.preferencia_tema === 'oscuro' ? 'dark' : (u.preferencia_tema === 'claro' ? 'light' : (u.preferencia_tema || 'light'));
-      this.selectedTheme = ut;
+      // Always use dark theme
+      this.selectedTheme = 'dark';
       this.form.patchValue({
         nombre: u.nombre ?? u.name ?? '',
-        preferencia_tema: ut,
+        preferencia_tema: 'dark',
         moneda_preferida: u.moneda_preferida || 'EUR',
       });
       const img = u.photo || u.avatar || u.picture || u.foto_perfil;
@@ -95,23 +94,20 @@ export class UserSettingsComponent implements OnInit {
 
   onSubmit() {
     if (!this.userId) return;
-    const payload = { ...this.form.value, foto_perfil: this.profileImgSrc };
+    const payload = { ...this.form.value, foto_perfil: this.profileImgSrc, preferencia_tema: 'dark' };
     this.auth.updateUser(this.userId, payload).subscribe({
       next: () => {
-        // apply selected theme immediately and store preference
-        const t = payload?.preferencia_tema;
-        if (t === 'dark' || t === 'light') {
-          try { 
-            this.theme.applyTheme(t);
-          } catch(e) {}
-        }
+        // Always apply dark theme
+        try { 
+          this.theme.applyTheme('dark');
+        } catch(e) {}
         // persist updated avatar, theme and currency locally
         try {
           const current = this.auth.getUser() || {};
           const updated = { 
             ...current, 
             foto_perfil: payload.foto_perfil, 
-            preferencia_tema: t === 'dark' ? 'oscuro' : t === 'light' ? 'claro' : current.preferencia_tema,
+            preferencia_tema: 'oscuro',
             moneda_preferida: payload.moneda_preferida || current.moneda_preferida
           };
           if (typeof window !== 'undefined' && window?.localStorage) {
@@ -136,6 +132,10 @@ export class UserSettingsComponent implements OnInit {
       input.value = '';
       input.click();
     }
+  }
+
+  deleteProfileImage() {
+    this.profileImgSrc = null;
   }
 
   onFileSelected(event: Event) {

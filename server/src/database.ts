@@ -62,8 +62,9 @@ export async function connectToDatabase(uri: string) {
     }
 
     try {
-        await collections.groupInvitations?.createIndex({ id_invitado: 1, estado: 1 }, { background: true });
-        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true });
+        await collections.groupInvitations?.createIndex({ id_invitado: 1, estado: 1 }, { background: true, sparse: true });
+        await collections.groupInvitations?.createIndex({ id_grupo: 1, id_invitado: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { id_invitado: { $ne: null } } });
+        await collections.groupInvitations?.createIndex({ token: 1 }, { unique: true, background: true, sparse: true, partialFilterExpression: { token: { $exists: true } } });
     } catch (err) {
         console.warn("Could not create index on group_invitations", err);
     }
@@ -330,8 +331,8 @@ async function applySchemaValidation(db: mongodb.Db) {
     const groupInvitationsJsonSchema = {
         $jsonSchema: {
             bsonType: "object",
-            required: ["id_grupo", "id_invitado", "id_invitador", "estado", "fecha_invitacion"],
-            additionalProperties: false,
+            required: ["id_grupo", "id_invitador", "estado", "fecha_invitacion"],
+            additionalProperties: true,
             properties: {
                 _id: {},
                 id_grupo: {
@@ -339,17 +340,26 @@ async function applySchemaValidation(db: mongodb.Db) {
                     description: "Reference to group id",
                 },
                 id_invitado: {
-                    bsonType: "string",
-                    description: "Reference to invited user id",
+                    bsonType: ["string", "null"],
+                    description: "Reference to invited user id (null for invitation links)",
                 },
                 id_invitador: {
                     bsonType: "string",
                     description: "Reference to inviter user id",
                 },
+                tipo: {
+                    bsonType: "string",
+                    enum: ["directa", "enlace"],
+                    description: "Type of invitation",
+                },
                 estado: {
                     bsonType: "string",
                     enum: ["pendiente", "aceptada", "rechazada"],
                     description: "Invitation status",
+                },
+                token: {
+                    bsonType: "string",
+                    description: "Unique token for invitation links",
                 },
                 fecha_invitacion: {
                     bsonType: "date",
@@ -358,6 +368,18 @@ async function applySchemaValidation(db: mongodb.Db) {
                 fecha_respuesta: {
                     bsonType: "date",
                     description: "Date when invitation was responded (optional)",
+                },
+                usos_maximos: {
+                    bsonType: ["int", "null"],
+                    description: "Maximum uses for invitation link (optional)",
+                },
+                usos_actuales: {
+                    bsonType: "int",
+                    description: "Current uses count for invitation link",
+                },
+                expira_en: {
+                    bsonType: ["date", "null"],
+                    description: "Expiration date for invitation link (optional)",
                 },
             },
         },

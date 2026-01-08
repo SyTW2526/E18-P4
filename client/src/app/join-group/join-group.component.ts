@@ -138,8 +138,6 @@ export class JoinGroupComponent implements OnInit {
           this.error = 'Este enlace de invitación ha expirado';
         } else if (errorMsg.includes('máximo de usos')) {
           this.error = 'Este enlace ha alcanzado el número máximo de usos';
-        } else if (errorMsg.includes('ya eres miembro')) {
-          this.error = 'Ya eres miembro de este grupo';
         } else if (errorMsg.includes('inválido')) {
           this.error = 'El enlace de invitación no es válido';
         } else {

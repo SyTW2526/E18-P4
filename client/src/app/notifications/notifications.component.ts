@@ -16,7 +16,7 @@ import { switchMap, startWith } from 'rxjs/operators';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatBadgeModule],
   template: `
-    <section style="max-width:800px;margin:0 auto;padding:1.5rem">
+    <section style="max-width:800px;margin:0 auto;padding:1.5rem;min-height:calc(100vh - 120px)">
       <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
         <button mat-icon-button (click)="goBack()">
           <mat-icon>arrow_back</mat-icon>

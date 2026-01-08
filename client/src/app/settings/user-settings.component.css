@@ -122,6 +122,39 @@
   font-size: 22px !important;
 }
 
+.avatar-delete {
+  position: absolute;
+  bottom: -4px;
+  left: -4px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent !important;
+  border: none !important;
+  color: #f87171 !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 2;
+}
+
+.avatar-delete:hover {
+  background: rgba(248, 113, 113, 0.2) !important;
+  box-shadow: 0 3px 12px rgba(248, 113, 113, 0.3) !important;
+  transform: scale(1.15);
+}
+
+.avatar-delete mat-icon {
+  margin: 0;
+  color: #f87171 !important;
+  font-size: 20px !important;
+}
+
 .avatar-fallback {
   width: 112px;
   height: 112px;

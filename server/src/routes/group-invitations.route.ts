@@ -39,6 +39,7 @@ groupInvitationsRouter.post("/", async (req: express.Request, res: express.Respo
       id_grupo: String(id_grupo),
       id_invitado: String(id_invitado),
       id_invitador: String(id_invitador),
+      tipo: 'directa',
       estado: 'pendiente',
       fecha_invitacion: new Date(),
     };
@@ -218,7 +219,7 @@ groupInvitationsRouter.post("/link/create", async (req: express.Request, res: ex
       expira_en: expira_en,
     };
 
-    const result = await collections.groupInvitations!.insertOne(invitation, { bypassDocumentValidation: true });
+    const result = await collections.groupInvitations!.insertOne(invitation);
     if (result && result.insertedId) {
       return res.status(201).send({ 
         message: 'Enlace de invitación creado',
@@ -273,7 +274,12 @@ groupInvitationsRouter.post("/link/:token/join", async (req: express.Request, re
     });
     
     if (existingMembership) {
-      return res.status(409).send({ message: 'Ya eres miembro de este grupo' });
+      // Si ya es miembro, devolver éxito con el id del grupo
+      return res.status(200).send({ 
+        message: 'Ya eres miembro de este grupo',
+        id_grupo: invitation.id_grupo,
+        alreadyMember: true
+      });
     }
 
     // Agregar usuario al grupo como miembro

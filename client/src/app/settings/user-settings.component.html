@@ -12,6 +12,9 @@
         <button mat-stroked-button class="avatar-action" type="button" (click)="triggerFileInput(fileInput)">
           <mat-icon>photo_camera</mat-icon>
         </button>
+        <button *ngIf="profileImgSrc" mat-stroked-button class="avatar-delete" type="button" (click)="deleteProfileImage()">
+          <mat-icon>delete</mat-icon>
+        </button>
       </div>
     </div>
 
@@ -29,14 +32,6 @@
           <div class="form-group">
             <label>{{ lang.t('email') }}</label>
             <div class="readonly-field">{{ auth.getUser()?.email }}</div>
-          </div>
-
-          <div class="form-group">
-            <label>{{ lang.t('theme') }}</label>
-            <select formControlName="preferencia_tema" (change)="onThemeChange($event)" class="custom-select">
-              <option value="light">{{ lang.t('light') }}</option>
-              <option value="dark">{{ lang.t('dark') }}</option>
-            </select>
           </div>
 
           <div class="form-group">
