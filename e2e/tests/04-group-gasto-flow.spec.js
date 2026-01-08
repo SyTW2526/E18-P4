@@ -16,12 +16,22 @@ async function handleConfirmation(driver) {
   } catch (_) {}
 
   try {
+    // Try modal button with class modal-btn delete-btn
     const confirmBtn = await driver.wait(
-      until.elementLocated(By.css('mat-dialog-container button.mat-primary, mat-dialog-container button[color="warn"], .swal2-confirm')),
+      until.elementLocated(By.css('button.modal-btn.delete-btn')),
       3000
     );
     await confirmBtn.click();
-  } catch (_) {}
+  } catch (_) {
+    try {
+      // Fallback: try mat-dialog button
+      const matBtn = await driver.wait(
+        until.elementLocated(By.css('mat-dialog-container button[color="warn"], mat-dialog-container .mat-primary')),
+        3000
+      );
+      await matBtn.click();
+    } catch (_2) {}
+  }
 }
 
 // waitForAppReady is imported from ../driver
@@ -74,26 +84,35 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
 
     // Fill inline create form
     const nameInput = await driver.wait(
-      until.elementLocated(By.css('input[name="createName"]')),
+      until.elementLocated(By.css('input[placeholder="Nombre del grupo"]')),
       20000,
       'Group name input not found within 20s'
     );
     await driver.wait(until.elementIsVisible(nameInput), 5000);
     await nameInput.clear();
     await nameInput.sendKeys(uniqueGroupName);
+    
+    // Wait for input to be valid and button to enable
+    await driver.wait(
+      until.elementLocated(By.css('button.confirm-btn:not([disabled])')),
+      10000,
+      'Confirm button not enabled within 10s'
+    );
 
-    const submitGroupBtn = By.xpath("//button[contains(.,'Crear grupo') or contains(.,'Create group') or contains(.,'Aceptar')]");
-    await clickElement(driver, submitGroupBtn, 10000);
+    const submitGroupBtn = await driver.findElement(By.css('button.confirm-btn'));
+    await driver.executeScript('arguments[0].click();', submitGroupBtn);
 
     // --- 2. OPEN GROUP ---
     console.log('Step 2: Opening Group');
 
-    const cardXPath = `//mat-card[.//mat-card-title[contains(text(), "${uniqueGroupName}")]]`;
+    const cardXPath = `//*[contains(text(), "${uniqueGroupName}")]`;
     await driver.wait(until.elementLocated(By.xpath(cardXPath)), 20000);
 
     const card = await driver.findElement(By.xpath(cardXPath));
     try { await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', card); } catch(_){}
-    await driver.executeScript('arguments[0].click();', card);
+    // Click on parent card element
+    const cardParent = await card.findElement(By.xpath("ancestor::*[@class[contains(., 'card')] or contains(@class, 'group-card')]"));
+    await driver.executeScript('arguments[0].click();', cardParent);
 
     await driver.wait(until.urlContains('/group'), 20000);
 
@@ -122,23 +141,19 @@ describe('E2E - Full Flow: Group > Gasto > Delete', function () {
     // --- 4. DELETE EXPENSE ---
     console.log('Step 4: Deleting Expense');
 
-    const expenseRowXPath = `//*[contains(text(), "${uniqueGastoDesc}")]/ancestor::mat-list-item`;
-    const rowEl = await driver.wait(until.elementLocated(By.xpath(expenseRowXPath)), 20000);
-    try { await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', rowEl); } catch (_) {}
+    const expenseXPath = `//*[contains(@class, 'expense-description') and contains(text(), "${uniqueGastoDesc}")]`;
+    const expenseEl = await driver.wait(until.elementLocated(By.xpath(expenseXPath)), 20000);
+    try { await driver.executeScript('arguments[0].scrollIntoView({block:"center"});', expenseEl); } catch (_) {}
 
-    let deleteBtnInRow;
-    try {
-      deleteBtnInRow = await rowEl.findElement(By.xpath(".//button[@title='Eliminar gasto' or @title='Delete expense']"));
-    } catch (_) {
-      deleteBtnInRow = await rowEl.findElement(By.css("button[title*='limin'], button.delete-btn"));
-    }
-    
-    await driver.executeScript('arguments[0].click();', deleteBtnInRow);
+    // Find the delete button within the expense item
+    const expenseItem = await expenseEl.findElement(By.xpath("ancestor::div[contains(@class, 'expense-item')]"));
+    const deleteBtn = await expenseItem.findElement(By.css('button.delete-btn'));
+    await driver.executeScript('arguments[0].click();', deleteBtn);
     await handleConfirmation(driver);
-
-    // Wait for row to disappear
+    
+    // Wait for expense to disappear
     try {
-      await driver.wait(until.stalenessOf(rowEl), 5000);
+      await driver.wait(until.stalenessOf(expenseEl), 5000);
     } catch (_) { await driver.sleep(1000); }
 
     // --- 6. VERIFY HOME ---

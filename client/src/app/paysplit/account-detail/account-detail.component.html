@@ -234,7 +234,7 @@
             <div *ngIf="gastos.length === 0" class="no-data-message">
               {{ lang.t('noExpensesYet') }}
             </div>
-            <svg *ngIf="gastos.length > 0" [attr.width]="chartWidth" height="300" class="expense-chart" viewBox="0 0 600 300">
+            <svg *ngIf="gastos.length > 0" [attr.width]="chartWidth" height="300" class="expense-chart" [attr.viewBox]="'0 0 ' + chartWidth + ' 300'">
               <!-- Axes -->
               <line x1="40" y1="20" x2="40" y2="260" stroke="#a1a1aa" stroke-width="2"/>
               <line x1="40" y1="260" x2="580" y2="260" stroke="#a1a1aa" stroke-width="2"/>

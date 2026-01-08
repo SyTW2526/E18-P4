@@ -5,7 +5,7 @@ npm-debug.log
 yarn-error.log
 GOOGLE_SIGNIN_FIX.md
 GOOGLE_SIGNIN_FIX_REGISTRO.md
-
+/*/artifacts
 # Ignore log files
 logs
 *.log
